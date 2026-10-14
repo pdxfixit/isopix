@@ -23,6 +23,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Update notice**: when a newer deploy is live, "🆕 An update for Isopix is ready." floats above the bottom bars with Reload (saves, lets the new service worker take over, reloads) and ✕; it waits while you draw or have a menu open (`web/update.js`, tests in `test/update.test.mjs`, `just look update updatesel`).
 
+**Build stamp**: the release and deployed commit, tiny, in the bottom-right corner (`buildStamp` in `web/update.js`; the commit is `version.json`'s `commit`, which flarepress's stamp writes).
+
 **Cell layer cache**: the cells are drawn to an offscreen bitmap a little larger than the screen (`web/layer.js` decides blit, patch or full redraw; tests in `test/layer.test.mjs`). Panning moves the bitmap, painting redraws only the changed area (the model records changed keys), and zoom redraws at the new scale.
 
 **Help**: Settings → About → Help or `?` opens a sheet of every control (with its icon), gesture and key, generated from the same key table the app binds (`web/help.js`, `web/keys.js`, `test/help.test.mjs`, `just look help`).
@@ -33,7 +35,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 ## Verified, and how
 
-- Engine and tools: `just test`, 130 Node tests (including `test/docs.test.mjs`) and 7 Python tests pass (2026-10-12).
+- Engine and tools: `just test`, 133 Node tests (including `test/docs.test.mjs` and `test/names.test.mjs`) and 11 Python tests pass (2026-10-13).
 - Output: `just export-check`, 26 checks pass (PNG face colors, SVG merge, project round trip with undo, the cached layer against a fresh redraw, the trace picture).
 - Layout: CI runs `just look` on every view in light mode at 320, 375, 700, 900 and 1100 px on each push (see `.github/workflows/test.yml`); green on `d6305fb`.
 - Offline: in headless Chrome the service worker registers, controls the page, and the app boots with the network off.
@@ -74,6 +76,6 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 ## In flight
 
-Release 1.0.1 (the rename to Isopix, semver, the public repo) is committed. Its first publish at isopix.pdxfixit.com, and the redirect from the old Isogrid address, follow in the next commit's notes.
+Release 1.0.1 (the rename to Isopix, semver, the public repo) is live at isopix.pdxfixit.com, published 2026-10-13: every file 200, `version.json` v1.0.1, checked through Cloudflare's address while this Mac's DNS still cached the name as missing. The old Isogrid address 301s every path there (`just sites` in flarepress). Release 1.0.2 adds the build stamp.
 
 Waiting on the owner: the "Try first" checks on a real phone, including the zoom rail's speed.
