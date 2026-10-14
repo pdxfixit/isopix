@@ -1,0 +1,7 @@
+.DS_Store
+shots/
+web/version.json
+# The global ignore has "Icon?" (macOS Icon\r files), which matches icons/ on a
+# case-insensitive disk. The app icons are real files: keep them.
+!/web/icons/
+__pycache__/

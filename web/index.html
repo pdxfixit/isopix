@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>Isopix</title>
+  <meta name="description" content="Draw on an isometric grid. The grid size is the brush size.">
+  <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1b1d22" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="version.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <canvas id="stage" role="img" aria-label="Drawing canvas. Use the tools below; the level buttons set the grid size." tabindex="0"></canvas>
+
+  <div class="cluster topleft">
+    <button id="drawing-open" class="btn labeled" aria-haspopup="dialog" aria-label="Drawing: name, new, open, save" title="Drawing (D)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span class="btn-words"><span class="btn-word">Drawing</span><span id="drawing-name-small" class="btn-sub"></span></span>
+    </button>
+    <button id="top-new" class="btn labeled wide-only" aria-label="New drawing" title="New drawing">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span class="btn-word">New</span>
+    </button>
+    <button id="top-open" class="btn labeled wide-only" aria-label="Open a project file" title="Open">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span class="btn-word">Open</span>
+    </button>
+    <button id="top-save" class="btn labeled wide-only" aria-label="Save the project file" title="Save file">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="btn-word">Save</span>
+    </button>
+    <button id="undo" class="btn" aria-label="Undo" title="Undo (Ctrl+Z)" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-3"/></svg>
+    </button>
+    <button id="redo" class="btn" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5M20 12H9a5 5 0 0 0 0 10h3"/></svg>
+    </button>
+  </div>
+
+  <div class="cluster topright">
+    <button id="mode-chip" class="btn mode-chip" aria-label="Keep fine detail is on. Tap for Paint behind." title="Big strokes over fine detail">
+      <svg id="mode-icon" viewBox="0 0 24 24" aria-hidden="true"></svg><span id="mode-label" aria-hidden="true">Keep</span>
+    </button>
+    <button id="settings-open" class="btn" aria-haspopup="dialog" aria-label="Settings" title="Settings (M)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 1.6 2.6 3-.7.7 3 2.6 1.6-1.4 2.5 1.4 2.5-2.6 1.6-.7 3-3-.7L12 21.5l-1.6-2.6-3 .7-.7-3-2.6-1.6L5.5 12 4.1 9.5l2.6-1.6.7-3 3 .7Z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+
+  <div id="levels" class="levels" role="group" aria-label="Grid level">
+    <div class="notch-window">
+      <div id="notches" class="notches" role="radiogroup" aria-label="Grid size: big cells to small cells"></div>
+    </div>
+    <button id="lock" class="btn lock" aria-pressed="false" aria-label="Lock grid level (zooming then keeps the level)" title="Lock level (K)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="shackle" d="M8 11V8a4 4 0 0 1 8 0"/></svg>
+    </button>
+  </div>
+  <div id="level-readout" class="readout" aria-hidden="true"></div>
+
+  <div id="zoom" class="zoom" role="group" aria-label="Zoom">
+    <button id="zoom-in" class="btn" aria-label="Zoom in" title="Zoom in (+)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"/></svg>
+    </button>
+    <div id="zoom-track" class="zoom-track" role="slider" tabindex="0" aria-orientation="vertical" aria-label="Zoom: up is closer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+      <div class="zoom-thumb" aria-hidden="true"></div>
+    </div>
+    <button id="zoom-out" class="btn" aria-label="Zoom out" title="Zoom out (−)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6"/></svg>
+    </button>
+    <button id="fit-view" class="btn" aria-label="Fit the drawing on screen" title="Fit drawing (0)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
+    </button>
+  </div>
+
+  <div id="selbar" class="selbar" role="toolbar" aria-label="Selection" hidden>
+    <button id="sel-coarser" class="btn" aria-label="Coarser: merge cells into bigger ones" title="Coarser">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 21 20H3Z"/></svg>
+    </button>
+    <span id="sel-level" class="chip" aria-live="polite"></span>
+    <button id="sel-finer" class="btn" aria-label="Finer: split every cell in four" title="Finer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 21 20H3ZM7.5 12h9L12 20Z"/></svg>
+    </button>
+    <button id="sel-mode" class="btn mode" aria-label="Coarsen color rule: Crisp" title="Crisp keeps the majority color; Blend averages">Crisp</button>
+    <button id="sel-done" class="btn" aria-label="Done: clear the selection" title="Done (Esc)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
+    </button>
+    <button id="sel-more" class="btn" aria-expanded="false" aria-controls="sel-extra" aria-label="More selection actions: snap, save as stamp, erase" title="More">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    </button>
+    <div id="sel-extra" class="sel-extra">
+      <button id="sel-snap" class="btn mode" aria-pressed="false" aria-label="Snap blended colors to the palette" title="Snap to palette">Snap</button>
+      <button id="sel-stamp" class="btn" aria-label="Save selection as a stamp brush" title="Save as stamp">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v6l3 3v3H5v-3l3-3ZM5 20h14"/></svg>
+      </button>
+      <button id="sel-erase" class="btn" aria-label="Erase what is in the selection" title="Erase selection">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="handle" class="handle" hidden role="slider" tabindex="0" aria-label="Selection density: drag up for finer, down for coarser" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0">
+    <div id="handle-track" class="handle-track" aria-hidden="true"></div>
+  </div>
+
+  <div id="popover" class="popover" hidden role="dialog" aria-label="Options"></div>
+
+  <div class="bottom">
+    <div id="palette" class="palette" role="radiogroup" aria-label="Colors"></div>
+    <div class="tools" role="toolbar" aria-label="Tools">
+      <button class="btn tool" data-tool="pencil" aria-pressed="true" aria-label="Pencil" title="Pencil (P)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-5L16 4l4 4L9 19ZM14 6l4 4"/></svg>
+      </button>
+      <button class="btn tool" data-tool="eraser" aria-pressed="false" aria-label="Eraser" title="Eraser (E)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 15 9-9 7 7-6 6H7ZM8 19h12"/></svg>
+      </button>
+      <button class="btn tool" data-tool="line" aria-pressed="false" aria-label="Line" title="Line (L)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/></svg>
+      </button>
+      <button class="btn tool" data-tool="fill" aria-pressed="false" aria-label="Fill bucket" title="Fill (F)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(9.4 10.8) rotate(45)"><path d="M-4.8-3-4.4 4h8.8l.4-7"/><ellipse cy="-3" rx="4.8" ry="1.3" stroke-width="1.5"/><path d="M-4.8-3C-5.6-10.6 5.6-10.6 4.8-3" stroke-width="1.2"/></g><path d="M14.92 12.07c1.6.4 2.4 2.4 2.4 4.2"/><path d="M17.32 17.07s2 2.5 2 3.7a2 2 0 0 1-4 0c0-1.2 2-3.7 2-3.7Z" fill="currentColor"/></svg>
+      </button>
+      <button class="btn tool" data-tool="select" aria-pressed="false" aria-label="Select" title="Select (S)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 21 19H3Z" stroke-dasharray="3 2.4"/></svg>
+      </button>
+      <button id="options" class="btn tool opts" aria-haspopup="dialog" aria-expanded="false" aria-label="Brush shape" title="Brush shape (B)">
+        <svg id="options-glyph" viewBox="0 0 24 24" aria-hidden="true"></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="update-bar" class="update-bar" role="status" aria-live="polite" hidden>
+    <span class="update-text">🆕 An update for Isopix is ready.</span>
+    <span class="update-buttons">
+      <button type="button" class="btn update-reload" id="update-reload" aria-label="Reload to get the update (your drawing is saved first)">Reload</button>
+      <button type="button" class="btn update-close" id="update-close" aria-label="Not now">✕</button>
+    </span>
+  </div>
+  <div id="protect-note" class="update-bar" role="status" aria-live="polite" hidden>
+    <span class="update-text" id="protect-text"></span>
+    <span class="update-buttons">
+      <button type="button" class="btn update-close" id="protect-close" aria-label="Close this message">✕</button>
+    </span>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="replay-bar" class="replay-bar" hidden>
+    <span>Replaying</span>
+    <button id="replay-stop" class="btn wide" aria-label="Stop replay">Stop</button>
+  </div>
+
+  <dialog id="settings" aria-labelledby="settings-title">
+    <form method="dialog" class="menu">
+      <header>
+        <h2 id="settings-title">Settings</h2>
+        <button class="btn" value="close" aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <section class="set-fold" id="set-drawing" aria-labelledby="set-drawing-title">
+        <h3><button type="button" class="set-head" aria-expanded="false" aria-controls="set-drawing-body"><span class="set-head-caret" aria-hidden="true">▸</span><span id="set-drawing-title">Drawing</span><span class="set-head-chip" id="set-drawing-chip"></span></button></h3>
+        <div class="set-body" id="set-drawing-body" hidden>
+          <fieldset>
+            <legend>A big stroke over finer detail</legend>
+            <label><input type="radio" name="protect" value="protect"> Keep fine detail: skip cells that already have finer detail</label>
+            <label><input type="radio" name="protect" value="behind"> Paint behind: fill only the empty parts</label>
+            <label><input type="radio" name="protect" value="replace"> Replace: paint over everything</label>
+          </fieldset>
+          <div class="row"><button type="button" id="paper-flip" class="btn wide" aria-describedby="paper-note">Paper: light</button></div>
+          <p class="note" id="paper-note">Each drawing keeps its own paper. The inks follow it; strokes keep their colors.</p>
+          <label class="row"><input type="checkbox" id="opt-shading"> Auto-shade cube faces (top light, left mid, right dark)</label>
+          <fieldset>
+            <legend>Symmetry</legend>
+            <label><input type="radio" name="symmetry" value="off"> Off</label>
+            <label><input type="radio" name="symmetry" value="mirror"> Mirror</label>
+            <label><input type="radio" name="symmetry" value="rot6"> 6-fold rotation</label>
+            <label><input type="radio" name="symmetry" value="rot6mirror"> 6-fold rotation and mirror</label>
+            <button type="button" id="sym-center" class="btn wide">Set center: tap a grid point</button>
+          </fieldset>
+        </div>
+      </section>
+      <section class="set-fold" id="set-grid" aria-labelledby="set-grid-title">
+        <h3><button type="button" class="set-head" aria-expanded="false" aria-controls="set-grid-body"><span class="set-head-caret" aria-hidden="true">▸</span><span id="set-grid-title">Grid</span><span class="set-head-chip" id="set-grid-chip"></span></button></h3>
+        <div class="set-body" id="set-grid-body" hidden>
+          <label class="row"><input type="checkbox" id="opt-gutters"> Show gutters (the thin grid lines) (G)</label>
+          <fieldset>
+            <legend>Finer-level hints</legend>
+            <label><input type="radio" name="hint" value="off"> Off</label>
+            <label><input type="radio" name="hint" value="faint"> Faint</label>
+            <label><input type="radio" name="hint" value="clear"> Clear</label>
+            <label class="row">How many finer levels <select id="opt-hint-levels"><option>1</option><option>2</option><option>3</option></select></label>
+          </fieldset>
+        </div>
+      </section>
+      <section class="set-fold" id="set-selection" aria-labelledby="set-selection-title">
+        <h3><button type="button" class="set-head" aria-expanded="false" aria-controls="set-selection-body"><span class="set-head-caret" aria-hidden="true">▸</span><span id="set-selection-title">Selection</span><span class="set-head-chip" id="set-selection-chip"></span></button></h3>
+        <div class="set-body" id="set-selection-body" hidden>
+          <p class="note">How to change the cell size inside a selection. The Finer and Coarser buttons always work.</p>
+          <label class="row"><input type="checkbox" id="opt-handle"> Drag the handle on the selection</label>
+          <label class="row"><input type="checkbox" id="opt-pinch"> Pinch inside the selection (experimental)</label>
+          <label class="row"><input type="checkbox" id="opt-longpress"> Long-press, then pinch (experimental)</label>
+        </div>
+      </section>
+      <section class="set-fold" id="set-learning" aria-labelledby="set-learning-title">
+        <h3><button type="button" class="set-head" aria-expanded="false" aria-controls="set-learning-body"><span class="set-head-caret" aria-hidden="true">▸</span><span id="set-learning-title">Learning</span><span class="set-head-chip" id="set-learning-chip"></span></button></h3>
+        <div class="set-body" id="set-learning-body" hidden>
+          <label class="row"><input type="checkbox" id="opt-limited"> Limited palette (start with 3 tones)</label>
+          <label class="row"><input type="checkbox" id="opt-gray"> Grayscale view: check your values</label>
+          <div class="row wrap">
+            <button type="button" id="trace-open" class="btn wide">Trace a picture</button>
+            <button type="button" id="trace-clear" class="btn wide">Remove picture</button>
+          </div>
+          <label class="row">Picture strength <input type="range" id="opt-trace" min="0.05" max="0.8" step="0.05"></label>
+          <button type="button" id="replay" class="btn wide">Time-lapse replay</button>
+        </div>
+      </section>
+      <section class="set-about" aria-labelledby="set-about-title">
+        <h3 id="set-about-title">About</h3>
+        <button type="button" id="help-open" class="btn wide">Help: every button, gesture and key (?)</button>
+        <p class="note">When a newer Isopix is live, a bar says "🆕 An update for Isopix is ready." Reload saves your drawing first; ✕ asks again later.</p>
+        <p class="version" id="version-label"></p>
+      </section>
+    </form>
+  </dialog>
+  <dialog id="drawing" aria-labelledby="drawing-title">
+    <form method="dialog" class="menu sheet">
+      <header>
+        <h2 id="drawing-title">Drawing</h2>
+        <button class="btn" value="close" aria-label="Close the drawing sheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <label class="name-field">Name <input type="text" id="drawing-name" maxlength="80" autocomplete="off" spellcheck="false"></label>
+      <div class="big-buttons">
+        <button type="button" id="file-new" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span>New</span></button>
+        <button type="button" id="file-open" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>Open</span></button>
+        <button type="button" id="file-save" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Save file</span></button>
+        <button type="button" id="file-png" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></svg><span>Save picture</span></button>
+      </div>
+      <div class="row wrap">
+        <button type="button" id="file-svg" class="btn wide">Save vector (SVG)</button>
+        <button type="button" id="file-replay" class="btn wide">Time-lapse</button>
+      </div>
+      <div id="new-confirm" class="confirm" hidden role="group" aria-labelledby="new-confirm-text">
+        <p id="new-confirm-text">Start a new drawing? This browser keeps one drawing, so New replaces this one. Save a file first to keep it.</p>
+        <div class="row wrap">
+          <button type="button" id="new-save-first" class="btn wide">Save file first</button>
+          <button type="button" id="new-anyway" class="btn wide danger">New anyway</button>
+          <button type="button" id="new-cancel" class="btn wide">Cancel</button>
+        </div>
+      </div>
+      <p class="note" id="autosave-status" aria-live="polite"></p>
+    </form>
+  </dialog>
+  <dialog id="help" aria-labelledby="help-title">
+    <form method="dialog" class="menu help">
+      <header>
+        <h2 id="help-title">Help</h2>
+        <button class="btn" value="close" aria-label="Close help">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div id="help-body"></div>
+    </form>
+  </dialog>
+</body>
+</html>
