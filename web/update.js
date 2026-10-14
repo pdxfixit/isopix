@@ -34,6 +34,17 @@ export function liveVersionOf(json) {
   return real(v) ? v : null;
 }
 
+// The tiny build stamp in the bottom-right corner: the app's release and the
+// commit the deploy stamped into version.json. Pure. A copy with no
+// version.json (a dev server) says 'dev' after the release.
+//   app:  self.ISOPIX_VERSION, or undefined
+//   json: the parsed version.json, or null
+export function buildStamp(app, json) {
+  const rel = typeof app === 'string' && app ? app : 'dev';
+  const sha = json && typeof json.commit === 'string' && /^[0-9a-f]{4,40}$/.test(json.commit) ? json.commit.slice(0, 7) : '';
+  return json ? (sha ? `${rel} · ${sha}` : rel) : `${rel} · dev`;
+}
+
 // Wires the bar. `deps` lets the tests drive it:
 //   loaded() the version this page loaded; busy() true while not to disturb;
 //   beforeReload() async, saves and readies the new worker;

@@ -240,6 +240,12 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
 .set-body { padding: 0 2px 12px; }
 .set-about { border-top: 1px solid var(--border); padding-top: 4px; }
 .set-about h3 { margin: 12px 0 8px; }
+/* The build stamp: release and commit, tiny, in the strip under the tool bar. Never takes a tap. */
+.build-stamp {
+  position: fixed; z-index: 4; right: calc(8px + env(safe-area-inset-right)); bottom: env(safe-area-inset-bottom);
+  font: 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); opacity: 0.7;
+  pointer-events: none; user-select: none; -webkit-user-select: none;
+}
 .version { text-align: center; color: var(--muted); font-size: 14px; margin: 14px 0 4px; }
 
 /* ---- Drawing sheet: the name, big file buttons ---- */

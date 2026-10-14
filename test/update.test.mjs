@@ -2,7 +2,7 @@
 // what ✕ does, and that Reload saves first (web/update.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { updateOffer, liveVersionOf, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
+import { updateOffer, liveVersionOf, buildStamp, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
 
 const offer = (o) => updateOffer({ loaded: 'aaa1111', live: 'bbb2222', busy: false, dismissed: null, ...o });
 
@@ -147,4 +147,13 @@ test('a dev copy never asks', async () => {
   await r.run(CHECK_MS);
   assert.equal(r.asked.length, 0);
   assert.equal(r.bar.hidden, true);
+});
+
+test('the corner stamp shows the release and the deployed commit, and never trusts a bad one', () => {
+  assert.equal(buildStamp('1.0.2', { version: 'v1.0.2', commit: '55a1363' }), '1.0.2 · 55a1363');
+  assert.equal(buildStamp('1.0.2', { version: 'v1.0.2', commit: '55a13639abcdef' }), '1.0.2 · 55a1363');
+  assert.equal(buildStamp('1.0.2', { version: 'v1.0.2' }), '1.0.2');              // a stamp from before the commit field
+  assert.equal(buildStamp('1.0.2', { version: 'v1', commit: '<b>x</b>' }), '1.0.2');
+  assert.equal(buildStamp('1.0.2', null), '1.0.2 · dev');                          // no version.json: a dev server
+  assert.equal(buildStamp(undefined, null), 'dev · dev');
 });

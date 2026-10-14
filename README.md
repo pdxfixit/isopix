@@ -62,6 +62,7 @@ LAN gets the app, but not the install.
   Learning (limited palette, grayscale, trace a picture, time-lapse) and About
   (version, Help).
 - **Help** (`?`): every button, gesture and key.
+- The tiny text in the bottom-right corner is the release and the commit it was built from.
 
 Keys: P pencil, E eraser, L line, F fill, S select, B brush, [ and ] grid size,
 K lock, G gutters, 0 fit the drawing, + and − zoom, Ctrl+Z undo, Shift+Ctrl+Z redo,
