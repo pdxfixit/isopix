@@ -8,8 +8,11 @@ Nothing approved and waiting.
 
 Offered, not yet approved (ask the owner first):
 
+- Everything in [docs/release-plan.md](docs/release-plan.md) (card 10 in [docs/questions.md](docs/questions.md)).
 - Pressure (pen) and layers, which the brief puts later.
 
 ## The owner does
 
-- Try it on the Pixel and a tablet: the five things in [docs/state.md](docs/state.md) "Try first".
+- Merge and deploy branch `claude/ui-cleanup-usability-p711b2` (saving, Move, the offline fix): it is pushed, not on `main`, not live.
+- Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
+- Answer cards 8 to 10 in [docs/questions.md](docs/questions.md).
