@@ -1,0 +1,65 @@
+// The Help sheet lists every control, gesture and key (web/help.js), and the
+// keys come from the same table the app binds (web/keys.js). These fail when
+// a key, tool, brush or button is added without its Help line.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { KEYS, keyFor } from '../web/keys.js';
+import { SECTIONS, helpHTML } from '../web/help.js';
+
+const html = fs.readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
+const app = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+const sheet = helpHTML((sel) => `<svg data-from='${sel}'></svg>`);
+const items = SECTIONS.flatMap((s) => s.items);
+
+test('every bound key is on the sheet, and the app handles every action in the table', () => {
+  for (const row of KEYS) {
+    assert.ok(sheet.includes(row.keys.join(' or ').replace(/&/g, '&amp;')), `key ${row.keys} missing from Help`);
+    const what = row.action.split(':')[0];
+    if (what === 'pan-hold') { assert.match(app, /spaceHeld = true/); continue; }
+    assert.match(app, new RegExp(`\\b${what}\\b[:,]`), `app.js does not handle ${row.action}`);
+  }
+});
+
+test('keyFor reads keyboard events the way the table says', () => {
+  assert.equal(keyFor({ key: 'p' }).action, 'tool:pencil');
+  assert.equal(keyFor({ key: 'P' }).action, 'tool:pencil', 'Caps Lock');
+  assert.equal(keyFor({ key: 'z', ctrlKey: true }).action, 'undo');
+  assert.equal(keyFor({ key: 'Z', metaKey: true, shiftKey: true }).action, 'redo');
+  assert.equal(keyFor({ key: 'y', ctrlKey: true }).action, 'redo');
+  assert.equal(keyFor({ key: '=' }).action, 'zoom:in');
+  assert.equal(keyFor({ key: '?' }).action, 'help');
+  assert.equal(keyFor({ key: 'p', ctrlKey: true }), null, 'Ctrl+P is the browser\'s');
+  assert.equal(keyFor({ key: 'x' }), null);
+});
+
+test('every tool button and brush shape has a Help line with its real icon', () => {
+  for (const [, tool] of html.matchAll(/data-tool="([a-z]+)"/g)) {
+    assert.ok(items.some((it) => it.from === `[data-tool="${tool}"]`), `tool ${tool} missing from Help`);
+  }
+  const brushes = Object.keys(eval(`(${app.match(/const BRUSH_LABEL = (\{[^}]+\})/)[1]})`));
+  for (const b of brushes) assert.ok(items.some((it) => it.glyph === b), `brush ${b} missing from Help`);
+});
+
+test('every button and slider on the page and in the Drawing sheet is on the Help sheet, and every icon it borrows exists', () => {
+  const drawing = html.slice(html.indexOf('<dialog id="drawing"'), html.indexOf('</dialog>', html.indexOf('<dialog id="drawing"')));
+  const page = html.slice(0, html.indexOf('<dialog')) + drawing;
+  // Notices are explained in place; the New confirmation's choices are explained under New.
+  const notControls = new Set(['update-reload', 'update-close', 'protect-close', 'replay-stop', 'new-save-first', 'new-anyway', 'new-cancel']);
+  // Sliders (role="slider": the zoom track, the density handle) count as controls too.
+  const controls = [...page.matchAll(/<button[^>]*\bid="([^"]+)"/g), ...page.matchAll(/<div[^>]*\bid="([^"]+)"[^>]*\brole="slider"/g)];
+  for (const [, id] of controls) {
+    if (notControls.has(id)) continue;
+    assert.ok(items.some((it) => it.from === `#${id}`), `#${id} missing from Help`);
+  }
+  for (const it of items.filter((x) => x.from)) {
+    const sel = it.from.startsWith('#') ? `id="${it.from.slice(1)}"` : it.from.slice(1, -1);
+    assert.ok(html.includes(sel), `Help borrows the icon of ${it.from}, which is not in index.html`);
+  }
+});
+
+test('the paint-can chip is explained in all three modes, and the words are defined', () => {
+  for (const w of ['Keep', 'Behind', 'Replace', 'Lattice', 'Cell', 'Level', 'Gutter', 'Density', 'Handle', 'Lock', 'Drawing', 'Settings', 'Name', 'Fit drawing']) {
+    assert.ok(items.some((it) => it.name === w), `${w} missing`);
+  }
+});

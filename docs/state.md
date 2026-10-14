@@ -1,0 +1,79 @@
+# State
+
+Present tense: what exists, what is in flight, what waits on the owner.
+
+## What exists
+
+Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history starts at release 1.0.1 on 2026-10-13. It was built from 2026-10-12 as Isogrid, from the owner's [design brief](design-brief.md), and lived at its old address; that history is in a private, archived repo. The site is https://isopix.pdxfixit.com. Hosting: [deploy-cloudflare.md](deploy-cloudflare.md).
+
+**Engine** (`web/engine/`; `test/` holds the `node --test` suites):
+
+- Lattice math: coordinates, hit test, children/parent, the six cells around a vertex, edge neighbors, hexagon distance, the three line families, edges and their refine/coarsen. The brief's verified math is proven by tests, including its three prototype checks.
+- The cell model with the one-cell-or-children invariant, `sub` counts, Keep fine detail / Paint behind / Replace, and a diff-based undo log that also drives previews (rollback) and time-lapse replay.
+- Brushes: triangle, rhombus, hexagon, trapezoid, big triangle, drag-sized face, drag-sized cube, stamp. Line Strip and Edge. Cube-face tags.
+- Fill over stored cells (never 4ᵏ tiny cells), bounded on empty paper; past 40,000 cells it fills bigger cells.
+- Papers: each drawing keeps its own (light or dark), saved with it; the inks follow it (`engine/paper.js`).
+- Symmetry: the exact 12-element group around a vertex (mirror, 6-fold, both), faces follow.
+- Selection regions, density change both ways (Crisp, Blend in Oklab, snap to palette), hidden children (and bold edges) restored on refine until painted on, marquee snapping, stamps that scale with the level.
+- SVG export (merged polygons with holes), project files (shape-checked on load).
+
+**App** (`web/`): the canvas with fading gutters and finer-level hints; tools, brush picker, palette with auto-shade and a custom color, the chunked level slider of hexagons (a rail hanging under the top buttons on phones, a top bar from 768 px) with follow-zoom and lock; pan and zoom (pinch, Ctrl+wheel, trackpad pinch, wheel pans, and the zoom rail on the left edge: zoom in, a log-scale slider, zoom out, ⌖ Fit drawing; `test/view.test.mjs`, `just look zoom fit`); a palette whose add-color and auto-shade buttons stay pinned while the inks scroll; on short landscape screens one bottom row; the selection bar (Finer, Coarser, Crisp/Blend, Snap, Save as stamp, Erase, Done), the density handle with a notch track, and the experimental pinch-inside and long-press-then-pinch gestures; the top bar's Drawing button and sheet (name, New, Open, Save file, Save picture, SVG, time-lapse; New, Open and Save also in the bar from 700 px) and ⚙️ Settings in folding sections (Drawing, Grid, Selection, Learning, About) with value chips; picking a color while the Eraser is on switches to the Pencil; autosave to IndexedDB; manifest and a network-first service worker.
+
+**Keep fine detail made visible** (named Protect until 2026-10-12): the Keep / Behind / Replace chip by ⌖ (the same tipped fill can as the Fill tool, the word tells the mode), hatched skipped cells in the hover preview and after a stroke, and a once-a-session "skipped N cells" notice (`web/engine/protect.js`, `test/protect.test.mjs`, `just look protect hoverskip`). The owner's "larger tile isn't overpainting" report was this mode: reproduced in headless Chrome (a level-2 tile over level-5 detail: Keep and Paint behind keep the detail, Replace overpaints, with or without follow-zoom, symmetry or drag brushes).
+
+**Update notice**: when a newer deploy is live, "🆕 An update for Isopix is ready." floats above the bottom bars with Reload (saves, lets the new service worker take over, reloads) and ✕; it waits while you draw or have a menu open (`web/update.js`, tests in `test/update.test.mjs`, `just look update updatesel`).
+
+**Cell layer cache**: the cells are drawn to an offscreen bitmap a little larger than the screen (`web/layer.js` decides blit, patch or full redraw; tests in `test/layer.test.mjs`). Panning moves the bitmap, painting redraws only the changed area (the model records changed keys), and zoom redraws at the new scale.
+
+**Help**: Settings → About → Help or `?` opens a sheet of every control (with its icon), gesture and key, generated from the same key table the app binds (`web/help.js`, `web/keys.js`, `test/help.test.mjs`, `just look help`).
+
+**Tools**: `just serve | test | look | version | export-check | perf | prove | live-check | icons`, plus the deploy recipes from `deploy.just` (`deploy-check | deploy-plan | deploy | deploy-verify | live | rollback | ship`). `test/docs.test.mjs` keeps the docs honest: every recipe and look view they name exists, every link and repo path resolves, and AGENTS.md stays under 16,000 bytes.
+
+**Hosting**: flarepress has the site folder `isopix.pdxfixit.com` (its `public` links to `web/`; its `site.conf` configures the shared `flarepress/tools/site.sh`, which `tools/deploy.sh` calls for check, stamp, verify, live and rollback); its first publish is release 1.0.1. First install on a real device (install to the home screen, offline start) is not yet tried. Recipes and rollback: [deploy-cloudflare.md](deploy-cloudflare.md).
+
+## Verified, and how
+
+- Engine and tools: `just test`, 130 Node tests (including `test/docs.test.mjs`) and 7 Python tests pass (2026-10-12).
+- Output: `just export-check`, 26 checks pass (PNG face colors, SVG merge, project round trip with undo, the cached layer against a fresh redraw, the trace picture).
+- Layout: CI runs `just look` on every view in light mode at 320, 375, 700, 900 and 1100 px on each push (see `.github/workflows/test.yml`); green on `d6305fb`.
+- Offline: in headless Chrome the service worker registers, controls the page, and the app boots with the network off.
+- In the Browser pane with a mouse: strokes, the selection marquee, Finer, and the handle drag. By pointer events dispatched from script: every brush, line styles, fill, symmetry (12 images), Keep/behind/replace, two-finger pinch zoom (a young stroke is dropped), pinch-inside and long-press-then-pinch density, stamps, follow-zoom hysteresis and the lock, replay, trace, grayscale.
+- Drawing speed (`just perf`: 38,400 cells, 1024×768 at 2×, headless Chrome on the owner's Mac, each frame timed through a 1-pixel read so the GPU work counts; median / p95 ms): before the cell-layer cache pan 28.9 / 32.2, zoom 26.2 / 28.5, draw 30.1 / 34.1; with it pan 4.5 / 23.4 (the p95 is the redraw when a pan leaves the cached margin), zoom 14.9 / 25.1, draw 12.8 / 15.0. Latest run (2026-10-12, `d6305fb`): pan 5.3 / 24.6, zoom 16.3 / 27.1, draw 13.7 / 15.5. The bar for changes is in [decisions.md](decisions.md) (Shipping). `just export-check` proves the cached layer matches a fresh redraw pixel for pixel after strokes, symmetry, erase, density changes, undo, redo, pan and zoom.
+
+## Not verified
+
+- Real multi-touch on a phone or tablet (pinch feel, two-finger pan, long-press timing, palm and accidental touches), pen input, and speed on the Pixel. Only simulated.
+- Installing to a home screen (needs https or localhost on the device).
+- Screen-reader use end to end (labels and roles are in place; no screen reader was run).
+
+## Try first (for the owner, on the phone)
+
+1. Draw at a big notch, pinch-zoom in, and draw again: does the level following zoom feel natural, and is the lock easy to find?
+2. Drag a cube, select around it, and drag the round handle up and down: does the density change read clearly, and does Coarser then Finer bring the detail back?
+3. Slide the zoom rail on the left (under the Drawing button): about 16 px of slide doubles the zoom. Is that too fast? + and − double and halve it; ⌖ at its foot fits the drawing on screen.
+4. Turn the phone sideways: the palette and tools share one row, and the rails hang under the top buttons. Is anything hard to reach?
+5. Settings → Drawing → Paper: flip a drawing to dark paper and draw with the light inks; then start a New drawing and check it opens on the paper matching the phone's mode.
+
+## CI gaps closed
+
+- 2026-10-13: `test/names.test.mjs` (in `just test`) fails when any file names the owner or his family; the names are stored as hashes, and it reports locations only (proven by planting a name in `web/`). CI also checks that `web/version.js`'s PATCH is the commit count of its commit (`bump_version.py --check`).
+
+- 2026-10-13: `just test` runs `bash -n` on every `tools/*.sh`, so a syntax error in the deploy script fails CI instead of a deploy (proven with a stray `fi`). The deploy steps moved to `flarepress/tools/site.sh`, which has its own tests and CI in flarepress.
+
+- 2026-10-12: GitHub Actions now run `just test`, `just export-check` and `just look` on every push (`test.yml`), fail when `web/` changed without a `web/version.js` bump (that would have caught the eight commits after `9cd39ce` that changed `web/` without one), and check daily that the live site serves `main`'s `version.js` (`live.yml`). `deploy-check` refuses an unpushed `HEAD`. `export-check` compares the cached cell layer with a fresh redraw (it caught a seam-order bug on erase).
+
+- 2026-10-12: the daily live check no longer fails while a deploy is in flight (one hour's grace after main's `version.js` changes) and retries a blip 3 times before calling the site down; its rules are unit-tested in `just test` (`tools/test_live_check.py`). Chrome gets 60 s to start on CI after a cold runner timed out at 15 s. Actions moved to Node 24 releases.
+
+- 2026-10-12: `test/docs.test.mjs` (in `just test`, so in CI) fails when a doc names a `just` recipe or `just look` view that does not exist, a relative link or a repo path in backticks does not resolve, or AGENTS.md grows past 16,000 bytes. On its first run it caught `just look … menu` in this file, a view renamed long ago. `just look --help` now lists views from the table it runs, so it cannot fall behind.
+
+- 2026-10-13: the `fit` look view (in CI) zooms far in, presses ⌖ and fails unless the drawing lands clear of every control; it caught a fit that ignored the fixed rails and top bar (an `offsetParent` test, null for fixed boxes), proven by restoring the bug. `just look` no longer counts inks scrolled under the palette's pinned buttons as overlaps, and the `zoom` view presses + when the track is hidden instead of passing on a hidden track.
+
+- 2026-10-12: `test/help.test.mjs` now counts sliders (`role="slider"`: the zoom track, the density handle) as controls that need a Help line, not only buttons. The `zoom` look view (in CI) fails if sliding the zoom track does not zoom in.
+
+- 2026-10-12: `test/help.test.mjs` fails when a bound key, a tool, a brush shape or any button on the page or in the Drawing sheet has no Help line, or when Help borrows an icon that no longer exists; keys are bound from the same table Help lists.
+
+## In flight
+
+Release 1.0.1 (the rename to Isopix, semver, the public repo) is committed. Its first publish at isopix.pdxfixit.com, and the redirect from the old Isogrid address, follow in the next commit's notes.
+
+Waiting on the owner: the "Try first" checks on a real phone, including the zoom rail's speed.
