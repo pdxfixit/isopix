@@ -59,7 +59,7 @@ Hosting is https://isopix.pdxfixit.com, deployed through flarepress, the owner's
 
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
 2. **Commit to `main`** by explicit path, then **`git push`**. `ship` (below) does commit, push and deploy in one step.
-3. **`just deploy-check`** (read-only): on `main`, `web/` committed, `HEAD` pushed (it refuses an unpushed commit), `index.html`, manifest and service worker present, `just test` green, prints the version that would ship. Then **`just deploy-plan`**: wrangler's dry run, which sends nothing.
+3. **`just deploy-check`** (read-only): on `main`, `web/` committed, `HEAD` pushed (it refuses an unpushed commit), `index.html`, manifest and service worker present, `just test` green, **GitHub's CI run for `HEAD` green** (it waits for one still running; `SKIP_CI=1` only when GitHub is down, and say so), prints the version that would ship. Then **`just deploy-plan`**: wrangler's dry run, which sends nothing.
 4. **`just --yes deploy`** publishes, then runs `deploy-verify` (live version, 200s, service-worker cache header, `version.js` equal to this checkout's). Without `--yes` it asks and, with no terminal, stops. `just --yes ship <msgfile> <files…>` is commit, push and deploy in one step.
 5. **Look at the live site:** `just live` (status, cache headers, etag, versions, ✅/⚠️). Any ❌ from `deploy-verify` means the new version is already live: fix forward, or `just rollback` (prints the steps; `--yes` runs them).
 
@@ -93,7 +93,8 @@ Rules:
 - **A new key goes in `web/keys.js`; a new button, tool or brush gets its line in `web/help.js`.** `test/help.test.mjs` fails otherwise.
 - **Every control has a label a screen reader reads,** and nothing is gesture-only (density change always has buttons).
 - **Respect `prefers-reduced-motion`.**
-- **No personal names.** Never write the owner's or his family's names in any file; `test/names.test.mjs` fails on them. Commits are authored as PDXfixIT (this repo's git config; set it in a fresh clone: `git config user.name PDXfixIT && git config user.email 1262042+pdxfixit@users.noreply.github.com`).
+- **Fresh clone: `just setup` first.** It turns on the pre-commit hook (`.githooks/pre-commit` runs `just test`, about 3 s) and sets the PDXfixIT author. Never skip the hook; fix what it reports.
+- **No personal names.** Never write the owner's or his family's names in any file or commit message; `test/names.test.mjs` fails on them, and on any commit not authored by PDXfixIT.
 - **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Push after every commit to `main` (see Ship).
 - **Agents are agents.** Call subagents "agents", never people.
 - **Tooling friction gets fixed:** an obvious, non-breaking improvement to a tool or doc you used goes in the same session, as its own commit.

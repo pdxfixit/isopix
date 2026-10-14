@@ -15,7 +15,7 @@ CI pins. Newer usually works; older Node does not.
 | just 1.36 or newer | every recipe (`[positional-arguments]` and `import?` need a recent one; Ubuntu's package is too old) | 1.58 (Mac), 1.36.0 (CI) | `brew install just` / the release tarball, as in `.github/workflows/test.yml` |
 | Google Chrome | `just look`, `just export-check`, `just perf`, `deploy-verify`'s live look (headless, a private profile each run) | current stable | `brew install --cask google-chrome` / Google's `.deb` (GitHub's Ubuntu runners have it at `/usr/bin/google-chrome`). Not at the macOS default path? Set `CHROME=/path/to/chrome`. |
 | git | everything | any recent | preinstalled |
-| gh (GitHub CLI), signed in | reading CI: `gh run list`, `gh run view <id> --log-failed`, `gh run download <id>` | 2.102 | `brew install gh`, then `gh auth login` (The owner's GitHub account owns the repo) |
+| gh (GitHub CLI), signed in | deploys (`deploy-check` waits for CI to be green), reading CI: `gh run list`, `gh run view <id> --log-failed`, `gh run download <id>` | 2.102 | `brew install gh`, then `gh auth login` (The owner's GitHub account owns the repo) |
 | curl | `just live`, `deploy-verify` | any | preinstalled |
 | `npx wrangler` (comes with Node) | deploys only, run by flarepress | whatever `npx` fetches | nothing to install |
 

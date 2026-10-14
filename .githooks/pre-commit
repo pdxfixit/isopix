@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Runs `just test` before every commit (about 3 s), so a red commit never
+# reaches CI. On 2026-10-13 a docs edit made after the last test run turned CI
+# red. Turn it on once per clone with `just setup`.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+if ! out=$(just test 2>&1); then
+  echo "$out" | grep -E '^not ok|^✖|Error|named in the docs|personal name' | head -20 >&2
+  echo "🛑 just test fails, so the commit is refused. Run just test to see everything." >&2
+  exit 1
+fi
