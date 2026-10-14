@@ -5,12 +5,17 @@
 // old caches, so nothing stale is served forever.
 importScripts('./version.js');
 const CACHE = `isopix-${self.ISOPIX_VERSION}`;
+// Every file the app loads (test/sw.test.mjs fails when one is missing: the
+// first load runs before this worker controls the page, so a module left out
+// here is not cached until a second visit, and an offline start breaks).
 const SHELL = [
   './', './index.html', './styles.css', './version.js', './manifest.webmanifest',
   './app.js', './render.js', './layer.js', './update.js', './storage.js', './glyphs.js',
+  './keys.js', './help.js', './palette.js', './sheets.js',
   './engine/lattice.js', './engine/model.js', './engine/brushes.js', './engine/symmetry.js',
   './engine/fill.js', './engine/density.js', './engine/svg.js', './engine/project.js',
-  './engine/view.js', './engine/color.js',
+  './engine/view.js', './engine/color.js', './engine/paper.js', './engine/protect.js',
+  './engine/gesture.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 

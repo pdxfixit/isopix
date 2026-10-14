@@ -31,7 +31,7 @@ jobs:
       - name: Output round trip (just export-check)
         run: just export-check --out shots/export
       - name: Width check (just look)
-        run: just look draw drawn select selmore rail zoom fit brushes settings settings-open-all drawing-sheet drawing-new color-pick sheet-focus update updatesel protect hoverskip help --light --out shots/look
+        run: just look draw drawn select selmore rail zoom fit brushes settings settings-open-all drawing-sheet drawing-new color-pick sheet-focus update updatesel protect hoverskip help move pinchpan save-file --light --out shots/look
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v7.0.2

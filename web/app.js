@@ -18,9 +18,10 @@ import { initUpdate, buildStamp, aboutVersion } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
 import { helpHTML } from './help.js';
-import { cleanName, fileBase, savedAgo, newChoices, chipText, SECTION_IDS, rememberedOpen, startsOpen, rememberOpen } from './sheets.js';
+import { cleanName, fileBase, savedAgo, fileLine, unsavedToFile, newChoices, chipText, SECTION_IDS, rememberedOpen, startsOpen, rememberOpen } from './sheets.js';
 import { paperOf, paperName, inkName, matchInk } from './engine/paper.js';
 import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './engine/protect.js';
+import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -73,13 +74,15 @@ export const app = {
   trace: null,
   replaying: null,
   pickCenter: false,
+  moveMode: false,       // the hand on the zoom rail: one finger moves the view
   lastDensity: null,
   loadedVersion: null,
   drawingName: 'Untitled drawing', // saved with the drawing (project file and autosave)
   lastSaved: null,       // when the autosave last landed in IndexedDB
+  file: { name: null, at: null, via: null, dirty: false, handle: null }, // the file this drawing was last saved to or opened from
   strokeSkips: new Map(), // cells Keep fine detail skipped in the stroke under way
   skipFlash: null,        // skipped cells hatched for a moment after a stroke
-  session: { told: false }, // the skip notice shows once a session // the deploy label this copy loaded (version.json), or null/'dev'
+  session: { told: false, storageTold: false }, // the skip and storage notices show once a session
 };
 window.isopix = app; // for debugging and the look tool
 
@@ -143,7 +146,7 @@ function placeUpdateBar() {
   const tops = [$('.bottom > .palette'), $('.bottom > .tools'), $('#selbar')]
     .map((el) => el.getBoundingClientRect()).filter((r) => r.height).map((r) => r.top);
   let top = Math.min(...tops);
-  for (const bar of [$('#update-bar'), $('#protect-note')]) {
+  for (const bar of [$('#update-bar'), $('#protect-note'), $('#save-note')]) {
     if (bar.hidden) continue;
     bar.style.bottom = `${Math.round(window.innerHeight - top + 8)}px`;
     top = bar.getBoundingClientRect().top;
@@ -347,11 +350,28 @@ function pickedColor() {
 // ---------- tools and the options popover ----------
 function setTool(tool) {
   set('tool', tool);
+  setMoveMode(false); // picking a tool means "draw now"
   for (const b of document.querySelectorAll('[data-tool]')) b.setAttribute('aria-pressed', String(b.dataset.tool === tool));
   closePopover();
   updateOptionsButton();
   app.ghost = null;
   requestRender();
+}
+// Move mode: every one-finger drag moves the view (engine/gesture.js). A tool
+// button, H or Esc turns it off; it is never remembered, so the app always
+// opens ready to draw.
+function setMoveMode(on, say = false) {
+  app.moveMode = on;
+  $('#move-mode').setAttribute('aria-pressed', String(on));
+  document.body.classList.toggle('moving', on);
+  updateCursor();
+  if (on) { app.ghost = null; app.ghostSkip = null; requestRender(); }
+  if (say) toast(on ? 'Move: drag to move the view. Tap a tool to draw.' : 'Drawing again');
+}
+// The hand cursor while a drag would pan; the closed hand during one.
+function updateCursor() {
+  canvas.classList.toggle('pan-ready', app.moveMode || spaceHeld);
+  canvas.classList.toggle('panning', gesture?.kind === 'pan');
 }
 function updateOptionsButton() {
   const s = app.settings, btn = $('#options');
@@ -493,11 +513,12 @@ function commit() {
   app.drawing.commit();
   afterChange();
 }
-function afterChange() {
+// changed: false after loading a drawing, which is no change to save to a file.
+function afterChange({ changed = true } = {}) {
   $('#undo').disabled = !app.drawing.undoStack.length;
   $('#redo').disabled = !app.drawing.redoStack.length;
   updateSelbar();
-  scheduleSave();
+  scheduleSave(changed);
   requestRender();
 }
 function undo() {
@@ -664,6 +685,7 @@ function cancelGesture() {
   clearTimeout(gesture.timer);
   gesture = null;
   app.crosshair = null;
+  updateCursor();
   requestRender();
 }
 
@@ -673,9 +695,9 @@ function startTwoFinger() {
   const mid = [(pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2];
   const s = app.settings;
   const prior = gesture;
-  // A young stroke is a mis-start of a pinch: drop it. An older one is kept.
+  // A young or short stroke was the first finger of a pinch: drop it. A real one is kept.
   if (prior && prior.tx && app.drawing.inTx) {
-    if (performance.now() - prior.t0 < 350) app.drawing.rollback(); else commit();
+    if (dropOnSecondFinger({ ageMs: performance.now() - prior.t0, travelPx: prior.travel || 0 })) { app.drawing.rollback(); app.strokeSkips.clear(); } else { commit(); reportSkips(); }
   }
   clearTimeout(prior?.timer);
   app.crosshair = null;
@@ -687,6 +709,7 @@ function startTwoFinger() {
     return;
   }
   gesture = { kind: 'pinch', dist, mid, zoom: app.view.zoom, world: app.view.toWorld(...mid) };
+  updateCursor();
 }
 
 function inSelection(wx, wy) {
@@ -702,8 +725,9 @@ function onDown(e) {
   pointers.set(e.pointerId, { x, y, type: e.pointerType });
   if (pointers.size === 2) { startTwoFinger(); return; }
   if (pointers.size > 2) return;
-  if (e.pointerType === 'mouse' && (e.button === 1 || e.button === 2 || spaceHeld)) { gesture = { kind: 'pan', x, y }; return; }
-  if (e.button > 0) return;
+  const does = oneFinger({ moveMode: app.moveMode && !app.pickCenter, button: e.button, pointerType: e.pointerType, spaceHeld });
+  if (does === 'pan') { gesture = { kind: 'pan', x, y }; app.ghost = null; updateCursor(); requestRender(); return; }
+  if (does === 'ignore') return;
   const [wx, wy] = app.view.toWorld(x, y);
   const s = app.settings;
   const t0 = performance.now();
@@ -725,18 +749,18 @@ function onDown(e) {
   if (s.tool === 'pencil' || erase) {
     if (DRAG_BRUSHES.has(s.brush)) {
       const A = L.nearestVertex(app.level, wx, wy);
-      gesture = { kind: 'drag', tx: true, t0, A, erase, x, y };
+      gesture = { kind: 'drag', tx: true, t0, A, erase, x, y, sx: x, sy: y, travel: 0 };
       app.drawing.begin(s.brush);
       dragApply(gesture, wx, wy);
     } else {
-      gesture = { kind: 'stroke', tx: true, t0, last: [wx, wy], erase };
+      gesture = { kind: 'stroke', tx: true, t0, last: [wx, wy], erase, sx: x, sy: y, travel: 0 };
       app.drawing.begin(erase ? 'erase' : 'paint');
       applyCells(brushAt(wx, wy), erase);
       if (erase) eraseEdgesNear(wx, wy);
     }
   } else if (s.tool === 'line') {
     const A = L.nearestVertex(app.level, wx, wy);
-    gesture = { kind: 'line', tx: true, t0, A, start: [wx, wy] };
+    gesture = { kind: 'line', tx: true, t0, A, start: [wx, wy], sx: x, sy: y, travel: 0 };
     app.drawing.begin('line');
     lineApply(gesture, wx, wy);
   } else if (s.tool === 'fill') {
@@ -797,6 +821,8 @@ function onMove(e) {
   if (!gesture) { hover(e); return; }
   const [wx, wy] = app.view.toWorld(x, y);
   const g = gesture;
+  // How far a stroke has gone from where it started, for dropOnSecondFinger.
+  if (g.tx) g.travel = Math.max(g.travel || 0, Math.hypot(x - g.sx, y - g.sy));
   if (g.kind === 'pinch' && pointers.size >= 2) {
     const pts = [...pointers.values()];
     const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -853,12 +879,16 @@ function onUp(e) {
   if (g.kind === 'pinch' || g.kind === 'density') {
     if (pointers.size < 2) {
       if (g.kind === 'density') previewEnd(true);
-      gesture = pointers.size ? { kind: 'none' } : null;
+      // The finger left after a pinch moves the view; it never draws.
+      const [rest] = [...pointers.values()];
+      gesture = !rest ? null : g.kind === 'pinch' && oneFinger({ afterPinch: true }) === 'pan' ? { kind: 'pan', x: rest.x, y: rest.y } : { kind: 'none' };
+      updateCursor();
     }
     return;
   }
   if (pointers.size) return;
   gesture = null;
+  updateCursor();
   if (g.tx) {
     if (e.type === 'pointercancel') { app.drawing.rollback(); app.strokeSkips.clear(); } else { commit(); reportSkips(); }
   }
@@ -879,6 +909,7 @@ function onUp(e) {
 
 function hover(e) {
   if (e.pointerType === 'touch') return;
+  if (app.moveMode) { if (app.ghost) { app.ghost = null; app.ghostSkip = null; requestRender(); } return; }
   const s = app.settings;
   app.ghostSkip = null;
   let items = null;
@@ -982,10 +1013,12 @@ function fitView() {
 
 // ---------- keyboard ----------
 // Keys come from the table in keys.js; the Help sheet lists the same table.
+const ANYWHERE = new Set(['save', 'saveas', 'open']); // Ctrl+S, Ctrl+Shift+S, Ctrl+O work in the sheets too
 function onKey(e) {
-  if (e.target.closest && e.target.closest('dialog, input, select, textarea')) return;
+  if (e.target.closest && e.target.closest('dialog, input, select, textarea') && !ANYWHERE.has(keyFor(e)?.action)) return;
   if (e.key === ' ') {
     if (e.type === 'keydown') { spaceHeld = true; e.preventDefault(); } else spaceHeld = false;
+    updateCursor();
     return;
   }
   if (e.type === 'keyup') return;
@@ -1005,7 +1038,11 @@ function onKey(e) {
     settings: openSettings,
     drawing: openDrawing,
     help: openHelp,
-    escape: () => { closePopover(); if (app.selection) { app.selection = null; updateSelbar(); requestRender(); } },
+    move: () => setMoveMode(!app.moveMode, true),
+    save: () => saveFile(),
+    saveas: () => saveFile({ asNew: true }),
+    open: () => askFirst('open'),
+    escape: () => { closePopover(); if (app.moveMode) setMoveMode(false); if (app.selection) { app.selection = null; updateSelbar(); requestRender(); } },
     undo, redo,
   }[what];
   if (run) run();
@@ -1078,31 +1115,115 @@ function openDrawing() {
   updateSavedLine();
   openSheet('#drawing');
 }
-function updateSavedLine() { $('#autosave-status').textContent = savedAgo(app.lastSaved ? Date.now() - app.lastSaved : null); }
+function updateSavedLine() {
+  $('#autosave-status').textContent = savedAgo(app.lastSaved ? Date.now() - app.lastSaved : null);
+  $('#file-status').textContent = fileLine({ ...app.file, linked: !!app.file.handle }, hasContent());
+}
 function setName(name) {
   app.drawingName = cleanName(name);
   $('#drawing-name-small').textContent = app.drawingName === 'Untitled drawing' ? '' : app.drawingName;
   $('#drawing-open').setAttribute('aria-label', `Drawing: ${app.drawingName}. Name, new, open, save`);
 }
 const hasContent = () => app.drawing.cells.size > 0 || app.drawing.edges.size > 0 || app.drawing.undoStack.length > 0;
-function saveFile() { store.download(projectBlob(), `${fileBase(app.drawingName)}.isopix.json`); toast('Project file saved'); }
+
+// ---------- saving to files ----------
+// storage.js picks the way: the Save dialog (then Save writes that same file
+// again), the share sheet on iPhone and iPad, or a download. app.file says
+// whether the drawing is in a file; the Save buttons wear a dot when not.
+const PROJECT_TYPE = { type: 'application/json', accept: { description: 'Isopix drawing', ext: ['.json'] } };
+function updateFileUI() {
+  const unsaved = unsavedToFile(app.file, hasContent());
+  for (const b of ['#top-save', '#file-save']) {
+    $(b).classList.toggle('unsaved', unsaved);
+    $(b).setAttribute('aria-label', `Save the project file${unsaved ? ' (changes not in a file yet)' : ''}`);
+  }
+  $('#file-saveas').hidden = !app.file.handle;
+  if ($('#drawing').open) updateSavedLine();
+}
+// The file record outlives a reload (IndexedDB can keep a file handle in
+// Chrome; where it cannot, it is kept without one).
+async function rememberFile() {
+  if (!(await store.idbSet('file', app.file))) await store.idbSet('file', { ...app.file, handle: null });
+}
+function markChanged() {
+  if (app.file.dirty) return;
+  app.file.dirty = true;
+  if (app.file.at) rememberFile();
+  updateFileUI();
+}
+function fileSaved(r, via) {
+  app.file = { name: r.name, at: Date.now(), via, dirty: false, handle: r.handle || null };
+  rememberFile();
+  updateFileUI();
+}
+// What a save says: where it went, or that nothing was saved.
+function sayResult(r, what) {
+  if (r.cancelled) toast('Not saved');
+  else if (r.failed) toast(`Could not save the ${what}: ${r.failed}`);
+  else if (r.handle) toast(`Saved to ${r.name}`);
+  else if (r.how === 'share') toast(`${what[0].toUpperCase()}${what.slice(1)} saved`);
+  else toast(`Saved ${r.name} to your downloads`);
+}
+// Returns true once the drawing is in a file.
+async function saveFile({ asNew = false } = {}) {
+  const r = await store.saveBlob({ name: `${fileBase(app.drawingName)}.isopix.json`, ...PROJECT_TYPE, make: () => projectBlob(), handle: asNew ? null : app.file.handle });
+  sayResult(r, 'project file');
+  if (r.cancelled || r.failed) return false;
+  fileSaved(r, 'save');
+  return true;
+}
+// The share sheet needs the picture at once, so it is encoded here, in the tap.
+function canvasBlobNow(c) {
+  const bin = atob(c.toDataURL('image/png').split(',')[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: 'image/png' });
+}
 async function savePicture() {
-  const b = await pngBlob();
-  if (b) store.download(b, `${fileBase(app.drawingName)}.png`); else toast('Nothing to save yet');
+  const c = pngCanvas();
+  if (!c) return toast('Nothing to save yet');
+  const make = ({ now }) => (now ? canvasBlobNow(c) : new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('the picture is too big for this browser'))), 'image/png')));
+  sayResult(await store.saveBlob({ name: `${fileBase(app.drawingName)}.png`, type: 'image/png', accept: { description: 'PNG picture', ext: ['.png'] }, make }), 'picture');
+}
+async function saveVector() {
+  if (!app.drawing.cells.size && !app.drawing.edges.size) return toast('Nothing to save yet');
+  sayResult(await store.saveBlob({ name: `${fileBase(app.drawingName)}.svg`, type: 'image/svg+xml', accept: { description: 'SVG vector picture', ext: ['.svg'] }, make: () => svgBlob() }), 'vector picture');
 }
 function startNew() {
   app.drawing = newDrawing(); app.selection = null; app.lastDensity = null; app.trace = null;
   setName('');
-  buildPalette(); syncMenu(); afterChange();
+  app.file = { name: null, at: null, via: null, dirty: false, handle: null };
+  rememberFile();
+  buildPalette(); syncMenu(); afterChange({ changed: false }); updateFileUI();
   if ($('#drawing').open) $('#drawing').close();
   toast('New drawing');
 }
-// New asks first when there is something to lose (sheets.js newChoices).
-function askNew() {
-  if (newChoices(hasContent())[0] === 'new-now') return startNew();
+// New and Open replace this drawing, so they ask first when there is
+// something not yet in a file (sheets.js newChoices). `pending` is which.
+let pending = 'new';
+const CONFIRM = {
+  new: { ask: 'Start a new drawing? This browser keeps one drawing, so New replaces this one. Save a file first to keep it.', go: 'New anyway', run: () => startNew() },
+  open: { ask: 'Open a file? It replaces this drawing in this browser. Save a file first to keep this one.', go: 'Open anyway', run: () => openProject() },
+};
+function askFirst(what) {
+  if (newChoices(hasContent(), unsavedToFile(app.file, true))[0] === 'new-now') return CONFIRM[what].run();
+  pending = what;
   if (!$('#drawing').open) openDrawing();
+  $('#new-confirm-text').textContent = CONFIRM[what].ask;
+  $('#new-anyway').textContent = CONFIRM[what].go;
+  $('#new-save-first').hidden = false;
   $('#new-confirm').hidden = false;
   $('#new-save-first').focus();
+}
+// Save first, then go on. Opening needs a fresh tap (browsers only show the
+// file chooser right after one), so after the save the Open button waits.
+async function saveThenGo() {
+  if (!(await saveFile())) return;
+  if (pending === 'new') return startNew();
+  $('#new-confirm-text').textContent = 'Saved. Now open a file?';
+  $('#new-save-first').hidden = true;
+  $('#new-anyway').textContent = 'Open';
+  $('#new-anyway').focus();
 }
 
 function wireMenu() {
@@ -1138,18 +1259,21 @@ function wireMenu() {
   // The Drawing sheet and the top bar's New, Open and Save.
   $('#drawing-name').addEventListener('input', (e) => { setName(e.target.value); scheduleSave(); });
   $('#drawing-name').addEventListener('change', (e) => { e.target.value = app.drawingName; });
-  $('#file-new').addEventListener('click', askNew);
-  $('#top-new').addEventListener('click', askNew);
-  $('#file-open').addEventListener('click', openProject);
-  $('#top-open').addEventListener('click', openProject);
-  $('#file-save').addEventListener('click', saveFile);
-  $('#top-save').addEventListener('click', saveFile);
+  $('#file-new').addEventListener('click', () => askFirst('new'));
+  $('#top-new').addEventListener('click', () => askFirst('new'));
+  $('#file-open').addEventListener('click', () => askFirst('open'));
+  $('#top-open').addEventListener('click', () => askFirst('open'));
+  $('#file-save').addEventListener('click', () => saveFile());
+  $('#top-save').addEventListener('click', () => saveFile());
+  $('#file-saveas').addEventListener('click', () => saveFile({ asNew: true }));
   $('#file-png').addEventListener('click', savePicture);
-  $('#file-svg').addEventListener('click', () => { if (!app.drawing.cells.size && !app.drawing.edges.size) return toast('Nothing to save yet'); store.download(svgBlob(), `${fileBase(app.drawingName)}.svg`); });
+  $('#file-svg').addEventListener('click', saveVector);
   $('#file-replay').addEventListener('click', () => { $('#drawing').close(); startReplay(); });
-  $('#new-save-first').addEventListener('click', () => { saveFile(); startNew(); });
-  $('#new-anyway').addEventListener('click', startNew);
-  $('#new-cancel').addEventListener('click', () => { $('#new-confirm').hidden = true; $('#file-new').focus(); });
+  $('#new-save-first').addEventListener('click', saveThenGo);
+  $('#new-anyway').addEventListener('click', () => { $('#new-confirm').hidden = true; CONFIRM[pending].run(); });
+  $('#new-cancel').addEventListener('click', () => { $('#new-confirm').hidden = true; $(pending === 'open' ? '#file-open' : '#file-new').focus(); });
+  $('#save-note-save').addEventListener('click', async () => { if (await saveFile()) $('#save-note').hidden = true; });
+  $('#save-note-close').addEventListener('click', () => { $('#save-note').hidden = true; });
 }
 
 // ---------- files ----------
@@ -1206,16 +1330,18 @@ function loadProjectObject(obj) {
   computeLevel(true);
   buildPalette();
   syncMenu();
-  afterChange();
+  afterChange({ changed: false });
 }
 async function openProject() {
-  const f = await store.pickFile('.json,.isopix,application/json');
-  if (!f) return;
+  const r = await store.openFile({ accept: ['.json', '.isopix'], description: 'Isopix drawing' });
+  if (!r) return;
+  const f = r.file;
   if (f.size > 50 * 1024 * 1024) return toast('That file is too big for a project');
   try {
     loadProjectObject(JSON.parse(await f.text()));
+    fileSaved({ name: f.name, handle: r.handle }, 'open');
     if ($('#settings').open) $('#settings').close(); if ($('#drawing').open) $('#drawing').close();
-    toast('Project opened');
+    toast(`Opened ${f.name}`);
   } catch (err) { toast(`Could not open it: ${err.message}`); }
 }
 async function openTrace() {
@@ -1252,10 +1378,28 @@ function placeTrace(f) {
 }
 
 // ---------- autosave ----------
-let saveTimer;
-function scheduleSave() {
+// Every change lands in IndexedDB 800 ms later, and at once when the app is
+// put away (switching apps, closing the tab), so a quick close loses nothing.
+let saveTimer, savePending = false;
+function scheduleSave(changed = true) {
+  if (changed) markChanged();
+  savePending = true;
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => { if (await store.idbSet('autosave', projectData())) { app.lastSaved = Date.now(); if ($('#drawing').open) updateSavedLine(); } }, 800);
+  saveTimer = setTimeout(saveNow, 800);
+}
+async function saveNow() {
+  clearTimeout(saveTimer);
+  if (!savePending) return;
+  savePending = false;
+  if (await store.idbSet('autosave', projectData())) {
+    app.lastSaved = Date.now();
+    if ($('#drawing').open) updateSavedLine();
+    if (hasContent()) store.keepStorage();
+  } else if (!app.session.storageTold && hasContent()) {
+    // A private window, full storage or blocked site data: say so once, with a way out.
+    app.session.storageTold = true;
+    $('#save-note').hidden = false;
+  }
 }
 
 // ---------- update notice ----------
@@ -1269,8 +1413,8 @@ export function isBusy() {
 // Before Reload: save the drawing now (not in 800 ms), and let a new service
 // worker take over so the reloaded page and the cache are the new version.
 async function prepareReload() {
-  clearTimeout(saveTimer);
-  if (await store.idbSet('autosave', projectData())) app.lastSaved = Date.now();
+  savePending = true;
+  await saveNow();
   const reg = await navigator.serviceWorker?.getRegistration?.();
   if (!reg) return;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1334,6 +1478,7 @@ function wire() {
   $('#undo').addEventListener('click', undo);
   $('#redo').addEventListener('click', redo);
   $('#fit-view').addEventListener('click', fitView);
+  $('#move-mode').addEventListener('click', () => setMoveMode(!app.moveMode, true));
   $('#mode-chip').addEventListener('click', cycleMode);
   $('#protect-close').addEventListener('click', () => { $('#protect-note').hidden = true; });
   $('#lock').addEventListener('click', toggleLock);
@@ -1406,7 +1551,12 @@ async function boot() {
   if (saved) {
     try { loadProjectObject(saved); if (Number.isFinite(saved.savedAt)) app.lastSaved = saved.savedAt; } catch (err) { toast(`The saved drawing could not load: ${err.message}`); }
   }
-  afterChange();
+  const file = await store.idbGet('file');
+  if (file && typeof file === 'object') app.file = { name: String(file.name || ''), at: Number(file.at) || null, via: file.via === 'open' ? 'open' : 'save', dirty: !!file.dirty, handle: file.handle || null };
+  afterChange({ changed: false });
+  updateFileUI();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
+  window.addEventListener('pagehide', saveNow);
   const label = $('#version-label');
   const stamp = $('#build-stamp');
   label.textContent = aboutVersion(self.ISOPIX_VERSION, null);
@@ -1425,7 +1575,7 @@ async function boot() {
     beforeReload: prepareReload,
   });
   // Keep the bar in place whenever it appears.
-  for (const id of ['#update-bar', '#protect-note']) new MutationObserver(placeUpdateBar).observe($(id), { attributes: true, attributeFilter: ['hidden'] });
+  for (const id of ['#update-bar', '#protect-note', '#save-note']) new MutationObserver(placeUpdateBar).observe($(id), { attributes: true, attributeFilter: ['hidden'] });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 boot();

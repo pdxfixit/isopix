@@ -9,7 +9,7 @@
 // screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
-//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help
+//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -111,6 +111,41 @@ VIEWS.hoverskip = { js: `${PROTECT}
   f('pointermove', x + 12, y + 3, 0);
   if (!window.isopix.ghostSkip) throw new Error('the hover preview shows no skipped cells');
   window.isopix.settings.locked = false;` };
+
+// Move mode: the hand on the zoom rail makes one finger pan and draw nothing;
+// tapping a tool draws again.
+VIEWS.move = { js: `${DRAW} const a = window.isopix, n = a.drawing.cells.size, cx = a.view.cx;
+  ${q('#move-mode')} if (!a.moveMode) throw new Error('the hand did not turn Move on');
+  fire('pointerdown', w * 0.5, h * 0.5, 7); for (let i = 1; i <= 6; i++) fire('pointermove', w * 0.5 - i * 20, h * 0.5, 7); fire('pointerup', w * 0.5 - 120, h * 0.5, 7);
+  if (a.drawing.cells.size !== n) throw new Error('a drag in Move mode drew cells');
+  if (!(a.view.cx > cx)) throw new Error('a drag in Move mode did not move the view');
+  ${q('[data-tool="pencil"]')} if (a.moveMode) throw new Error('tapping a tool left Move on');
+  ${q('#move-mode')}` };
+// Two fingers: a first finger held still is not a stroke, and the finger left
+// after the pinch pans instead of drawing.
+VIEWS.pinchpan = { js: `${q('[data-tool="pencil"]')} const a = window.isopix, c = document.querySelector('#stage');
+  const f = (type, x, y, id) => c.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: id, pointerType: 'touch', isPrimary: id === 11, bubbles: true, button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
+  const x = innerWidth * 0.5, y = innerHeight * 0.45;
+  f('pointerdown', x, y, 11); await new Promise((r) => setTimeout(r, 650)); f('pointermove', x + 3, y, 11);
+  f('pointerdown', x + 80, y, 12); f('pointermove', x + 100, y, 12); f('pointerup', x + 100, y, 12);
+  const cx = a.view.cx; for (let i = 1; i <= 5; i++) f('pointermove', x + 3 + i * 20, y, 11); f('pointerup', x + 103, y, 11);
+  if (a.drawing.cells.size) throw new Error('two fingers left ' + a.drawing.cells.size + ' cells drawn');
+  if (!(a.view.cx < cx)) throw new Error('the finger left after a pinch did not pan');` };
+// Save file with the browser's Save dialog (stubbed: headless has no dialog):
+// the first Save asks, the next writes the same file, and the dot follows changes.
+VIEWS['save-file'] = { js: `${DRAW} const a = window.isopix; let asked = 0, writes = 0;
+  const handle = { name: 'look.isopix.json', queryPermission: async () => 'granted', createWritable: async () => ({ write: async () => { writes++; }, close: async () => {} }) };
+  window.showSaveFilePicker = async () => { asked++; return handle; };
+  const dot = () => document.querySelector('#file-save').classList.contains('unsaved');
+  ${q('#drawing-open')} if (!dot()) throw new Error('no unsaved dot after drawing');
+  ${q('#file-save')} await new Promise((r) => setTimeout(r, 100));
+  if (asked !== 1 || writes !== 1 || dot()) throw new Error('first Save: asked ' + asked + ', wrote ' + writes + ', dot ' + dot());
+  ${q('#file-save')} await new Promise((r) => setTimeout(r, 100));
+  if (asked !== 1 || writes !== 2) throw new Error('second Save asked again or did not write: asked ' + asked + ', wrote ' + writes);
+  if (document.querySelector('#file-saveas').hidden) throw new Error('Save as new file is hidden with a file to write to');
+  document.querySelector('#drawing').close(); { ${DRAW} }
+  if (!dot()) throw new Error('no dot after a change');
+  ${q('#drawing-open')} if (!/Changed since/.test(document.querySelector('#file-status').textContent)) throw new Error('file line: ' + document.querySelector('#file-status').textContent);` };
 
 function usage(msg) {
   if (msg) console.error(`❌ ${msg}`);
