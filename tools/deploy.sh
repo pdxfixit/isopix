@@ -56,7 +56,15 @@ case "$sub" in
   verify)
     site verify "$@"
     # Console errors on the live site. A file added in this release can 404 at
-    # some edges for a few seconds: retry before calling it a failure.
+    # some edges for a few seconds: retry before calling it a failure. When this
+    # Mac cannot resolve the host yet (a cached miss after a first publish), Chrome
+    # goes to 1.1.1.1's answer, as site.sh's checks do.
+    rc=0; curl -sS -m 10 -o /dev/null "$URL/" 2>/dev/null || rc=$?
+    if [ "$rc" = 6 ]; then
+      host=${URL#*://}; host=${host%%[/:]*}
+      ip=$(dig +short +time=3 @1.1.1.1 "$host" 2>/dev/null | grep -E '^[0-9]+(\.[0-9]+){3}$' | head -1 || true)
+      [ -n "$ip" ] && export CHROME_HOST_RULES="MAP $host $ip"
+    fi
     ok=0; for _ in 1 2 3; do just look --url "$URL/" >/dev/null 2>&1 && { ok=1; break; }; sleep 20; done
     [ "$ok" = 1 ] && echo "✅ just look: no errors on the live site" \
       || { echo "🛑 just look found problems on the live site (run: just look --url $URL/)" >&2; exit 1; } ;;

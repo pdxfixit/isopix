@@ -40,6 +40,8 @@ export async function launchChrome() {
     '--mute-audio', `--user-data-dir=${profile}`, '--remote-debugging-port=0',
     // CI runners (GitHub Actions) need these; a Mac does not.
     ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
+    // "MAP host ip": deploy.sh sets it when this Mac cannot resolve a just-published host.
+    ...(process.env.CHROME_HOST_RULES ? [`--host-resolver-rules=${process.env.CHROME_HOST_RULES}`] : []),
     'about:blank',
   ], { stdio: 'ignore' });
   process.on('exit', () => {
