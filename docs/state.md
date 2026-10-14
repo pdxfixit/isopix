@@ -58,7 +58,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 ## CI gaps closed
 
-- 2026-10-13: a pre-commit hook runs `just test` (`just setup` turns it on; it would have stopped the red `639ac16`, a docs edit made after the last test run). `deploy-check` waits for GitHub's CI on `HEAD` and refuses a red one (proven against `639ac16`), since `just look` and export-check run only there. `test/names.test.mjs` also checks every commit's author (PDXfixIT) and message (it finds 104 problems in the old Isogrid history).
+- 2026-10-13: a pre-commit hook runs `just test` (`just setup` turns it on; it would have stopped the red `639ac16`, a docs edit made after the last test run). `deploy-check` waits for GitHub's CI on `HEAD` and refuses a red one (proven against `639ac16`), since `just look` and export-check run only there. `test/names.test.mjs` also checks every commit's author (PDXfixIT) and message (it finds 104 problems in the old Isogrid history). After a first publish, this Mac can cache the new name as missing for 30 minutes; `verify`, `live` and the live `just look` now check through 1.1.1.1's answer when that happens and say so (flarepress `1d589ea`; proven live on isopix.pdxfixit.com, where it had reported 8 false ❌).
 
 - 2026-10-13: `test/names.test.mjs` (in `just test`) fails when any file names the owner or his family; the names are stored as hashes, and it reports locations only (proven by planting a name in `web/`). CI also checks that `web/version.js`'s PATCH is the commit count of its commit (`bump_version.py --check`).
 

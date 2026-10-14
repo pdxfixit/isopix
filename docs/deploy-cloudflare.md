@@ -87,6 +87,8 @@ wait is real.
 
 ### The first publish
 
+Right after it, this Mac may cache the new name as missing for up to 30 minutes (the pre-publish check looked it up before it existed). `deploy-verify` and `live` then say "this Mac cannot resolve … yet" and check at Cloudflare's address instead; that is expected, not a failure.
+
 The first publish creates the Custom Domain, which adds a DNS record in the
 `pdxfixit.com` zone. That is why `just deploy` refuses while the address does
 not answer at all, unless you set `FIRST_PUBLISH=1`:
