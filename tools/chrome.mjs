@@ -1,15 +1,24 @@
 // A private headless Chrome and the DevTools protocol, for tools/look.mjs
 // (`just look`) and its cloud checks (look-cloud.mjs). Node with no
 // dependencies: Node's own WebSocket and fetch. Chrome comes from $CHROME,
-// else the usual macOS path. Each run gets its own throwaway profile, removed
-// on exit, so agents never share a browser.
+// else the first that exists of the macOS path, Linux's google-chrome or
+// chromium, and the Playwright Chromium a cloud session has in /opt/pw-browsers.
+// Each run gets its own throwaway profile, removed on exit, so agents never
+// share a browser.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
-export const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+function findChrome() {
+  const fixed = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
+  const pw = '/opt/pw-browsers';
+  let found = [];
+  try { found = fs.readdirSync(pw).filter((d) => /^chromium-\d+$/.test(d)).sort().reverse().map((d) => path.join(pw, d, 'chrome-linux', 'chrome')); } catch { /* none */ }
+  return [...fixed, ...found].find((p) => fs.existsSync(p)) || fixed[0];
+}
+export const CHROME = process.env.CHROME || findChrome();
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -38,8 +47,8 @@ export async function launchChrome() {
   const proc = spawn(CHROME, [
     '--headless', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars',
     '--mute-audio', `--user-data-dir=${profile}`, '--remote-debugging-port=0',
-    // CI runners (GitHub Actions) need these; a Mac does not.
-    ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
+    // CI runners (GitHub Actions) and a cloud session running as root need these; a Mac does not.
+    ...(process.env.CI || process.getuid?.() === 0 ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
     // "MAP host ip": deploy.sh sets it when this Mac cannot resolve a just-published host.
     ...(process.env.CHROME_HOST_RULES ? [`--host-resolver-rules=${process.env.CHROME_HOST_RULES}`] : []),
     'about:blank',
