@@ -51,6 +51,25 @@ test('the name saves with the drawing; an old project without one gets the defau
 test('New asks only when there is something to lose, with three clear choices', () => {
   assert.deepEqual(S.newChoices(false), ['new-now']);
   assert.deepEqual(S.newChoices(true), ['save-first', 'new-anyway', 'cancel']);
+  assert.deepEqual(S.newChoices(true, false), ['new-now'], 'every change is already in a file');
+  assert.deepEqual(S.newChoices(false, true), ['new-now']);
+});
+
+test('the file line says whether the drawing is in a file, and whether it changed since', () => {
+  const now = 1e12;
+  assert.equal(S.fileLine(null, false, now), '');
+  assert.match(S.fileLine(null, true, now), /^Not saved to a file yet/);
+  assert.equal(S.fileLine({ name: 'cube.isopix.json', at: now - 5000, via: 'save' }, true, now), 'Saved as cube.isopix.json a moment ago.');
+  assert.equal(S.fileLine({ name: 'cube.isopix.json', at: now - 3 * 60000, via: 'save', linked: true }, true, now), 'Saved as cube.isopix.json 3 minutes ago. Save writes to the same file.');
+  assert.equal(S.fileLine({ name: 'a.json', at: now - 1000, via: 'open', dirty: true }, true, now), 'Changed since you opened a.json a moment ago. Save file to keep the changes.');
+  assert.equal(S.fileLine({ name: 'a.json', at: now, via: 'open' }, true, now), 'Opened a.json a moment ago.');
+});
+
+test('the Save dot: something drawn that is not in a file, or changed since', () => {
+  assert.equal(S.unsavedToFile(null, false), false, 'empty paper');
+  assert.equal(S.unsavedToFile(null, true), true);
+  assert.equal(S.unsavedToFile({ at: 1, dirty: false }, true), false);
+  assert.equal(S.unsavedToFile({ at: 1, dirty: true }, true), true);
 });
 
 test('the saved line', () => {

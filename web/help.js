@@ -62,7 +62,7 @@ export const SECTIONS = [
       { name: 'Drawing', from: '#drawing-open', says: 'Opens the Drawing sheet: the name of this drawing, New, Open, Save file and Save picture. On a phone this narrow it shows only its folder.' },
       { name: 'New', from: '#top-new', says: 'On wider screens: starts a new drawing. It asks first if this one has anything in it.' },
       { name: 'Open', from: '#top-open', says: 'On wider screens: opens a project file.' },
-      { name: 'Save', from: '#top-save', says: 'On wider screens: saves the project file.' },
+      { name: 'Save', from: '#top-save', says: 'On wider screens: saves the project file, like Save file in the Drawing sheet. A dot means changes not in a file yet.' },
       { name: 'Settings', from: '#settings-open', says: 'Drawing, Grid, Selection, Learning and About. Each part folds; its chip shows what is set.' },
       { name: 'Undo', from: '#undo', says: 'Takes back the last change. There is no limit.' },
       { name: 'Redo', from: '#redo', says: 'Puts it back.' },
@@ -73,12 +73,13 @@ export const SECTIONS = [
   },
   {
     title: 'Drawing sheet',
-    intro: 'Opened by the Drawing button. This browser keeps one drawing and saves it as you go.',
+    intro: 'Opened by the Drawing button. This browser keeps one drawing and saves it as you go, even when you switch apps. A file keeps it anywhere.',
     items: [
       { name: 'Name', text: 'Aa', says: 'The drawing\'s name. Saved files are named after it.' },
       { name: 'New', from: '#file-new', says: 'Starts a new drawing. If this one has anything in it, you choose: Save file first, New anyway, or Cancel.' },
-      { name: 'Open', from: '#file-open', says: 'Opens a project file (.isopix.json).' },
-      { name: 'Save file', from: '#file-save', says: 'Saves a project file: the whole drawing with its undo history, stamps, paper and trace picture.' },
+      { name: 'Open', from: '#file-open', says: 'Opens a project file (.isopix.json). It replaces this drawing, so it asks first if this one has changes not in a file.' },
+      { name: 'Save file', from: '#file-save', says: 'Saves a project file: the whole drawing with its undo history, stamps, paper and trace picture. On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. A dot on Save means the drawing has changes not in a file yet.' },
+      { name: 'Save as new file', from: '#file-saveas', text: '⇩', says: 'Shows after Save has a file to write to: saves a copy as a new file instead.' },
       { name: 'Save picture', from: '#file-png', says: 'Saves a PNG picture of the drawing.' },
       { name: 'Save vector (SVG)', from: '#file-svg', text: 'SVG', says: 'Saves an SVG: a vector file that stays sharp at any size.' },
       { name: 'Time-lapse', from: '#file-replay', text: '▶', says: 'Plays the drawing back from the start.' },
@@ -93,13 +94,14 @@ export const SECTIONS = [
     ],
   },
   {
-    title: 'Zoom',
-    intro: 'The rail on the left. Zoom only changes the view, never the drawing. Following zoom, the grid level changes with it.',
+    title: 'Zoom and move',
+    intro: 'The rail on the left. Zoom and Move only change the view, never the drawing. Following zoom, the grid level changes with it.',
     items: [
       { name: 'Zoom in', from: '#zoom-in', says: 'Twice as close.' },
       { name: 'Zoom slider', from: '#zoom-track', text: '⇕', says: 'Slide up to come closer, down to see more. Each step of the same length doubles or halves the zoom.' },
       { name: 'Zoom out', from: '#zoom-out', says: 'Half as close.' },
       { name: 'Fit drawing', from: '#fit-view', says: 'Zooms and moves so everything you drew fills the screen. On empty paper it goes back to the start.' },
+      { name: 'Move', from: '#move-mode', says: 'The hand. While it is lit, one finger (or the mouse) moves the view and draws nothing. Tap it again, or tap any tool, to draw.' },
     ],
   },
   {
@@ -129,8 +131,8 @@ export const SECTIONS = [
   {
     title: 'Gestures',
     items: [
-      { name: 'One finger, or the mouse', text: '☝', says: 'Draws with the tool in use. A pen draws too.' },
-      { name: 'Two fingers', text: '✌', says: 'Drag to pan, pinch to zoom.' },
+      { name: 'One finger, or the mouse', text: '☝', says: 'Draws with the tool in use. A pen draws too. With the Move hand lit, it moves the view instead.' },
+      { name: 'Two fingers', text: '✌', says: 'Drag to move the view, pinch to zoom. If the first finger left a mark, it is taken back. Lift one finger and keep moving the other to keep panning.' },
       { name: 'Mouse wheel', text: '⇅', says: 'Pans. Ctrl + wheel, or a trackpad pinch, zooms.' },
       { name: 'Middle button, or Space + drag', text: '✋', says: 'Pans with the mouse.' },
       { name: 'Hover', text: '◌', says: 'With a mouse or pen, shows the cells a stroke would paint, and hatches the ones Keep would skip.' },

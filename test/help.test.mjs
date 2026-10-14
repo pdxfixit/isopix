@@ -30,6 +30,11 @@ test('keyFor reads keyboard events the way the table says', () => {
   assert.equal(keyFor({ key: '=' }).action, 'zoom:in');
   assert.equal(keyFor({ key: '?' }).action, 'help');
   assert.equal(keyFor({ key: 'p', ctrlKey: true }), null, 'Ctrl+P is the browser\'s');
+  assert.equal(keyFor({ key: 's', ctrlKey: true }).action, 'save', 'Ctrl+S saves the drawing, not the web page');
+  assert.equal(keyFor({ key: 'S', metaKey: true, shiftKey: true }).action, 'saveas');
+  assert.equal(keyFor({ key: 'o', ctrlKey: true }).action, 'open');
+  assert.equal(keyFor({ key: 'h' }).action, 'move');
+  assert.equal(keyFor({ key: 's' }).action, 'tool:select', 'plain S is still Select');
   assert.equal(keyFor({ key: 'x' }), null);
 });
 
@@ -45,7 +50,7 @@ test('every button and slider on the page and in the Drawing sheet is on the Hel
   const drawing = html.slice(html.indexOf('<dialog id="drawing"'), html.indexOf('</dialog>', html.indexOf('<dialog id="drawing"')));
   const page = html.slice(0, html.indexOf('<dialog')) + drawing;
   // Notices are explained in place; the New confirmation's choices are explained under New.
-  const notControls = new Set(['update-reload', 'update-close', 'protect-close', 'replay-stop', 'new-save-first', 'new-anyway', 'new-cancel']);
+  const notControls = new Set(['update-reload', 'update-close', 'protect-close', 'save-note-save', 'save-note-close', 'replay-stop', 'new-save-first', 'new-anyway', 'new-cancel']);
   // Sliders (role="slider": the zoom track, the density handle) count as controls too.
   const controls = [...page.matchAll(/<button[^>]*\bid="([^"]+)"/g), ...page.matchAll(/<div[^>]*\bid="([^"]+)"[^>]*\brole="slider"/g)];
   for (const [, id] of controls) {

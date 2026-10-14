@@ -20,17 +20,37 @@ export function fileBase(name) {
   return s || 'isopix';
 }
 
+// "a moment ago", "3 minutes ago", "2 h ago".
+function ago(ms) {
+  const min = Math.floor(ms / 60000);
+  return ms < 60000 ? 'a moment ago' : min < 60 ? `${min} ${min === 1 ? 'minute' : 'minutes'} ago` : `${Math.floor(min / 60)} h ago`;
+}
+
 // "Saved in this browser …" for the time since the last autosave.
 export function savedAgo(ms) {
   if (ms == null || !Number.isFinite(ms)) return 'Not saved in this browser yet.';
-  const min = Math.floor(ms / 60000);
-  const when = ms < 60000 ? 'a moment ago' : min < 60 ? `${min} ${min === 1 ? 'minute' : 'minutes'} ago` : `${Math.floor(min / 60)} h ago`;
-  return `Saved in this browser ${when}. Nothing leaves your device.`;
+  return `Saved in this browser ${ago(ms)}. Nothing leaves your device.`;
 }
 
-// What New does: start at once when there is nothing to lose, else ask.
-export function newChoices(hasContent) {
-  return hasContent ? ['save-first', 'new-anyway', 'cancel'] : ['new-now'];
+// The file line under it: whether this drawing is in a file, and whether it
+// changed since. `file` is app.file: {name, at (when saved or opened), via:
+// 'save' | 'open', dirty, linked (Save writes that same file again)}.
+export function fileLine(file, hasContent, now = Date.now()) {
+  const f = file || {};
+  if (!f.at || !Number.isFinite(f.at)) return hasContent ? 'Not saved to a file yet. Save file keeps a copy you can open on any device.' : '';
+  const when = ago(Math.max(0, now - f.at));
+  if (f.dirty) return `Changed since ${f.via === 'open' ? 'you opened' : 'you saved'} ${f.name} ${when}. Save file to keep the changes.`;
+  const done = f.via === 'open' ? `Opened ${f.name} ${when}.` : `Saved as ${f.name} ${when}.`;
+  return f.linked ? `${done} Save writes to the same file.` : done;
+}
+
+// Whether the Save buttons wear the "not in a file" dot.
+export const unsavedToFile = (file, hasContent) => !!hasContent && (!file || !file.at || !!file.dirty);
+
+// What New and Open do: go ahead when there is nothing to lose (nothing
+// drawn, or every change already in a file), else ask.
+export function newChoices(hasContent, unsaved = true) {
+  return hasContent && unsaved ? ['save-first', 'new-anyway', 'cancel'] : ['new-now'];
 }
 
 // ---------- Settings sections ----------

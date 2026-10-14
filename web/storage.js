@@ -1,5 +1,5 @@
 // Browser storage: the autosaved project and saved stamps in IndexedDB,
-// settings in localStorage, and file save/open/download helpers.
+// settings in localStorage, and saving and opening files (saveBlob, openFile).
 // Every storage call is wrapped: a private window or blocked storage must
 // never stop the app from drawing.
 
@@ -52,14 +52,104 @@ export function saveSettings(s) {
   try { localStorage.setItem('isopix-settings', JSON.stringify(s)); } catch { /* storage blocked */ }
 }
 
+// ---------- saving and opening files ----------
+// How Save reaches a file on this device. Pure, so test/storage.test.mjs can
+// check every case:
+//  'picker'   the browser's own Save dialog (Chrome and Edge on a computer).
+//             The app keeps hold of the file, so the next Save writes the same one.
+//  'share'    the share sheet, whose "Save to Files" is the dependable way on an
+//             iPhone or iPad: a download link there can do nothing, or open the
+//             file over the app with no way back when Isopix is on the home screen.
+//  'download' a download link (Android, Firefox, Safari on a Mac).
+export function saveMethod({ picker = false, shareFiles = false, ios = false } = {}) {
+  if (picker) return 'picker';
+  if (ios && shareFiles) return 'share';
+  return 'download';
+}
+
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function canShareFiles(file) {
+  try { return !!navigator.canShare && navigator.canShare({ files: [file] }); } catch { return false; }
+}
+const aborted = (err) => err && err.name === 'AbortError';
+
 export function download(blob, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name;
+  a.hidden = true;
   document.body.append(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  // Long enough for a slow phone to start writing a big picture.
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+
+async function writeTo(handle, blob) {
+  if (handle.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted'
+    && (await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') throw new DOMException('no permission', 'NotAllowedError');
+  const w = await handle.createWritable();
+  await w.write(blob);
+  await w.close();
+}
+
+// Saves a file the way this device does it best (saveMethod).
+//   name     the suggested file name
+//   type     its media type; accept: {'.ext': description} for the Save dialog
+//   make({now})  makes the Blob. With now: true it must return it at once
+//            (the share sheet needs the tap that asked for it to be recent);
+//            otherwise it may return a promise.
+//   handle   a file this drawing was saved to or opened from (picker only):
+//            written again without a dialog; a failure there asks for a new file.
+// Returns {how, handle?, name} when saved, {cancelled: true} when the person
+// closed the dialog or sheet, {failed: message} when nothing could be saved.
+export async function saveBlob({ name, type, accept, make, handle = null }) {
+  const how = saveMethod({
+    picker: typeof window.showSaveFilePicker === 'function',
+    shareFiles: isIOS() && canShareFiles(new File([''], name, { type })),
+    ios: isIOS(),
+  });
+  if (how === 'picker') {
+    try {
+      if (handle) {
+        try { await writeTo(handle, await make({ now: false })); return { how, handle, name: handle.name }; } catch (err) { if (aborted(err)) return { cancelled: true }; }
+      }
+      const h = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: accept.description, accept: { [type]: accept.ext } }] });
+      await writeTo(h, await make({ now: false }));
+      return { how, handle: h, name: h.name };
+    } catch (err) {
+      if (aborted(err)) return { cancelled: true };
+      // Blocked here (an iframe, a policy): fall back to a download.
+    }
+  }
+  if (how === 'share') {
+    try {
+      await navigator.share({ files: [new File([make({ now: true })], name, { type })] });
+      return { how, name };
+    } catch (err) {
+      if (aborted(err)) return { cancelled: true };
+    }
+  }
+  try {
+    download(await make({ now: false }), name);
+    return { how: 'download', name };
+  } catch (err) { return { failed: err && err.message ? err.message : String(err) }; }
+}
+
+// Opens one file. Where the browser can (Chrome and Edge on a computer), it
+// also hands back the file itself, so Save can write to it again.
+// Returns {file, handle?} or null when the person cancelled.
+export async function openFile({ accept, description }) {
+  if (typeof window.showOpenFilePicker === 'function') {
+    try {
+      const [handle] = await window.showOpenFilePicker({ types: [{ description, accept: { 'application/json': accept } }] });
+      return { file: await handle.getFile(), handle };
+    } catch (err) {
+      if (aborted(err)) return null;
+    }
+  }
+  const file = await pickFile(accept.join(',') + ',application/json');
+  return file ? { file } : null;
 }
 
 export function pickFile(accept) {
@@ -67,9 +157,28 @@ export function pickFile(accept) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = accept;
-    input.addEventListener('change', () => resolve(input.files[0] || null));
+    input.hidden = true;
+    // In the page, not floating: some Safari versions ignore a detached input.
+    document.body.append(input);
+    const done = (f) => { input.remove(); resolve(f); };
+    input.addEventListener('change', () => done(input.files[0] || null));
+    input.addEventListener('cancel', () => done(null));
     input.click();
   });
+}
+
+// Ask the browser not to clear the autosave when space runs low (Safari
+// clears a site's storage after weeks unused otherwise). Firefox asks the
+// person with a prompt, so it is not asked there; Chrome and Safari decide
+// quietly. Once per session, after something is drawn.
+let persistAsked = false;
+export async function keepStorage() {
+  if (persistAsked) return;
+  persistAsked = true;
+  try {
+    if (/Firefox\//.test(navigator.userAgent) || !navigator.storage?.persist) return;
+    if (!(await navigator.storage.persisted())) await navigator.storage.persist();
+  } catch { /* not offered here */ }
 }
 
 export const stampName = () => new Date().toISOString().slice(0, 16).replace('T', ' ').replace(':', '.');
