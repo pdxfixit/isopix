@@ -76,6 +76,6 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 ## In flight
 
-Release 1.0.1 (the rename to Isopix, semver, the public repo) is live at isopix.pdxfixit.com, published 2026-10-13: every file 200, `version.json` v1.0.1, checked through Cloudflare's address while this Mac's DNS still cached the name as missing. The old Isogrid address 301s every path there (`just sites` in flarepress). Release 1.0.2 adds the build stamp.
+Release 1.0.1 (the rename to Isopix, semver, the public repo) is live at isopix.pdxfixit.com, published 2026-10-13: every file 200, `version.json` v1.0.1, checked through Cloudflare's address while this Mac's DNS still cached the name as missing. The old Isogrid address 301s every path there (checked by flarepress's `sites` recipe). Release 1.0.2 adds the build stamp.
 
 Waiting on the owner: the "Try first" checks on a real phone, including the zoom rail's speed.
