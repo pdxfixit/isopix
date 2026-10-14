@@ -39,10 +39,17 @@ export function liveVersionOf(json) {
 // version.json (a dev server) says 'dev' after the release.
 //   app:  self.ISOPIX_VERSION, or undefined
 //   json: the parsed version.json, or null
+const releaseOf = (app) => (typeof app === 'string' && app ? app : 'dev');
+const shaOf = (json) => (json ? (typeof json.commit === 'string' && /^[0-9a-f]{4,40}$/.test(json.commit) ? json.commit.slice(0, 7) : '') : 'dev');
 export function buildStamp(app, json) {
-  const rel = typeof app === 'string' && app ? app : 'dev';
-  const sha = json && typeof json.commit === 'string' && /^[0-9a-f]{4,40}$/.test(json.commit) ? json.commit.slice(0, 7) : '';
-  return json ? (sha ? `${rel} · ${sha}` : rel) : `${rel} · dev`;
+  const sha = shaOf(json);
+  return sha ? `${releaseOf(app)} · ${sha}` : releaseOf(app);
+}
+
+// Settings → About says the same in words: "Version 1.0.2 (55a1363)". Pure.
+export function aboutVersion(app, json) {
+  const sha = shaOf(json);
+  return sha ? `Version ${releaseOf(app)} (${sha})` : `Version ${releaseOf(app)}`;
 }
 
 // Wires the bar. `deps` lets the tests drive it:

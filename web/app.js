@@ -14,7 +14,7 @@ import { shade } from './engine/color.js';
 import { Renderer, drawCells, drawEdges } from './render.js';
 import * as store from './storage.js';
 import { GLYPHS, notchGlyph } from './glyphs.js';
-import { initUpdate, buildStamp } from './update.js';
+import { initUpdate, buildStamp, aboutVersion } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
 import { helpHTML } from './help.js';
@@ -1409,12 +1409,12 @@ async function boot() {
   afterChange();
   const label = $('#version-label');
   const stamp = $('#build-stamp');
-  label.textContent = `Version ${self.ISOPIX_VERSION || 'dev'}`;
+  label.textContent = aboutVersion(self.ISOPIX_VERSION, null);
   stamp.textContent = buildStamp(self.ISOPIX_VERSION, null);
   // The deploy label this copy was loaded with: the update bar compares against it.
   fetch('version.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => {
     stamp.textContent = buildStamp(self.ISOPIX_VERSION, v);
-    if (v && typeof v.version === 'string') { app.loadedVersion = v.version; label.textContent = `Version ${buildStamp(self.ISOPIX_VERSION, v)}`; }
+    if (v && typeof v.version === 'string') { app.loadedVersion = v.version; label.textContent = aboutVersion(self.ISOPIX_VERSION, v); }
   }).catch(() => {});
   app.update = initUpdate({
     bar: $('#update-bar'),

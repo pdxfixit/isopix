@@ -2,7 +2,7 @@
 // what ✕ does, and that Reload saves first (web/update.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { updateOffer, liveVersionOf, buildStamp, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
+import { updateOffer, liveVersionOf, buildStamp, aboutVersion, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
 
 const offer = (o) => updateOffer({ loaded: 'aaa1111', live: 'bbb2222', busy: false, dismissed: null, ...o });
 
@@ -156,4 +156,10 @@ test('the corner stamp shows the release and the deployed commit, and never trus
   assert.equal(buildStamp('1.0.2', { version: 'v1', commit: '<b>x</b>' }), '1.0.2');
   assert.equal(buildStamp('1.0.2', null), '1.0.2 · dev');                          // no version.json: a dev server
   assert.equal(buildStamp(undefined, null), 'dev · dev');
+});
+
+test('About names the release and the commit in parentheses, never the release twice', () => {
+  assert.equal(aboutVersion('1.0.4', { version: 'v1.0.4', commit: 'a95077f' }), 'Version 1.0.4 (a95077f)');
+  assert.equal(aboutVersion('1.0.4', { version: 'v1.0.4' }), 'Version 1.0.4');
+  assert.equal(aboutVersion('1.0.4', null), 'Version 1.0.4 (dev)');
 });
