@@ -11,12 +11,19 @@ default:
 serve port="8790":
     python3 tools/serve.py {{port}}
 
+# 🧰 Once per clone: the pre-commit hook (runs just test) and the PDXfixIT author
+setup:
+    git config core.hooksPath .githooks
+    git config user.name PDXfixIT
+    git config user.email 1262042+pdxfixit@users.noreply.github.com
+    @echo "✅ commits run just test first, and are authored as PDXfixIT"
+
 # (node --check takes one file at a time: given several, it checks only the first)
 # 🧪 Syntax-check every module, then run the engine tests (Node's built-in runner; nothing to install)
 test:
     @for f in web/*.js web/engine/*.js tools/*.mjs test/*.mjs; do node --check "$f" || exit 1; done
     @python3 -m py_compile tools/serve.py tools/bump_version.py tools/live_check.py
-    @for f in tools/*.sh; do bash -n "$f" || exit 1; done
+    @for f in tools/*.sh .githooks/*; do bash -n "$f" || exit 1; done
     node --test test/*.test.mjs
     python3 -m unittest discover -s tools -p 'test_*.py'
 

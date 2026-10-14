@@ -49,6 +49,32 @@ test('the name check finds a name, and passes code words', () => {
   assert.deepEqual(namesIn('Math.max(a, b); const MAX_CELLS = 1; benefit, bench'), []);
 });
 
+// What is wrong with the commits in a `git log` made with LOG_FORMAT. Pure.
+export const LOG_FORMAT = '%H%x00%an%x00%ae%x00%cn%x00%ce%x00%B%x1e';
+export function commitProblems(log) {
+  const bad = [];
+  for (const rec of log.split('\x1e').map((s) => s.trim()).filter(Boolean)) {
+    const [sha, an, ae, cn, ce, body = ''] = rec.split('\0');
+    if (an !== 'PDXfixIT') bad.push(`${sha.slice(0, 7)}: the author is not PDXfixIT (just setup)`);
+    if (namesIn([an, ae, cn, ce, body].join('\n')).length) bad.push(`${sha.slice(0, 7)}: a personal name in its author, committer or message`);
+  }
+  return bad;
+}
+
+test('the commit check finds a stranger author and a name in a message', () => {
+  const n = (...c) => String.fromCharCode(...c);
+  const rec = (an, body) => ['abcdef1234', an, 'x@y.z', an, 'x@y.z', body].join('\0') + '\x1e';
+  assert.deepEqual(commitProblems(rec('PDXfixIT', 'feat: a thing')), []);
+  assert.deepEqual(commitProblems(rec('someone', 'feat: a thing')), ['abcdef1: the author is not PDXfixIT (just setup)']);
+  assert.equal(commitProblems(rec('PDXfixIT', `fix: asked by ${n(66, 101, 110)}`)).length, 1);
+});
+
+test('every commit is authored by PDXfixIT and names no one (messages are public too)', () => {
+  let log;
+  try { log = execFileSync('git', ['log', `--format=${LOG_FORMAT}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString(); } catch { return; } // no commits yet
+  assert.deepEqual(commitProblems(log), []);
+});
+
 test('no file names the owner or his family', () => {
   const bad = [];
   for (const f of files()) {
