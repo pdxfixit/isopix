@@ -1,4 +1,4 @@
-# Daily: is https://isopix.pdxfixit.com up, and does it serve main's
+# Daily: is https://isopix.app up, and does it serve main's
 # web/version.js? A down or broken site fails (after 3 retries, 20 s apart);
 # live behind main passes with a notice for the first hour after main's
 # version.js changed (a deploy in flight), then fails. tools/live_check.py.

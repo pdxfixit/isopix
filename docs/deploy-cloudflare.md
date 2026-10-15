@@ -1,10 +1,34 @@
-# Hosting: isopix.pdxfixit.com
+# Hosting: isopix.app
 
-**The app is served at https://isopix.pdxfixit.com/**, public: anyone with
+**The app is served at https://isopix.app/**, public: anyone with
 the address can open and use it. It is static files only (no server, no
 accounts, no analytics). Drawings stay in the browser that made them.
 
-**Status:** the first publish at isopix.pdxfixit.com is release 1.0.1, 2026-10-13 ([state.md](state.md)).
+**Status:** the first publish was release 1.0.1 at isopix.pdxfixit.com, 2026-10-13. The move to isopix.app (the owner bought it and set up its DNS, 2026-10-15) is committed and waits for its first deploy ([state.md](state.md)).
+
+## Old addresses
+
+Browsers keep saved data per address, so a plain 301 would leave every
+drawing behind. Instead, the old addresses carry it over (`web/move.js`):
+
+- **isopix.pdxfixit.com** (1.0's home) is a second Custom Domain on the same
+  Worker and serves the same files. On start there, the app reads the
+  autosave, settings and file record of that browser, packs them (gzip,
+  base64url) into `https://isopix.app/#move=…`, lets its service worker go,
+  and goes. A fragment is never sent to any server. `?stay` keeps the app
+  there instead, for a drawing too big to carry (over 1 MB packed, even
+  without its trace picture and undo history).
+- **The old Isogrid address** is flarepress's move Worker (its folder's
+  `index.js`): `/` is a small page that imports `https://isopix.app/move.js`
+  (served with CORS, see `web/_headers`) and calls `moveToNewHome()`, which
+  reads Isogrid's database there; every other path 301s to isopix.app.
+- **At isopix.app**, the app reads `#move=` on start and removes it from the
+  address. With no drawing of its own it takes the arrival silently; with one,
+  it keeps its own and offers the arrival in a note ("Open it" asks first). An
+  arrival it has taken once is never taken again. Isogrid's settings arrive
+  under Isopix's names. The old copy stays where it was.
+- An app installed to a home screen from an old address now opens isopix.app
+  in the browser; install again from isopix.app.
 
 ## How it is deployed
 
@@ -13,15 +37,16 @@ Through **flarepress** (`~/src/flarepress`, private repo
 `AGENTS.md` is the authority on that account; read it before changing anything
 there.
 
-- `flarepress/isopix.pdxfixit.com/public` is a symlink to this repo's
+- `flarepress/isopix.app/public` is a symlink to this repo's
   `web/`, the same pattern as the owner's other app sites. A deploy ships this checkout's
   `web/` as it is on disk, committed or not. `just deploy-check` refuses
   uncommitted edits in `web/` so the live site is always a commit on `main`.
-- `flarepress/isopix.pdxfixit.com/wrangler.toml`: static assets from
-  `./public` and one Custom Domain, `isopix.pdxfixit.com`. No Worker script,
-  no database, no `www`, no apex route. `pdxfixit.com` itself is a separate
-  site in flarepress; this subdomain does not touch it.
-- `flarepress/isopix.pdxfixit.com/site.conf` configures
+- `flarepress/isopix.app/wrangler.toml`: static assets from `./public` and
+  two Custom Domains, `isopix.app` and `isopix.pdxfixit.com` (the old home,
+  which moves visitors on). No Worker script, no database, no `www`.
+  `pdxfixit.com` itself is a separate site in flarepress; this subdomain does
+  not touch it.
+- `flarepress/isopix.app/site.conf` configures
   `flarepress/tools/site.sh`, which does the steps every app site shares (check, gate,
   stamp, verify, live, rollback; the other app sites use the same tool). This repo's
   `tools/deploy.sh` calls it and adds Isopix's own steps: the tests and the
@@ -90,7 +115,7 @@ wait is real.
 Right after it, this Mac may cache the new name as missing for up to 30 minutes (the pre-publish check looked it up before it existed). `deploy-verify` and `live` then say "this Mac cannot resolve … yet" and check at Cloudflare's address instead; that is expected, not a failure.
 
 The first publish creates the Custom Domain, which adds a DNS record in the
-`pdxfixit.com` zone. That is why `just deploy` refuses while the address does
+zone. That is why `just deploy` refuses while the address does
 not answer at all, unless you set `FIRST_PUBLISH=1`:
 
 ```
@@ -109,19 +134,19 @@ live).
 If `~/src/flarepress` is missing, clone it (private; the owner grants access):
 `git clone git@github.com:pdxfixit/flarepress.git ~/src/flarepress`, or clone
 anywhere and set `FLAREPRESS=/that/path`. Its `AGENTS.md` is the authority on
-the Cloudflare account. If the clone has no `isopix.pdxfixit.com/` folder,
-make it again; this is its whole content (2026-10-12):
+the Cloudflare account. If the clone has no `isopix.app/` folder,
+make it again; this is its whole content (2026-10-15):
 
 ```
-mkdir -p ~/src/flarepress/isopix.pdxfixit.com
-ln -s "$PWD/web" ~/src/flarepress/isopix.pdxfixit.com/public   # run from this repo
+mkdir -p ~/src/flarepress/isopix.app
+ln -s "$PWD/web" ~/src/flarepress/isopix.app/public   # run from this repo
 ```
 
-`~/src/flarepress/isopix.pdxfixit.com/site.conf` (2026-10-13; flarepress's
+`~/src/flarepress/isopix.app/site.conf` (2026-10-15; flarepress's
 `flarepress/tools/site.sh` names every key):
 
 ```
-url=https://isopix.pdxfixit.com
+url=https://isopix.app
 committed=web
 pwa=1
 compare=version.js
@@ -130,17 +155,18 @@ version_wait=90
 rollback=redeploy
 ```
 
-`~/src/flarepress/isopix.pdxfixit.com/wrangler.toml`:
+`~/src/flarepress/isopix.app/wrangler.toml` (the Worker keeps its first name):
 
 ```toml
 # Isopix, a touch drawing app on an isometric grid. The site lives in its own
 # repo (github.com/pdxfixit/isopix); public/ links to its web/ folder. Static
-# assets only: no Worker script, no bindings. Just this one hostname.
-# pdxfixit.com itself is a separate site; a subdomain here does not touch it.
+# assets only: no Worker script, no bindings. Home: isopix.app; the old home,
+# isopix.pdxfixit.com, serves the same files and moves visitors on (move.js).
 name = "isopix-pdxfixit-com"
-compatibility_date = "2026-10-12"
+compatibility_date = "2026-10-13"
 
 routes = [
+  { pattern = "isopix.app", custom_domain = true },
   { pattern = "isopix.pdxfixit.com", custom_domain = true }
 ]
 
@@ -209,7 +235,7 @@ Afterwards the live site is **not** `main`'s head. Fix forward, or run `just
 up like any other update (see the service worker notes above).
 
 To take the site down entirely (only on the owner's explicit go): from
-`~/src/flarepress/isopix.pdxfixit.com`, `npx wrangler delete` removes the Worker; check the zone's DNS tab afterwards in
+`~/src/flarepress/isopix.app`, `npx wrangler delete` removes the Worker; check the zone's DNS tab afterwards in
 case the Custom Domain record outlives it. Then remove the folder from
 flarepress and its line in flarepress `AGENTS.md`.
 
@@ -218,8 +244,10 @@ flarepress and its line in flarepress `AGENTS.md`.
 Cloudflare refuses to attach a Custom Domain over an existing DNS record on the
 same hostname, and `wrangler deploy` fails with an error naming the record.
 
-1. Look first, read-only: `dig +short isopix.pdxfixit.com` and `dig +short
-   CNAME isopix.pdxfixit.com`. On 2026-10-12 both were empty.
+1. Look first, read-only: `dig +short isopix.app` and `dig +short CNAME
+   isopix.app` (or the Cloudflare dashboard's DNS tab for the zone). The
+   owner set up isopix.app's DNS himself on 2026-10-15: a record he made on
+   the apex is exactly what blocks the attach.
 2. If a record exists, **do not delete it yourself.** Show the owner the exact record
    (type, name, content) and ask. Deleting a DNS record needs his approval.
 3. After he approves (or deletes it in the dashboard, DNS tab), run the deploy
@@ -228,8 +256,8 @@ same hostname, and `wrangler deploy` fails with an error naming the record.
 ## Things to know
 
 - **Each address has its own storage.** Drawings saved at `localhost` or any
-  other address do not appear on isopix.pdxfixit.com; export and import
-  move them.
+  other address do not appear on isopix.app; export and import move them.
+  The old addresses carry theirs over by themselves (above).
 - **First install on a real device is unverified** (the site is live, but nobody has tried it on a device yet):
   that the manifest installs, the worker registers, and offline start works on
   the Pixel and a tablet.

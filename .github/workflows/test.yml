@@ -30,6 +30,8 @@ jobs:
         run: python3 tools/bump_version.py --check
       - name: Output round trip (just export-check)
         run: just export-check --out shots/export
+      - name: Moving house (just move-check)
+        run: just move-check
       - name: Width check (just look)
         run: just look draw drawn select selmore rail zoom fit brushes settings settings-open-all drawing-sheet drawing-new color-pick sheet-focus update updatesel protect hoverskip help move pinchpan save-file --light --out shots/look
       - name: Upload screenshots

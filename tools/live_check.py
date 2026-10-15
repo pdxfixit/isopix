@@ -14,7 +14,7 @@ Two rules (owner, 2026-10-12: fewer failure emails, but never miss a real outage
 Stdlib only (Python 3.8+). The decision is pure (`decide`); the network and the
 clock come in as arguments, so tools/test_live_check.py drives every case.
 
-    python3 tools/live_check.py [URL]        (default https://isopix.pdxfixit.com)
+    python3 tools/live_check.py [URL]        (default https://isopix.app)
 """
 import os
 import random
@@ -78,7 +78,7 @@ def decide(statuses, live_stamp, main_stamp, main_age_s, grace_s=GRACE_S):
 
 
 def main():
-    url = (sys.argv[1] if len(sys.argv) > 1 else "https://isopix.pdxfixit.com").rstrip("/")
+    url = (sys.argv[1] if len(sys.argv) > 1 else "https://isopix.app").rstrip("/")
 
     def fetch(path):
         req = urllib.request.Request(f"{url}{path}?ci={random.randrange(1 << 30)}", headers={"User-Agent": "isopix-live-check"})
