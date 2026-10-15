@@ -244,7 +244,13 @@
         <h2 id="drawing-title">Drawing</h2>
         <button class="btn" value="close" aria-label="Close the drawing sheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </header>
-      <label class="name-field">Name <input type="text" id="drawing-name" maxlength="80" autocomplete="off" spellcheck="false"></label>
+      <div class="name-field">
+        <label for="drawing-name">Name</label>
+        <div class="name-row">
+          <input type="text" id="drawing-name" maxlength="80" autocomplete="off" spellcheck="false">
+          <button type="button" id="name-roll" class="btn" aria-label="Roll a new silly name"><span aria-hidden="true">🎲</span></button>
+        </div>
+      </div>
       <div class="big-buttons">
         <button type="button" id="file-new" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span>New</span></button>
         <button type="button" id="file-open" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>Open</span></button>

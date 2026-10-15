@@ -9,7 +9,7 @@
 // screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
-//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first
+//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -114,8 +114,15 @@ VIEWS.welcome = { js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${na
   ${TAP3}` };
 // A first visit: a fresh profile (storage cleared, never marked welcomed)
 // opens on the card by itself, over an empty drawing.
+const SILLY = /^([A-Z])[a-z]+ \1[a-z]+$/;
 VIEWS['welcome-first'] = { fresh: true, js: `if (!document.querySelector('#welcome').open) throw new Error('a first visit did not open the welcome');
+  if (!${SILLY}.test(window.isopix.drawingName)) throw new Error('the first drawing has no silly name: ' + window.isopix.drawingName);
   ${TAP3}` };
+// The Drawing sheet after 🎲: a different silly name, in the field too.
+VIEWS['name-roll'] = { js: `${q('#drawing-open')} ${nap}
+  const before = window.isopix.drawingName; ${q('#name-roll')} ${nap}
+  const after = window.isopix.drawingName;
+  if (after === before || !${SILLY}.test(after) || document.querySelector('#drawing-name').value !== after) throw new Error('🎲 gave ' + after + ' after ' + before);` };
 VIEWS.help = { js: `document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }));
   if (!document.querySelector('#help').open) throw new Error('? did not open Help');` };
 VIEWS.protect = { js: `${PROTECT} window.isopix.settings.locked = false;` };
@@ -292,12 +299,17 @@ for (const screen of opts.screens) {
   for (const w of opts.widths) {
     errors = []; csp = []; logs = [];
     await send('Emulation.setDeviceMetricsOverride', { width: w, height: opts.height, deviceScaleFactor: 1, mobile: w < 768 });
+    // A fresh view first leaves the last page, which saves as it goes and would
+    // undo the clear. It comes before `loaded`, so about:blank's load does not count.
+    if (VIEWS[screen].fresh) {
+      await send('Page.navigate', { url: 'about:blank' }); await sleep(300);
+      await send('Storage.clearDataForOrigin', { origin: new URL(base).origin, storageTypes: 'all' });
+    }
     const loaded = new Promise((r) => listeners.push(function once(m) {
       if (m.method === 'Page.loadEventFired') { listeners.splice(listeners.indexOf(once), 1); r(); }
     }));
     const live = VIEWS[screen].live;
     setLive(live ? live[0] : null);
-    if (VIEWS[screen].fresh) await send('Storage.clearDataForOrigin', { origin: new URL(base).origin, storageTypes: 'all' });
     await send('Page.navigate', { url: `${base}?look=${screen}-${w}` });
     await loaded;
     await sleep(500);

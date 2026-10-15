@@ -291,6 +291,10 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
 
 /* ---- Drawing sheet: the name, big file buttons ---- */
 .menu .name-field { display: flex; flex-direction: column; align-items: stretch; gap: 4px; font-weight: 600; margin: 8px 0 12px; }
+.menu .name-field label { min-height: 0; }
+.name-row { display: flex; gap: 8px; }
+.name-row input { flex: 1; min-width: 0; }
+#name-roll { font-size: 24px; flex: none; }
 .name-field input { min-height: 48px; font: inherit; font-size: 18px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--ink); }
 .big-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .btn.big { flex-direction: column; min-height: 84px; gap: 6px; font-size: 16px; }

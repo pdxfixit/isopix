@@ -76,7 +76,8 @@ export const SECTIONS = [
     title: 'Drawing sheet',
     intro: 'Opened by the Drawing button. This browser keeps one drawing and saves it as you go, even when you switch apps. A file keeps it anywhere.',
     items: [
-      { name: 'Name', text: 'Aa', says: 'The drawing\'s name. Saved files are named after it.' },
+      { name: 'Name', text: 'Aa', says: 'The drawing\'s name. A new drawing gets a silly one; type your own any time. Saved files are named after it, in lowercase.' },
+      { name: 'Roll a name', from: '#name-roll', text: '🎲', says: 'Rolls another silly name for this drawing: two words with the same first letter.' },
       { name: 'New', from: '#file-new', says: 'Starts a new drawing. If this one has anything in it, you choose: Save file first, New anyway, or Cancel.' },
       { name: 'Open', from: '#file-open', says: 'Opens a drawing Isopix saved: its PNG, an .isopix file, or an older .isopix.json. It replaces this drawing, so it asks first if this one has changes not in a file.' },
       { name: 'Save file', from: '#file-save', says: 'Saves the whole drawing with its undo history, stamps, paper and trace picture, as a PNG picture that opens in any photo app and reopens here, ready to keep drawing (with that off in Settings → Drawing, the button reads Save Isopix drawing and makes an .isopix file instead). On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
