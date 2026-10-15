@@ -102,4 +102,4 @@ Before that:
 
 Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); the owner chose the next three (gallery, pen mode, two-finger-tap undo; [TODO.md](../TODO.md)).
 
-On `main`: nothing half done. Release 1.2.13 is live at https://isopix.app (deployed 2026-10-15 from `cbf65a5`).
+On `main`: nothing half done. Release 1.2.13 is live at https://isopix.app (deployed 2026-10-15 from `cbf65a5`). **Not deployed:** 1.2.19 (`3cd6edd`) and 1.2.20 (`4fbf6fb`) are on `main`; a cloud deploy on 2026-10-15 stopped because flarepress was not in the session and attaching it mid-session was refused. Waits on the owner: start the deploy task and cloud sessions with `pdxfixit/flarepress` selected ([environment.md](environment.md#a-cloud-session-claudeaicode)), then deploy `main`.
