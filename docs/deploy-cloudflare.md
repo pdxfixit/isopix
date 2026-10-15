@@ -45,7 +45,7 @@ D1 database are bound ([state.md](state.md)); then its push trigger goes on, for
 commits that change `web/`, `worker/` or `site/`.
 
 The deploy code is **flarepress**, a public repo
-(`github.com/pdxfixit/flarepress`; the workflow checks out a pinned commit, the Mac uses
+(`github.com/pdxfixit/flarepress`; the workflow checks out its rolling `v1` tag, the Mac uses
 a clone at `~/src/flarepress`). The site's config lives here:
 
 - `site/wrangler.toml`: Worker `isopix-app`, static assets from `../web` and
