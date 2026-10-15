@@ -22,6 +22,7 @@ import { cleanName, fileBase, savedAgo, fileLine, unsavedToFile, newChoices, chi
 import { paperOf, paperName, inkName, matchInk } from './engine/paper.js';
 import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './engine/protect.js';
 import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
+import { OLD_HOSTS, moveToNewHome, readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -146,7 +147,7 @@ function placeUpdateBar() {
   const tops = [$('.bottom > .palette'), $('.bottom > .tools'), $('#selbar')]
     .map((el) => el.getBoundingClientRect()).filter((r) => r.height).map((r) => r.top);
   let top = Math.min(...tops);
-  for (const bar of [$('#update-bar'), $('#protect-note'), $('#save-note')]) {
+  for (const bar of [$('#update-bar'), $('#protect-note'), $('#save-note'), $('#move-note')]) {
     if (bar.hidden) continue;
     bar.style.bottom = `${Math.round(window.innerHeight - top + 8)}px`;
     top = bar.getBoundingClientRect().top;
@@ -1145,10 +1146,13 @@ function updateFileUI() {
 async function rememberFile() {
   if (!(await store.idbSet('file', app.file))) await store.idbSet('file', { ...app.file, handle: null });
 }
+// Every change: the dot follows whether something drawn is not in a file
+// (already "changed" on an empty page, a first stroke still needs the dot).
 function markChanged() {
-  if (app.file.dirty) return;
-  app.file.dirty = true;
-  if (app.file.at) rememberFile();
+  if (!app.file.dirty) {
+    app.file.dirty = true;
+    if (app.file.at) rememberFile();
+  }
   updateFileUI();
 }
 function fileSaved(r, via) {
@@ -1204,6 +1208,7 @@ let pending = 'new';
 const CONFIRM = {
   new: { ask: 'Start a new drawing? This browser keeps one drawing, so New replaces this one. Save a file first to keep it.', go: 'New anyway', run: () => startNew() },
   open: { ask: 'Open a file? It replaces this drawing in this browser. Save a file first to keep this one.', go: 'Open anyway', run: () => openProject() },
+  moved: { ask: 'Open the drawing from Isopix\'s old address? It replaces this one in this browser. Save a file first to keep this one.', go: 'Open it', run: () => openMoved() },
 };
 function askFirst(what) {
   if (newChoices(hasContent(), unsavedToFile(app.file, true))[0] === 'new-now') return CONFIRM[what].run();
@@ -1274,6 +1279,8 @@ function wireMenu() {
   $('#new-cancel').addEventListener('click', () => { $('#new-confirm').hidden = true; $(pending === 'open' ? '#file-open' : '#file-new').focus(); });
   $('#save-note-save').addEventListener('click', async () => { if (await saveFile()) $('#save-note').hidden = true; });
   $('#save-note-close').addEventListener('click', () => { $('#save-note').hidden = true; });
+  $('#move-open').addEventListener('click', () => askFirst('moved'));
+  $('#move-close').addEventListener('click', () => { $('#move-note').hidden = true; app.pendingMove = null; });
 }
 
 // ---------- files ----------
@@ -1375,6 +1382,62 @@ function placeTrace(f) {
   };
   img.onerror = () => toast('That picture would not open');
   img.src = URL.createObjectURL(f);
+}
+
+// ---------- moving house (move.js) ----------
+// A drawing that came from an old address while this one had its own waits
+// here, offered by a note, until opened or dismissed.
+function openMoved() {
+  const m = app.pendingMove;
+  if (!m) return;
+  try {
+    loadProjectObject(m);
+    app.file = { name: null, at: null, via: null, dirty: false, handle: null };
+    rememberFile(); updateFileUI();
+    toast('Opened the drawing from the old address');
+  } catch (err) { toast(`It would not open: ${err.message}`); }
+  app.pendingMove = null;
+  $('#move-note').hidden = true;
+}
+function showMoveNote(text, offer) {
+  $('#move-text').textContent = text;
+  $('#move-open').hidden = !offer;
+  $('#move-note').hidden = false;
+}
+// Settings carried from the old address, before the app reads its own.
+function takeMovedSettings(arriving) {
+  const has = (k) => { try { return localStorage.getItem(k) !== null; } catch { return true; } };
+  const copy = keysToCopy(arriving.local, has);
+  for (const [k, v] of copy) { try { localStorage.setItem(k, v); } catch { /* storage blocked */ } }
+  if (copy.length) app.settings = store.loadSettings(DEFAULTS);
+}
+// The drawing carried from the old address: taken when this browser has none
+// here, else offered; one already taken is never taken twice (move.js landing).
+async function takeMovedDrawing(arriving) {
+  if (arriving.dropped.includes('drawing')) {
+    const stay = OLD_HOSTS.includes(arriving.from) ? ` To keep it, open ${arriving.from}/?stay and save it as a file.` : '';
+    showMoveNote(`Isopix moved to isopix.app. Your drawing at the old address was too big to bring along.${stay}`, false);
+    return;
+  }
+  const m = arriving.autosave;
+  if (!m) return;
+  const seen = (await store.idbGet('moved-in')) || [];
+  const savedAt = Number(m.savedAt) || null;
+  const what = landing({ incoming: { from: arriving.from, savedAt, hasContent: hasDrawing(m) }, current: { hasContent: hasContent(), savedAt: app.lastSaved }, seen: Array.isArray(seen) ? seen : [] });
+  if (what === 'ignore') return;
+  store.idbSet('moved-in', [...(Array.isArray(seen) ? seen : []), { from: arriving.from, savedAt }].slice(-20));
+  if (what === 'offer') {
+    app.pendingMove = m;
+    showMoveNote('Isopix moved to isopix.app, and your drawing from the old address came along. This browser already has a drawing here, so that one stays open.', true);
+    return;
+  }
+  try {
+    loadProjectObject(m);
+    if (savedAt) app.lastSaved = savedAt;
+    if (arriving.file) { app.file = arriving.file; rememberFile(); }
+    const lost = arriving.dropped.filter((d) => d !== 'drawing').map((d) => (d === 'trace' ? 'its trace picture' : 'its undo history'));
+    if (lost.length) toast(`Your drawing moved here from the old address, without ${lost.join(' or ')} (too big to carry).`);
+  } catch { /* a drawing that will not load stays at the old address */ }
 }
 
 // ---------- autosave ----------
@@ -1537,6 +1600,11 @@ function wire() {
 }
 
 async function boot() {
+  // An old address carries its drawing to isopix.app and goes (move.js).
+  // ?stay keeps the app here, to save a drawing too big to carry.
+  if (OLD_HOSTS.includes(location.hostname) && !new URLSearchParams(location.search).has('stay')) { await moveToNewHome(); return; }
+  const arriving = await readMoveHash();
+  if (arriving) takeMovedSettings(arriving);
   readTheme();
   buildNotches();
   buildZoom();
@@ -1553,6 +1621,7 @@ async function boot() {
   }
   const file = await store.idbGet('file');
   if (file && typeof file === 'object') app.file = { name: String(file.name || ''), at: Number(file.at) || null, via: file.via === 'open' ? 'open' : 'save', dirty: !!file.dirty, handle: file.handle || null };
+  if (arriving) await takeMovedDrawing(arriving);
   afterChange({ changed: false });
   updateFileUI();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
@@ -1575,7 +1644,7 @@ async function boot() {
     beforeReload: prepareReload,
   });
   // Keep the bar in place whenever it appears.
-  for (const id of ['#update-bar', '#protect-note', '#save-note']) new MutationObserver(placeUpdateBar).observe($(id), { attributes: true, attributeFilter: ['hidden'] });
+  for (const id of ['#update-bar', '#protect-note', '#save-note', '#move-note']) new MutationObserver(placeUpdateBar).observe($(id), { attributes: true, attributeFilter: ['hidden'] });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 boot();

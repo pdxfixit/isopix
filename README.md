@@ -1,6 +1,6 @@
 # Isopix 🔺
 
-**Draw it: https://isopix.pdxfixit.com** (works offline; add it to your home screen).
+**Draw it: https://isopix.app** (works offline; add it to your home screen).
 
 A touch drawing app on an isometric (triangular) grid. Your finger fills grid
 cells instead of drawing a thin line. **The grid size is the brush size**: big

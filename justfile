@@ -44,6 +44,10 @@ look *args:
 version *args:
     @python3 tools/bump_version.py "$@"
 
+# 🚚 Moving house to isopix.app, end to end in headless Chrome: the old addresses carry a drawing over (web/move.js)
+move-check:
+    @node tools/move_check.mjs
+
 # 🖼️ Output round trip in headless Chrome: PNG pixels, SVG merge, project save/load/undo (--out DIR keeps the files)
 [positional-arguments]
 export-check *args:

@@ -1,6 +1,6 @@
 # Isopix 🧊
 
-A touch drawing app on an isometric (triangular) grid, for the owner first and for kids second, so kid-friendly. The grid size is the brush size. Plain HTML, CSS and ES modules in `web/`, Canvas 2D, Pointer Events, no build step and no dependencies. Installable and offline. Live at https://isopix.pdxfixit.com/ (see [Ship](#ship)).
+A touch drawing app on an isometric (triangular) grid, for the owner first and for kids second, so kid-friendly. The grid size is the brush size. Plain HTML, CSS and ES modules in `web/`, Canvas 2D, Pointer Events, no build step and no dependencies. Installable and offline. Live at https://isopix.app/ (see [Ship](#ship)).
 
 This file is the contract: how to start, how to verify and ship, and the rules for working here. Detail lives in the files it points to.
 
@@ -48,14 +48,14 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 1. **`just test`** must be green. Judge it by the exit code, not by grepping: a syntax error stops it at `node --check` before any test runs.
 2. **Every engine change ships with a test that fails without it.** Prove it: `just prove test/<file>.test.mjs web/engine/<file>.js`.
 3. **Look at it** for anything a user sees: `just look [draw|drawn|select|settings|drawing-sheet|brushes …] [--js CODE]` (`just look --help` lists every view) reports sideways scroll, console errors, CSP blocks, controls under 44 px and overlaps at 320, 375, 700, 900 and 1100 px, and saves screenshots to the folder it prints. Run it with `--light` and again with `--dark`. Read the screenshots: the script cannot judge layout. A new screen or state gets a view: add an entry to `VIEWS` in `tools/look.mjs` (JS that opens it and throws if it did not), then add it to the `just look` line in `.github/workflows/test.yml`.
-4. **Output changes:** `just export-check`.
+4. **Output changes:** `just export-check`. **Moving house** (`web/move.js`, the old addresses): `just move-check`.
 5. **The shared Browser pane** is for real clicks and drags only. Serve on 8791 and pass your own `tabId` to every call. Its service worker fails to register (a pane limit); headless Chrome registers it and runs offline.
 6. **Rendering changes:** `just perf` before and after; the bar is in docs/decisions.md (Shipping).
 7. **What no tool here can test:** real multi-touch (pinch, long-press then pinch, two-finger pan), pen pressure, and performance on a real phone. Pointer events dispatched from script cover the logic, not the feel. Say so in your report.
 
 ## Ship
 
-Hosting is https://isopix.pdxfixit.com, deployed through flarepress, the owner's Cloudflare deploy repo, outside this one (`~/src/flarepress/isopix.pdxfixit.com/`, whose `public` links to this repo's `web/`; [what to do without it](docs/environment.md#things-outside-this-repo)). Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). **After every commit to `main` that changes `web/`: push, then deploy, then look** (The owner, 2026-10-12: "always deploy following a commit"). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed: a deploy would only pop the update notice for nothing (docs/decisions.md, Shipping; card 7 asks the owner to confirm). Nothing deploys by itself: GitHub only tests and watches, and the live site is whatever `just --yes deploy` last sent.
+Hosting is https://isopix.app, deployed through flarepress, the owner's Cloudflare deploy repo, outside this one (`~/src/flarepress/isopix.app/`, whose `public` links to this repo's `web/`; the old addresses carry drawings over by `web/move.js`; [what to do without it](docs/environment.md#things-outside-this-repo)). Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). **After every commit to `main` that changes `web/`: push, then deploy, then look** (The owner, 2026-10-12: "always deploy following a commit"). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed: a deploy would only pop the update notice for nothing (docs/decisions.md, Shipping; card 7 asks the owner to confirm). Nothing deploys by itself: GitHub only tests and watches, and the live site is whatever `just --yes deploy` last sent.
 
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
 2. **Commit to `main`** by explicit path, then **`git push`**. `ship` (below) does commit, push and deploy in one step.
@@ -66,7 +66,7 @@ Hosting is https://isopix.pdxfixit.com, deployed through flarepress, the owner's
 Rules:
 
 - **Push after every commit to `main`; deploy after every one that changes `web/`**, then `just live`. Never deploy with failing tests (`deploy-check` refuses), and bump `web/version.js` with each release that changes `web/` (CI fails without it).
-- **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go. Isopix's first publish, at isopix.pdxfixit.com, was approved on 2026-10-13 for release 1.0.1.
+- **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go. Isopix's first publish, at isopix.pdxfixit.com, was approved on 2026-10-13 for release 1.0.1; the move to isopix.app, on 2026-10-15 (its first deploy there may need `FIRST_PUBLISH=1`).
 - **Never delete or edit a DNS record without the owner's approval.** If the domain will not attach, show him the exact record (see the doc).
 - Only `web/` is uploaded, so only `web/` must be committed (`ALLOW_DIRTY=1` overrides, and stamps the version `-dirty`).
 - `web/version.json` is the deploy's label (git describe), written by `deploy-stamp` and gitignored; `web/version.js` is the app's release stamp. They are different files.

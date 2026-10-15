@@ -20,5 +20,10 @@
 /version.json
   Cache-Control: no-store
 
+# The old Isogrid address's page loads move.js from here, as a module, to
+# carry its drawings over: a cross-origin module needs CORS.
+/move.js
+  Access-Control-Allow-Origin: *
+
 /manifest.webmanifest
   Content-Type: application/manifest+json

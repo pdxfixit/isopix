@@ -3,7 +3,7 @@
 # this is the tool). Subcommands: check, gate, stamp, verify, live, rollback.
 #
 # The shared steps (check, gate, stamp, verify, live, rollback) are flarepress's
-# tools/site.sh, configured by flarepress/isopix.pdxfixit.com/site.conf, so
+# tools/site.sh, configured by flarepress/isopix.app/site.conf, so
 # every app site deploys the same way. Isopix's own steps are here: the tests
 # and the version.js bump before a deploy, and `just look` on the live site after
 # one. Only `push` and `rollback --yes` ever change the live site, and both are
@@ -11,7 +11,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SITE=isopix.pdxfixit.com
+SITE=isopix.app
 export FLAREPRESS="${FLAREPRESS:-$HOME/src/flarepress}"
 # DEPLOY_URL points the live checks at another server (for trying this script out).
 URL="${DEPLOY_URL:-https://$SITE}"
