@@ -21,7 +21,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Saving** (2026-10-14, branch only, see In flight): Save picks the way per device (`saveMethod` in `web/storage.js`): the browser's Save dialog once, then the same file each Save (Chrome, Edge on a computer; the handle is kept in IndexedDB); the share sheet on iPhone and iPad; else a download. Ctrl+S, Ctrl+Shift+S (save as new file) and Ctrl+O. A dot on Save marks changes not in a file; the Drawing sheet's file line says which file and whether it changed; New and Open ask first only then. The autosave also runs at once when the page is hidden; `navigator.storage.persist` is asked for (not in Firefox); a private window gets a one-time notice with Save file (`just look save-file`, `test/sheets.test.mjs`, `test/storage.test.mjs`).
 
-**Moving house** (2026-10-15, branch only): https://isopix.app is the home; isopix.pdxfixit.com and the old Isogrid address carry a browser's drawing, settings and file record over in the `#move=` fragment and go (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
+**Moving house** (2026-10-15, branch only): https://isopix.app is the home (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers whose page carries a browser's drawing, settings and file record over in the `#move=` fragment and goes (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
 
 **Drawing or moving** (2026-10-14, branch only): the Move hand at the foot of the zoom rail (and `H`) makes one finger pan; a tool tap, the hand or Esc ends it. A second finger takes back a stroke under 500 ms old or under 24 px long; the finger left after a pinch pans (`web/engine/gesture.js`, `test/gesture.test.mjs`, `just look move pinchpan`).
 
@@ -98,9 +98,9 @@ Before that:
 
 **Moving house to isopix.app** (2026-10-15, the owner bought it and set up its DNS): committed and pushed on branch `claude/ui-cleanup-usability-p711b2` here and in flarepress, **not merged and not deployed** (a cloud session cannot). Release 1.2.12. What it does: [deploy-cloudflare.md](deploy-cloudflare.md#old-addresses). To ship, from the owner's Mac, in this order:
 
-1. Merge the branch to `main` in both repos (flarepress: the folder is now `isopix.app/`, with both hostnames; the Isogrid folder's `index.js` is the move page; `sites_check.py` knows move pages).
-2. `git -C ~/src/flarepress pull`, then here `just deploy-plan`, then `just --yes deploy` (with `FIRST_PUBLISH=1` if isopix.app does not answer yet). If wrangler refuses the isopix.app Custom Domain over an existing DNS record (one made when the DNS was set up), show the record and delete it only with the owner's go, then deploy again ([deploy-cloudflare.md](deploy-cloudflare.md#if-the-custom-domain-will-not-attach)).
-3. Only after isopix.app serves `move.js`: in flarepress, run its `push` recipe on the old Isogrid site's folder (its page loads `move.js` from isopix.app), then its `sites` recipe for that folder and `isopix.app`; then `just live` here.
+1. Merge the branch to `main` in both repos (flarepress: `isopix.app/` is the new Worker `isopix-app`; `isopix.pdxfixit.com/` and the Isogrid folder are move Workers; `sites_check.py` knows move pages).
+2. `git -C ~/src/flarepress pull`, then here `just deploy-plan`, then `FIRST_PUBLISH=1 just --yes deploy` (a new Worker; isopix.pdxfixit.com keeps serving 1.0.4 meanwhile). If wrangler refuses the isopix.app Custom Domain over an existing DNS record (one made when the DNS was set up), show the record and delete it only with the owner's go, then deploy again ([deploy-cloudflare.md](deploy-cloudflare.md#if-the-custom-domain-will-not-attach)).
+3. Only after isopix.app serves `move.js`: in flarepress, run its `push` recipe on `isopix.pdxfixit.com` and on the old Isogrid site's folder (their pages load `move.js` from isopix.app), then its `sites` recipe for those and `isopix.app`; then `just live` here.
 
 Earlier on the same branch: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); cards 8 to 10 in [questions.md](questions.md) wait on the owner.
 

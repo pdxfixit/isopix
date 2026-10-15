@@ -22,7 +22,7 @@ import { cleanName, fileBase, savedAgo, fileLine, unsavedToFile, newChoices, chi
 import { paperOf, paperName, inkName, matchInk } from './engine/paper.js';
 import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './engine/protect.js';
 import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
-import { OLD_HOSTS, moveToNewHome, readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
+import { readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -1415,8 +1415,9 @@ function takeMovedSettings(arriving) {
 // here, else offered; one already taken is never taken twice (move.js landing).
 async function takeMovedDrawing(arriving) {
   if (arriving.dropped.includes('drawing')) {
-    const stay = OLD_HOSTS.includes(arriving.from) ? ` To keep it, open ${arriving.from}/?stay and save it as a file.` : '';
-    showMoveNote(`Isopix moved to isopix.app. Your drawing at the old address was too big to bring along.${stay}`, false);
+    showMoveNote(arriving.savedFile
+      ? 'Isopix moved to isopix.app. Your drawing was too big to bring along by itself, so it was saved to your downloads as a file: open it with Drawing → Open.'
+      : 'Isopix moved to isopix.app. Your drawing at the old address was too big to bring along.', false);
     return;
   }
   const m = arriving.autosave;
@@ -1600,9 +1601,7 @@ function wire() {
 }
 
 async function boot() {
-  // An old address carries its drawing to isopix.app and goes (move.js).
-  // ?stay keeps the app here, to save a drawing too big to carry.
-  if (OLD_HOSTS.includes(location.hostname) && !new URLSearchParams(location.search).has('stay')) { await moveToNewHome(); return; }
+  // A drawing carried here from an old address (move.js).
   const arriving = await readMoveHash();
   if (arriving) takeMovedSettings(arriving);
   readTheme();

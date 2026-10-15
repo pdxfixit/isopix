@@ -1,20 +1,19 @@
-// Moving house. Isopix lives at https://isopix.app; its old addresses hand
-// over what a browser saved there. Browsers keep saved data per address, so a
-// plain redirect would leave every drawing behind. The old address runs
-// moveToNewHome(): it reads that browser's autosave, settings and file record,
-// packs them into the new address's #move= fragment (a fragment is never sent
-// to any server), and goes. At the new address, app.js reads the fragment on
-// start (readMoveHash) and keeps the drawing unless it already has one
-// (landing). The old copy is left where it was.
+// Moving house. Isopix lives at https://isopix.app; its old addresses
+// (isopix.pdxfixit.com and Isogrid's) hand over what a browser saved there.
+// Browsers keep saved data per address, so a plain redirect would leave every
+// drawing behind. Each old address serves a small page (flarepress, its move
+// Worker) that loads this file from isopix.app and runs moveToNewHome(): it
+// reads that browser's autosave, settings and file record, packs them into the
+// new address's #move= fragment (a fragment is never sent to any server), and
+// goes. At the new address, app.js reads the fragment on start (readMoveHash)
+// and keeps the drawing unless it already has one (landing). The old copy is
+// left where it was.
 //
-// No imports and no DOM at load: the old Isogrid address's page loads this one
-// file from isopix.app (see _headers: it is served with CORS), and the tests
-// import its pure parts in Node.
+// No imports and no DOM at load: the old pages load this one file cross-origin
+// (see _headers: it is served with CORS), and the tests import its pure parts
+// in Node.
 
 export const HOME = 'https://isopix.app';
-// Old addresses that serve this app and move on start. The old Isogrid address
-// serves only a small page that calls moveToNewHome() (flarepress).
-export const OLD_HOSTS = ['isopix.pdxfixit.com'];
 // The longest address to hand a browser: Chrome takes 2 MB; others less.
 export const MAX_URL = 1_000_000;
 
@@ -92,13 +91,20 @@ export async function unpack(s) {
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
-// The address to go to, with as much as fits (shrinkings, best first).
-export async function moveURL(saved, limit = MAX_URL) {
+// The address to go to, with as much as fits (shrinkings, best first), and
+// what had to stay behind. savedFile: the drawing went to the downloads instead.
+export async function moveURL(saved, limit = MAX_URL, savedFile = false) {
   for (const { autosave, dropped } of shrinkings(saved.autosave)) {
-    const url = `${HOME}/#move=${await pack({ v: 1, from: saved.from, autosave, file: saved.file || null, local: saved.local || {}, dropped })}`;
-    if (url.length <= limit) return url;
+    const url = `${HOME}/#move=${await pack({ v: 1, from: saved.from, autosave, file: saved.file || null, local: saved.local || {}, dropped, savedFile: savedFile && dropped.includes('drawing') })}`;
+    if (url.length <= limit) return { url, dropped };
   }
-  return `${HOME}/`;
+  return { url: `${HOME}/`, dropped: ['drawing'] };
+}
+
+// A drawing's project file name, as the app names them.
+export function fileNameFor(autosave) {
+  const base = String(autosave?.name || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').trim().replace(/\s+/g, '-').slice(0, 60);
+  return `${base || 'isopix'}.isopix.json`;
 }
 
 // The arrival, checked for shape (anyone can make a link with #move=). The
@@ -111,6 +117,7 @@ export function arrival(obj) {
     file: isObj(obj.file) && typeof obj.file.name === 'string' ? { name: obj.file.name.slice(0, 200), at: Number(obj.file.at) || null, via: obj.file.via === 'open' ? 'open' : 'save', dirty: !!obj.file.dirty, handle: null } : null,
     local: isObj(obj.local) ? obj.local : {},
     dropped: Array.isArray(obj.dropped) ? obj.dropped.filter((d) => ['trace', 'history', 'drawing'].includes(d)) : [],
+    savedFile: obj.savedFile === true,
   };
 }
 
@@ -168,12 +175,30 @@ async function readSaved() {
   return { from: location.hostname, autosave: found?.autosave || null, file: found?.file || null, local };
 }
 
+// A drawing too big for the address goes to the downloads as a project file.
+function download(obj) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(obj)], { type: 'application/json' }));
+  a.download = fileNameFor(obj);
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
+
 // At an old address: carry what this browser saved here to the new one, and
 // go. The old service worker is let go, so this address stops serving a
 // stale copy. Whatever goes wrong, it still goes, within a few seconds.
 export async function moveToNewHome({ wait = 4000 } = {}) {
   const work = (async () => {
-    const url = await moveURL(await readSaved());
+    const saved = await readSaved();
+    let { url, dropped } = await moveURL(saved);
+    if (dropped.includes('drawing') && hasDrawing(saved.autosave)) {
+      try {
+        download(saved.autosave);
+        await new Promise((r) => setTimeout(r, 800)); // let the download start before the page goes
+        ({ url } = await moveURL(saved, MAX_URL, true));
+      } catch { /* left at the old address */ }
+    }
     try {
       const regs = await navigator.serviceWorker?.getRegistrations?.();
       await Promise.all((regs || []).map((r) => r.unregister()));
