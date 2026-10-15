@@ -29,7 +29,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Update notice**: when a newer deploy is live, "🆕 An update for Isopix is ready." floats above the bottom bars with Reload (saves, lets the new service worker take over, reloads) and ✕; it waits while you draw or have a menu open (`web/update.js`, tests in `test/update.test.mjs`, `just look update updatesel`).
 
-**Build stamp**: the release and deployed commit, tiny, in the bottom-right corner (`buildStamp` in `web/update.js`; the commit is `version.json`'s `commit`, which flarepress's stamp writes).
+**Build stamp**: the release and deployed commit, small (10 px), in the bottom-right corner, a link to the GitHub repo; Settings → About's version line is the same link at 44 px (`buildStamp` in `web/update.js`; the commit is `version.json`'s `commit`, which flarepress's stamp writes).
 
 **Cell layer cache**: the cells are drawn to an offscreen bitmap a little larger than the screen (`web/layer.js` decides blit, patch or full redraw; tests in `test/layer.test.mjs`). Panning moves the bitmap, painting redraws only the changed area (the model records changed keys), and zoom redraws at the new scale.
 
