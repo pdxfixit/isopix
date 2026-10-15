@@ -2,8 +2,8 @@
 """Serve web/ on every interface so a phone on the same Wi-Fi can open it.
 
 Stdlib only (Python 3.8+). Sends no-store so an edited file shows on the next
-reload. Also sends the `/*` headers from web/_headers (the CSP included), so a
-page that would break on the live site breaks here first. A dev copy has no
+reload. Also sends the headers web/_headers gives each path (the CSP, and
+CORS for move.js), so a page that would break on the live site breaks here first. A dev copy has no
 web/version.json (the deploy writes it), so /version.json answers "dev"
 instead of a 404 that the console would print in red.
 
@@ -19,7 +19,10 @@ from pathlib import Path
 WEB = Path(__file__).resolve().parent.parent / "web"
 
 
-def site_headers():
+def site_headers(path="/"):
+    """The web/_headers rules that match this path, as Cloudflare applies them:
+    `/*` for every path, an exact path, or a prefix ending in `*`. Cache-Control
+    is left to the dev server (no-store)."""
     found, applies = {}, False
     try:
         lines = (WEB / "_headers").read_text().splitlines()
@@ -29,10 +32,12 @@ def site_headers():
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         if not line[0].isspace():
-            applies = line.strip() == "/*"
+            rule = line.strip()
+            applies = rule == path or (rule.endswith("*") and path.startswith(rule[:-1]))
         elif applies and ":" in line:
             name, value = line.split(":", 1)
-            found[name.strip()] = value.strip()
+            if name.strip().lower() != "cache-control":
+                found[name.strip()] = value.strip()
     return found
 
 
@@ -43,7 +48,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
-        for name, value in site_headers().items():
+        for name, value in site_headers(self.path.split("?")[0]).items():
             self.send_header(name, value)
         super().end_headers()
 
