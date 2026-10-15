@@ -395,3 +395,40 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---- Loading screen (web/loading.js) ----
+   Paper from the first frame; after 0.5 s the grid sweeps in clockwise like a
+   progress ring (easing toward 0.9 of a turn) under a bar with the icon's cube
+   building. loading.js completes the turn when the app is ready, then fades it. */
+@property --p { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.loading { position: fixed; inset: 0; z-index: 50; background: var(--bg); color: var(--ink); transition: opacity 0.15s; }
+.loading.gone { opacity: 0; pointer-events: none; }
+.loading-sweep { position: absolute; inset: 0; opacity: 0; --p: 0deg;
+  -webkit-mask-image: conic-gradient(#000 var(--p), transparent 0); mask-image: conic-gradient(#000 var(--p), transparent 0);
+  animation: loading-in 0.2s 0.5s forwards, loading-turn 6s 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+.loading.finishing .loading-sweep { opacity: 1; --p: 360deg; transition: --p 0.2s ease-out; }
+.loading-paper { position: absolute; inset: 0; background: var(--line);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27.7128' height='16'%3E%3Cpath d='M0 0V16M13.8564 0V16M27.7128 0V16M0 0L27.7128 16M0 16L27.7128 0' stroke='%23000' stroke-opacity='.16' fill='none'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='110.851' height='64'%3E%3Cpath d='M0 0V64M55.4256 0V64M110.851 0V64M0 0L110.851 64M0 64L110.851 0' stroke='%23000' stroke-opacity='.45' stroke-width='1.2' fill='none'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27.7128' height='16'%3E%3Cpath d='M0 0V16M13.8564 0V16M27.7128 0V16M0 0L27.7128 16M0 16L27.7128 0' stroke='%23000' stroke-opacity='.16' fill='none'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='110.851' height='64'%3E%3Cpath d='M0 0V64M55.4256 0V64M110.851 0V64M0 0L110.851 64M0 64L110.851 0' stroke='%23000' stroke-opacity='.45' stroke-width='1.2' fill='none'/%3E%3C/svg%3E");
+  -webkit-mask-position: center; mask-position: center; }
+.loading-bar { position: absolute; left: 0; right: 0; margin: 0 auto; width: max-content; max-width: calc(100vw - 32px);
+  bottom: calc(max(48px, 12vh) + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px;
+  padding: 10px 18px 10px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);
+  opacity: 0; animation: loading-in 0.2s 0.5s forwards; }
+.loading-cube { width: 44px; height: 44px; flex: none; }
+.loading-words { display: flex; flex-direction: column; line-height: 1.15; }
+.loading-name { font-size: 20px; font-weight: 800; }
+.loading-tag { font-size: 14px; color: var(--muted); }
+.loading-slow { position: absolute; left: 16px; right: 16px; top: 40%; margin: 0 auto; max-width: 340px; text-align: center;
+  display: grid; gap: 12px; justify-items: center; padding: 16px; background: var(--panel); border-radius: 16px; box-shadow: var(--shadow); }
+@keyframes loading-in { to { opacity: 1; } }
+@keyframes loading-turn { from { --p: 0deg; } to { --p: 324deg; } }
+@media (prefers-reduced-motion: no-preference) {
+  .loading-cube polygon { transform-box: fill-box; transform-origin: center; animation: loading-face 2.4s ease-out infinite both; }
+  .loading-cube .f2 { animation-delay: 0.3s; }
+  .loading-cube .f3 { animation-delay: 0.6s; }
+}
+@keyframes loading-face { 0% { opacity: 0; transform: scale(0.6); } 14% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 92%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .loading-sweep { --p: 360deg; animation: loading-in 0.2s 0.5s forwards; }
+}

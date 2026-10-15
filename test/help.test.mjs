@@ -50,7 +50,7 @@ test('every button and slider on the page and in the Drawing sheet is on the Hel
   const drawing = html.slice(html.indexOf('<dialog id="drawing"'), html.indexOf('</dialog>', html.indexOf('<dialog id="drawing"')));
   const page = html.slice(0, html.indexOf('<dialog')) + drawing;
   // Notices are explained in place; the New confirmation's choices are explained under New.
-  const notControls = new Set(['update-reload', 'update-close', 'protect-close', 'save-note-save', 'save-note-close', 'move-open', 'move-close', 'replay-stop', 'new-save-first', 'new-anyway', 'new-cancel']);
+  const notControls = new Set(['update-reload', 'update-close', 'protect-close', 'save-note-save', 'save-note-close', 'move-open', 'move-close', 'replay-stop', 'new-save-first', 'new-anyway', 'new-cancel', 'loading-reload']);
   // Sliders (role="slider": the zoom track, the density handle) count as controls too.
   const controls = [...page.matchAll(/<button[^>]*\bid="([^"]+)"/g), ...page.matchAll(/<div[^>]*\bid="([^"]+)"[^>]*\brole="slider"/g)];
   for (const [, id] of controls) {

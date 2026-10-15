@@ -33,7 +33,7 @@ jobs:
       - name: Moving house (just move-check)
         run: just move-check
       - name: Width check (just look)
-        run: just look draw drawn select selmore rail zoom fit brushes settings settings-open-all drawing-sheet drawing-new color-pick sheet-focus update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll --light --out shots/look
+        run: just look draw drawn select selmore rail zoom fit brushes settings settings-open-all drawing-sheet drawing-new color-pick sheet-focus update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll loading loading-slow --light --out shots/look
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v7.0.2
