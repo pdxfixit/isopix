@@ -61,8 +61,12 @@ The owner's cloud environment can deploy (2026-10-15). It has:
 - **Allowed domains** the deploy and its checks need: `api.cloudflare.com`,
   `isopix.app`, `isopix.pdxfixit.com` and the old Isogrid address (for
   flarepress's `sites`), with the default package-manager list kept.
-- **flarepress**: attach `pdxfixit/flarepress` to the session (add_repo) and
-  clone it next to this repo, then run `tools/cloud_setup.sh` again.
+- **flarepress**: select `pdxfixit/flarepress` as a second repository,
+  beside `pdxfixit/isopix`, wherever a session starts: a new cloud session and
+  the scheduled deploy task. It is cloned to `/home/user/flarepress`, where
+  `tools/cloud_setup.sh` finds it. Do not attach it mid-session (add_repo):
+  the session's permission check refuses that (2026-10-15), and a session
+  cannot change its own repositories. Without it, the session cannot deploy.
 - **CI without gh**: `deploy-check` reads the public repo's runs from GitHub's
   API when `gh` is not logged in.
 
