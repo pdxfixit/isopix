@@ -35,7 +35,9 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Cell layer cache**: the cells are drawn to an offscreen bitmap a little larger than the screen (`web/layer.js` decides blit, patch or full redraw; tests in `test/layer.test.mjs`). Panning moves the bitmap, painting redraws only the changed area (the model records changed keys), and zoom redraws at the new scale.
 
-**Welcome card** (2026-10-15, branch only): once, on a first visit over an empty drawing, a card with a cube of six triangles to tap (they fill with the color in use, shaded by face), three lines on how to touch the app, and Start drawing; Settings → About → Show the welcome again (`web/welcome.js`, `test/welcome.test.mjs`, `just look welcome welcome-first`). Proposed and waiting on the owner: a loading screen and silly default drawing names (mocks at https://claude.ai/artifact/UP7bVMZ4mz7zhAd5iXhEjF; see [questions.md](questions.md)).
+**Welcome card** (2026-10-15, branch only): once, on a first visit over an empty drawing, a card with a cube of six triangles to tap (they fill with the color in use, shaded by face), three lines on how to touch the app, and Start drawing; Settings → About → Show the welcome again (`web/welcome.js`, `test/welcome.test.mjs`, `just look welcome welcome-first`). 
+
+**Silly names** (2026-10-15, branch only): New and the first drawing in a browser get a name like "Bouncy Badger" (96 adjectives, 96 nouns, same first letter); 🎲 by the name rolls another; file names are lowercase (`web/sillynames.js`, `test/sillynames.test.mjs`, `just look name-roll`).
 
 **Help**: Settings → About → Help or `?` opens a sheet of every control (with its icon), gesture and key, generated from the same key table the app binds (`web/help.js`, `web/keys.js`, `test/help.test.mjs`, `just look help`).
 

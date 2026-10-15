@@ -13,10 +13,11 @@ export function cleanName(name) {
   return s || DEFAULT_NAME;
 }
 
-// The start of a saved file's name: the drawing's name with characters that
-// file systems refuse removed, spaces as dashes. "isopix" when nothing is left.
+// The start of a saved file's name: the drawing's name in lowercase, with
+// characters that file systems refuse removed, spaces as dashes. "isopix" when
+// nothing is left. (Owner, 2026-10-15: "lowercase filenames".)
 export function fileBase(name) {
-  const s = cleanName(name).replace(/[\\/:*?"<>|]/g, '').replace(/^\.+/, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+  const s = cleanName(name).replace(/[\\/:*?"<>|]/g, '').replace(/^\.+/, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 60).toLowerCase();
   return s || 'isopix';
 }
 

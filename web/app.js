@@ -24,6 +24,7 @@ import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './eng
 import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
 import { readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
 import { welcomeDue, initWelcome } from './welcome.js';
+import { sillyName } from './sillynames.js';
 import * as PNGP from './engine/pngproject.js';
 
 // ---------- palette and settings ----------
@@ -1232,7 +1233,7 @@ async function saveVector() {
 }
 function startNew() {
   app.drawing = newDrawing(); app.selection = null; app.lastDensity = null; app.trace = null;
-  setName('');
+  setName(sillyName(Math.random, app.drawingName));
   app.file = { name: null, at: null, via: null, dirty: false, handle: null };
   rememberFile();
   buildPalette(); syncMenu(); afterChange({ changed: false }); updateFileUI();
@@ -1302,6 +1303,7 @@ function wireMenu() {
   $('#replay').addEventListener('click', () => { $('#settings').close(); startReplay(); });
   // The Drawing sheet and the top bar's New, Open and Save.
   $('#drawing-name').addEventListener('input', (e) => { setName(e.target.value); scheduleSave(); });
+  $('#name-roll').addEventListener('click', () => { setName(sillyName(Math.random, app.drawingName)); $('#drawing-name').value = app.drawingName; scheduleSave(); });
   $('#drawing-name').addEventListener('change', (e) => { e.target.value = app.drawingName; });
   $('#file-new').addEventListener('click', () => askFirst('new'));
   $('#top-new').addEventListener('click', () => askFirst('new'));
@@ -1667,6 +1669,7 @@ async function boot() {
   if (saved) {
     try { loadProjectObject(saved); if (Number.isFinite(saved.savedAt)) app.lastSaved = saved.savedAt; } catch (err) { toast(`The saved drawing could not load: ${err.message}`); }
   }
+  if (!saved && !arriving) setName(sillyName()); // the very first drawing here gets a silly name too
   const file = await store.idbGet('file');
   if (file && typeof file === 'object') app.file = { name: String(file.name || ''), at: Number(file.at) || null, via: file.via === 'open' ? 'open' : 'save', dirty: !!file.dirty, handle: file.handle || null };
   if (arriving) await takeMovedDrawing(arriving);

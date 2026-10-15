@@ -35,9 +35,10 @@ test('drawing names and file names', () => {
   assert.equal(S.cleanName(undefined), 'Untitled drawing');
   assert.equal(S.cleanName('   '), 'Untitled drawing');
   assert.equal(S.cleanName('  My   cube\n'), 'My cube');
-  assert.equal(S.fileBase('My cube: v2/final?'), 'My-cube-v2final');
+  assert.equal(S.fileBase('My cube: v2/final?'), 'my-cube-v2final');
   assert.equal(S.fileBase('..\\\\..'), 'isopix');
-  assert.equal(S.fileBase('Untitled drawing'), 'Untitled-drawing');
+  assert.equal(S.fileBase('Untitled drawing'), 'untitled-drawing');
+  assert.equal(S.fileBase('Bouncy Badger'), 'bouncy-badger', 'file names are lowercase');
   assert.ok(S.fileBase('x'.repeat(200)).length <= 60);
 });
 
