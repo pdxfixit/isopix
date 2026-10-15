@@ -155,7 +155,9 @@ export function helpHTML(iconOf = () => '') {
     if (it.glyph) return GLYPHS[it.glyph];
     const borrowed = it.from ? iconOf(it.from) : '';
     if (borrowed) return borrowed;
-    return `<span class="help-text-icon">${esc(it.text || '')}</span>`;
+    // Long keys (Ctrl+Shift+S) wrap after each + to fit the 44 px box.
+    const text = esc(it.text || '');
+    return `<span class="help-text-icon">${it.key ? text.replace(/\+(?=.)/g, '+<wbr>') : text}</span>`;
   };
   const sections = [...SECTIONS, { title: 'Keys', intro: 'For a keyboard.', items: keyItems() }];
   return sections.map((s, i) => `<section aria-labelledby="help-h${i}"><h3 id="help-h${i}">${esc(s.title)}</h3>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${

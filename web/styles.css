@@ -256,6 +256,9 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
 .version { text-align: center; color: var(--muted); font-size: 14px; margin: 14px 0 4px; }
+.version a { color: inherit; display: inline-block; padding: 12px 8px; min-height: 44px; }
+.help-report { border-top: 1px solid var(--border); margin: 18px 0 4px; padding-top: 12px; text-align: center; }
+.help-report a { display: inline-block; padding: 12px 8px; min-height: 44px; color: var(--accent); font-weight: 700; }
 
 /* ---- Drawing sheet: the name, big file buttons ---- */
 .menu .name-field { display: flex; flex-direction: column; align-items: stretch; gap: 4px; font-weight: 600; margin: 8px 0 12px; }
@@ -272,7 +275,8 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
 .help-icon { width: 44px; min-height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
 .help-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .help-icon svg path[fill="currentColor"] { fill: currentColor; }
-.help-icon.help-key { font: 700 13px ui-monospace, monospace; }
+.help-icon.help-key { font: 700 13px ui-monospace, monospace; text-align: center; line-height: 1.15; padding: 3px 0; }
+.help-icon.help-key .help-text-icon { font-size: 12px; }
 .help-text-icon { font-weight: 800; font-size: 15px; }
 .help b { margin-right: 4px; }
 
