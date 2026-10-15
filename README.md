@@ -93,7 +93,7 @@ leaves the device.
 
 | Path | What it holds |
 |---|---|
-| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `glyphs.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
+| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `glyphs.js`, `welcome.js` (the first-visit card), `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `test/` | `node --test` suites for the engine. |
 | `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |

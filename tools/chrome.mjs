@@ -97,6 +97,15 @@ export async function connect(wsUrl) {
   return { send, listeners, session, close: () => ws.close() };
 }
 
+// The welcome card opens on a first visit over an empty drawing, which is
+// every fresh profile here. Tools that are not about it call this after
+// Page.enable, so each page starts as a returning visitor's; the `welcome`
+// look view opens it on purpose.
+// A page whose address has look=welcome-first is left alone: that view checks
+// a first visit.
+export const skipWelcome = (send) => send('Page.addScriptToEvaluateOnNewDocument', { source:
+  "try { if (!/[?&]look=welcome-first/.test(location.search)) { const k = 'isopix-settings', s = JSON.parse(localStorage.getItem(k) || '{}'); s.welcomed = true; localStorage.setItem(k, JSON.stringify(s)); } } catch {}" });
+
 // Runs `expression` in the page (awaiting a promise) and gives its value, or
 // throws the page's error.
 export async function evaluate(send, expression) {

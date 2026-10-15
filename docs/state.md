@@ -33,6 +33,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Cell layer cache**: the cells are drawn to an offscreen bitmap a little larger than the screen (`web/layer.js` decides blit, patch or full redraw; tests in `test/layer.test.mjs`). Panning moves the bitmap, painting redraws only the changed area (the model records changed keys), and zoom redraws at the new scale.
 
+**Welcome card** (2026-10-15, branch only): once, on a first visit over an empty drawing, a card with a cube of six triangles to tap (they fill with the color in use, shaded by face), three lines on how to touch the app, and Start drawing; Settings → About → Show the welcome again (`web/welcome.js`, `test/welcome.test.mjs`, `just look welcome welcome-first`). Proposed and waiting on the owner: a loading screen and silly default drawing names (mocks at https://claude.ai/artifact/UP7bVMZ4mz7zhAd5iXhEjF; see [questions.md](questions.md)).
+
 **Help**: Settings → About → Help or `?` opens a sheet of every control (with its icon), gesture and key, generated from the same key table the app binds (`web/help.js`, `web/keys.js`, `test/help.test.mjs`, `just look help`).
 
 **Tools**: `just serve | test | look | version | export-check | perf | prove | live-check | icons`, plus the deploy recipes from `deploy.just` (`deploy-check | deploy-plan | deploy | deploy-verify | live | rollback | ship`). `test/docs.test.mjs` keeps the docs honest: every recipe and look view they name exists, every link and repo path resolves, and AGENTS.md stays under 16,000 bytes.
@@ -71,6 +73,8 @@ Before that:
 5. Settings → Drawing → Paper: flip a drawing to dark paper and draw with the light inks; then start a New drawing and check it opens on the paper matching the phone's mode.
 
 ## CI gaps closed
+
+- 2026-10-15: `just look welcome-first` (in CI) clears the profile's storage before each width, so it is the one view that sees what a first visit sees: it fails unless the welcome card opens by itself (proven by taking the open call out). The look tools mark every other page welcomed (`skipWelcome` in `tools/chrome.mjs`), so the card never hides what a view checks. look's overlap check now tests SVG controls by their shapes, not their boxes (the cube's triangles share boxes but never touch); sample points are offset so none lands on a shared edge.
 
 - 2026-10-15: `just move-check` (in CI) moves a drawing end to end in headless Chrome from both old addresses (mapped to localhost) and checks it lands silently, is never taken twice, and is offered, not put in place of a drawing already there; `test/move.test.mjs` covers packing, the size fallbacks and the shape check of an arrival. The dev server now sends each path's `_headers` rules (CORS on `move.js`), as Cloudflare does. The `save-file` look view, run at several widths, caught the Save dot not coming back when the file record was already "changed" and the page empty; fixed.
 

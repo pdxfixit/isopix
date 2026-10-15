@@ -38,9 +38,8 @@ items move to [TODO.md](../TODO.md) "Agents do". Sizes: **S** under an hour,
 3. **Two-finger tap undoes, three-finger tap redoes.** S–M. The convention
    from Procreate and most drawing apps; cheap to add on top of the gesture
    code. Needs a real phone to tune timing.
-4. **First-run tips.** S. Three short, dismissible tips the first time: one
-   finger draws, two fingers move and zoom, the hand moves with one. An empty
-   canvas is otherwise silent.
+4. **First-run tips.** Done as the welcome card (2026-10-15, the owner's
+   pick of three mocks): see docs/decisions.md.
 5. **Share a picture.** S. A Share button (phones) that sends the PNG to
    Messages, Photos and so on through the share sheet.
 6. **Install button.** S. "Add Isopix to your home screen": the browser's own

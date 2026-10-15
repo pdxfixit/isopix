@@ -231,6 +231,7 @@
       <section class="set-about" aria-labelledby="set-about-title">
         <h3 id="set-about-title">About</h3>
         <button type="button" id="help-open" class="btn wide">Help: every button, gesture and key (?)</button>
+        <button type="button" id="welcome-again" class="btn wide">Show the welcome again</button>
         <p class="note">When a newer Isopix is live, a bar says "🆕 An update for Isopix is ready." Reload saves your drawing first; ✕ asks again later.</p>
         <p class="version"><a href="https://github.com/pdxfixit/isopix" target="_blank" rel="noopener"><span id="version-label"></span>&nbsp;· GitHub</a></p>
       </section>
@@ -275,6 +276,24 @@
         </button>
       </header>
       <div id="help-body"></div>
+    </form>
+  </dialog>
+  <dialog id="welcome" aria-labelledby="welcome-title">
+    <form method="dialog" class="menu welcome">
+      <button class="btn welcome-close" value="close" aria-label="Close the welcome">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <svg id="welcome-cube" class="welcome-cube" viewBox="0 0 170 132" role="group" aria-label="A cube to build: six triangles"></svg>
+      <p id="welcome-caption" class="welcome-caption" aria-live="polite"></p>
+      <h2 id="welcome-title">Welcome to Isopix</h2>
+      <p class="welcome-say">Draw with triangles. Small ones for detail, big ones to fill fast.</p>
+      <ul class="welcome-list">
+        <li><span class="welcome-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-5L16 4l4 4L9 19ZM14 6l4 4"/></svg></span>One finger draws.</li>
+        <li><span class="welcome-ic" aria-hidden="true">2</span>Two fingers move and zoom.</li>
+        <li><span class="welcome-ic lit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19.8 7.5v9L12 21l-7.8-4.5v-9Z"/></svg></span>The hexagon picks the size.</li>
+      </ul>
+      <button id="welcome-start" class="btn welcome-start" value="start" autofocus>Start drawing</button>
+      <p class="note welcome-foot">Help, in ⚙️ Settings, shows every button.</p>
     </form>
   </dialog>
 </body>

@@ -64,6 +64,7 @@ export const SECTIONS = [
       { name: 'Open', from: '#top-open', says: 'On wider screens: opens a project file.' },
       { name: 'Save', from: '#top-save', says: 'On wider screens: saves the project file, like Save file in the Drawing sheet. A dot means changes not in a file yet.' },
       { name: 'Settings', from: '#settings-open', says: 'Drawing, Grid, Selection, Learning and About. Each part folds; its chip shows what is set.' },
+      { name: 'Welcome', from: '#welcome-again', text: '👋', says: 'Settings → About → Show the welcome again opens the card a first visit shows. Its cube is practice: tap the six triangles and each shades itself. It is not part of your drawing.' },
       { name: 'Undo', from: '#undo', says: 'Takes back the last change. There is no limit.' },
       { name: 'Redo', from: '#redo', says: 'Puts it back.' },
       { name: 'Keep', from: '#mode-chip', says: 'What a big stroke does over finer detail. Keep: it skips cells that already have finer detail (the preview hatches them). Tap to switch.' },
