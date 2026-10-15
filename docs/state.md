@@ -23,6 +23,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Moving house** (2026-10-15, live): https://isopix.app is the home (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers whose page carries a browser's drawing, settings and file record over in the `#move=` fragment and goes (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
 
+**Save as a picture** (2026-10-15, on `main`): Save file writes `name.isopix.png`, a picture with the whole project inside; Open reads it back; a setting in Settings → Drawing switches Save to `.isopix.json` (`web/engine/pngproject.js`, `test/pngproject.test.mjs`, four `just export-check` checks; the file also checked with Python's own PNG reading).
+
 **Drawing or moving** (2026-10-14, live at isopix.app in 1.2.13): the Move hand at the top of the zoom rail (and `H`) makes one finger pan; a tool tap, the hand or Esc ends it. A second finger takes back a stroke under 500 ms old or under 24 px long; the finger left after a pinch pans (`web/engine/gesture.js`, `test/gesture.test.mjs`, `just look move pinchpan`).
 
 **Keep fine detail made visible** (named Protect until 2026-10-12): the Keep / Behind / Replace chip by ⌖ (the same tipped fill can as the Fill tool, the word tells the mode), hatched skipped cells in the hover preview and after a stroke, and a once-a-session "skipped N cells" notice (`web/engine/protect.js`, `test/protect.test.mjs`, `just look protect hoverskip`). The owner's "larger tile isn't overpainting" report was this mode: reproduced in headless Chrome (a level-2 tile over level-5 detail: Keep and Paint behind keep the detail, Replace overpaints, with or without follow-zoom, symmetry or drag brushes).
