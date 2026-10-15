@@ -10,7 +10,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 - **Run:** `just serve`, then http://localhost:8790/. Port 8790 is the owner's own server; agents preview on **8791** (`just serve 8791`).
 - **Look:** `just look drawn select settings drawing-sheet brushes` checks 320, 375, 700, 900 and 1100 px in your own headless Chrome.
 - **Output:** `just export-check` proves PNG, SVG and project files round trip.
-- **Ship:** see [Ship](#ship). A commit that changes `web/` gets `just version` and a push; GitHub deploys it (`.github/workflows/deploy.yml`, started by hand for now). Agents never deploy.
+- **Ship:** see [Ship](#ship). A commit that changes `web/` gets `just version` and a push; GitHub deploys it (`.github/workflows/deploy.yml`, on every push to `main` that changes `web/`, `worker/` or `site/`). Agents never deploy.
 - **Agents never deploy** and hold no Cloudflare token: commit, push, get CI green, and say whether it is deployed: [docs/environment.md](docs/environment.md#a-session-that-cannot-deploy).
 
 ## Cold start: read in this order
@@ -56,7 +56,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 
 ## Ship
 
-Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here (The owner, 2026-10-15: "move towards a GHA focused deploy, so an agent / ide isn't in the mix"). **The workflow starts by hand for now** (Actions → deploy → Run workflow): `main` holds the usage counts, which must not go live before their Worker and D1 database are bound (docs/state.md); then its push trigger goes on for `web/`, `worker/` and `site/`. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
+Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here (The owner, 2026-10-15: "move towards a GHA focused deploy, so an agent / ide isn't in the mix"). **It deploys every push to `main` that changes `web/`, `worker/` or `site/`** (the owner, 2026-10-15: "autodeploy like noodlepads"); Actions → deploy → Run workflow runs it by hand. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
 
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
 2. **Commit to `main`** by explicit path, then **`git push`**, and read the CI run until it is green.
