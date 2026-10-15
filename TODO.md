@@ -13,6 +13,6 @@ Offered, not yet approved (ask the owner first):
 
 ## The owner does
 
-- Deploy `main` (the move to isopix.app, saving, Move, the offline fix) from the Mac: the steps are in [docs/state.md](docs/state.md) "In flight".
+- Push the two move pages from the Mac (isopix.app itself is live): the steps are in [docs/state.md](docs/state.md) "In flight".
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
 - Answer cards 8 to 10 in [docs/questions.md](docs/questions.md).
