@@ -44,6 +44,31 @@ Check them all: `node --version; python3 --version; just --version; gh auth stat
 | **The design brief** | Background on intent. | In repo: [design-brief.md](design-brief.md). | — (in repo) |
 | **A real phone or tablet** | Real multi-touch, pen, install to home screen, speed on a phone. | No tool here can test these. Say so in your report and add the check to "Try first" in [state.md](state.md). | The owner |
 
+## A cloud session (claude.ai/code)
+
+The owner's cloud environment can deploy (2026-10-15). It has:
+
+- **`CLOUDFLARE_API_TOKEN`** as an environment variable (Workers Scripts and
+  Routes edit, DNS edit, Zone read). Wrangler reads it; flarepress's Keychain
+  lookup finds nothing on Linux and leaves it alone.
+- **A setup script** that is a shim to `tools/cloud_setup.sh`:
+  `f=/home/user/isopix/tools/cloud_setup.sh; [ -f "$f" ] && bash "$f" || true`.
+  `.claude/hooks/session-start.sh` runs the same script at every session start
+  (git settings live in each fresh clone). It installs `just` and wrangler
+  (pinned), runs `just setup`, points flarepress's `isopix.app/public` at this
+  checkout's `web/` (and exports `FLAREPRESS`), and reports whether the token
+  and the deploy hosts are reachable.
+- **Allowed domains** the deploy and its checks need: `api.cloudflare.com`,
+  `isopix.app`, `isopix.pdxfixit.com` and the old Isogrid address (for
+  flarepress's `sites`), with the default package-manager list kept.
+- **flarepress**: attach `pdxfixit/flarepress` to the session (add_repo) and
+  clone it next to this repo, then run `tools/cloud_setup.sh` again.
+- **CI without gh**: `deploy-check` reads the public repo's runs from GitHub's
+  API when `gh` is not logged in.
+
+Then deploy as on the Mac (AGENTS.md, Ship). If the setup script's report
+shows a ⚠️, fix that first; otherwise follow the next section.
+
 ## A session that cannot deploy
 
 A cloud session, or any session without flarepress, the Cloudflare login or
