@@ -74,7 +74,7 @@ From this repo (`just` lists them with their notes):
 ```
 just deploy-check    # on main, web/ committed, files present, tests pass, CI green, shows the version that would ship
 just deploy-plan     # deploy-check, then wrangler's dry run: lists the files, sends nothing
-just --yes deploy    # harvest, check, stamp, push, then deploy-verify (never without --yes; GitHub runs it too)
+just --yes deploy    # check, stamp, push, then deploy-verify (never without --yes; GitHub runs it too)
 just deploy-verify   # wait for the live version, then check the live site
 just live            # what is live right now (read-only)
 just rollback        # print the steps to go back to the previous release; add --yes to run them
