@@ -21,27 +21,36 @@ site() { "$TOOL" "$SITE" "$@"; }
 
 # GitHub's test run for HEAD must be green: `just look` and export-check run only
 # there. A run still going is waited for (CI's own 20-minute limit bounds it). SKIP_CI=1 skips
-# this, for when GitHub or gh is down; say so in the report.
+# this, for when GitHub or gh is down; say so in the report. Without a logged-in
+# gh (a cloud session), it reads the public repo's runs from GitHub's API instead.
+ci_run() {  # "id status conclusion" of test.yml's newest run for $1, or nothing
+  if gh auth status >/dev/null 2>&1; then
+    gh run list --workflow test.yml --commit "$1" --limit 1 --json databaseId,status,conclusion \
+      -q '.[0] | "\(.databaseId) \(.status) \(.conclusion)"' 2>/dev/null || true
+  else
+    curl -fsS -m 20 "https://api.github.com/repos/pdxfixit/isopix/actions/workflows/test.yml/runs?head_sha=$1&per_page=1" 2>/dev/null \
+      | python3 -c 'import json,sys; r=json.load(sys.stdin)["workflow_runs"]; print(r and "%s %s %s" % (r[0]["id"], r[0]["status"], r[0]["conclusion"]) or "")' 2>/dev/null || true
+  fi
+}
 ci_green() {
   local sha st id
   [ "${SKIP_CI:-}" = 1 ] && { echo "⚠️ SKIP_CI=1: deploying without GitHub's test run"; return 0; }
-  command -v gh >/dev/null || { echo "🛑 no gh, so CI cannot be read (SKIP_CI=1 deploys without it)" >&2; return 1; }
   sha=$(git rev-parse HEAD)
   for _ in 1 2 3 4 5 6; do   # a run appears a few seconds after the push
-    st=$(gh run list --workflow test.yml --commit "$sha" --limit 1 --json databaseId,status,conclusion \
-      -q '.[0] | "\(.databaseId) \(.status) \(.conclusion)"' 2>/dev/null || true)
-    [ -n "$st" ] && break; sleep 10
+    st=$(ci_run "$sha"); [ -n "$st" ] && break; sleep 10
   done
   [ -n "$st" ] || { echo "🛑 no CI run for ${sha:0:7} on GitHub (pushed? gh run list)" >&2; return 1; }
   id=${st%% *}
+  case "$st" in *" completed "*) ;; *) echo "⏳ CI is running for ${sha:0:7} (run $id); waiting for it" ;; esac
+  for _ in $(seq 1 120); do   # up to 20 minutes, CI's own limit
+    case "$st" in *" completed "*) break ;; esac
+    sleep 10; st=$(ci_run "$sha")
+  done
   case "$st" in
-    *" completed success") ;;
-    *" completed "*) echo "🛑 CI failed for ${sha:0:7}: gh run view $id --log-failed" >&2; return 1 ;;
-    *) echo "⏳ CI is running for ${sha:0:7}; waiting for it (gh run watch $id)"
-       gh run watch "$id" --exit-status >/dev/null 2>&1 \
-         || { echo "🛑 CI did not pass for ${sha:0:7}: gh run view $id --log-failed" >&2; return 1; } ;;
+    *" completed success") echo "✅ CI green for ${sha:0:7} (tests, export-check, move-check, just look)" ;;
+    *" completed "*) echo "🛑 CI failed for ${sha:0:7}: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; return 1 ;;
+    *) echo "🛑 CI still not done for ${sha:0:7} after 20 minutes: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; return 1 ;;
   esac
-  echo "✅ CI green for ${sha:0:7} (tests, export-check, just look)"
 }
 
 sub=${1:-}; shift || true
