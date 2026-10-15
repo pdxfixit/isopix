@@ -101,6 +101,17 @@ const result = await evaluate(`(async () => {
     sameNow: JSON.stringify([...backNow.cells].sort()) === JSON.stringify([...a.drawing.cells].sort()),
     plainRefused: /no Isopix drawing inside/.test(plain), name: back.name };
   out.projectPngBytes = Array.from(new Uint8Array(await pp.arrayBuffer()));
+
+  // The .isopix file (Save with "Save as a picture" off): gzip, or plain JSON
+  // for the share sheet; an older .isopix.json still opens.
+  const cellsOf = (o) => JSON.stringify([...P.load(o).cells].sort());
+  const mine = JSON.stringify([...a.drawing.cells].sort());
+  const iz = await a.isopixFile(), ij = a.isopixFile({ now: true });
+  const head = Array.from(new Uint8Array(await iz.slice(0, 2).arrayBuffer()));
+  out.isopix = { size: iz.size, jsonSize: json.length, gzip: head[0] === 0x1f && head[1] === 0x8b,
+    same: cellsOf(await a.projectFromFile(new File([iz], 'check.isopix'))) === mine,
+    sameNow: cellsOf(await a.projectFromFile(new File([ij], 'now.isopix'))) === mine,
+    oldJson: cellsOf(await a.projectFromFile(new File([json], 'old.isopix.json'))) === mine };
   a.settings.locked = false;
   return out;
 })()`);
@@ -191,6 +202,9 @@ const checks = [
   ['🖼️💾 Open gets the same drawing and undo log back out of Save\'s PNG', result.projectPng.same],
   ['🖼️💾 the share sheet\'s uncompressed PNG opens the same', result.projectPng.sameNow],
   ['🖼️💾 a plain picture is refused with a way forward (Trace a picture)', result.projectPng.plainRefused],
+  [`📦 an .isopix file is gzip (${Math.round(result.isopix.size / 1024)} KB, the JSON is ${Math.round(result.isopix.jsonSize / 1024)} KB) and opens the same`, result.isopix.gzip && result.isopix.same],
+  ['📦 the share sheet\'s plain .isopix opens the same', result.isopix.sameNow],
+  ['📦 an older .isopix.json still opens', result.isopix.oldJson],
   ...layer.map(([label, bad, small, max]) => [`🧱 cached cell layer matches a fresh redraw after ${label} (${bad} visible differences; ${small} faint edge values, largest ${max})`, bad === 0]),
   [`🖼️  a 4000x3000 trace photo is made smaller to ${trace1.w}x${trace1.h}, and says so`, trace1.w === 2048 && trace1.h === 1536 && /smaller/.test(trace1.toast)],
   [`💾 the trace picture comes back after a reload (${trace2.w} px wide)`, trace2.w === 2048],

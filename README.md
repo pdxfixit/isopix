@@ -82,8 +82,9 @@ notice says so once, with a Save file button. Settings live in `localStorage`.
 **Save file** writes a PNG picture with the whole project inside
 (`name.isopix.png`; `web/engine/pngproject.js`): it opens in any photo app,
 and Open reads the drawing back out. Settings → Drawing → "Save as a
-picture" off writes a `.isopix.json` file instead. Either holds the cells,
-bold edges, hidden children, the undo log and stamps. How it saves depends on the device
+picture" off makes it **Save Isopix drawing**, which writes an `.isopix` file
+(the project JSON, gzip-compressed). Either holds the cells, bold edges,
+hidden children, the undo log and stamps; older `.isopix.json` files still open. How it saves depends on the device
 (`saveMethod` in `web/storage.js`): Chrome and Edge on a computer show their
 Save dialog once and then write the same file on each Save (the file handle
 is kept in IndexedDB); iPhone and iPad open the share sheet (Save to Files),
