@@ -157,6 +157,8 @@ export async function openFile({ accept, description }) {
 const through = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
 export const deflate = (bytes) => through(bytes, new CompressionStream('deflate'));
 export const inflate = (bytes) => through(bytes, new DecompressionStream('deflate'));
+export const gzip = (bytes) => through(bytes, new CompressionStream('gzip'));
+export const gunzip = (bytes) => through(bytes, new DecompressionStream('gzip'));
 
 export function pickFile(accept) {
   return new Promise((resolve) => {
