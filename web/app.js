@@ -1105,7 +1105,8 @@ function syncMenu() {
   $('#opt-limited').checked = s.limited;
   $('#opt-gray').checked = s.gray;
   $('#opt-save-png').checked = s.savePng;
-  $('#file-save-label').textContent = s.savePng ? 'Save file' : 'Save Isopix drawing';
+  $('#opt-save-png-row').hidden = !store.offersIsopixFile({ ios: store.isIOS() });
+  $('#file-save-label').textContent = savesPng() ? 'Save file' : 'Save Isopix drawing';
   $('#opt-trace').value = String(s.traceOpacity);
   document.body.classList.toggle('gray', s.gray);
   const dark = paperName(app.drawing.paper) === 'dark';
@@ -1142,7 +1143,9 @@ const PNG_TYPE = { type: 'image/png', accept: { description: 'Isopix drawing (a 
 // Save's file: a PNG with the whole project inside (engine/pngproject.js), or
 // with that setting off, an .isopix file (Owner: "call it save isopix drawing,
 // and use the idea of an .isopix extension here"; "this was instead of the json file").
-const saveExt = () => (app.settings.savePng ? '.isopix.png' : '.isopix');
+// The PNG unless the setting is off on a device that offers .isopix files.
+const savesPng = () => app.settings.savePng || !store.offersIsopixFile({ ios: store.isIOS() });
+const saveExt = () => (savesPng() ? '.isopix.png' : '.isopix');
 function isopixFile({ now = false } = {}) {
   const json = new TextEncoder().encode(JSON.stringify(projectData()));
   if (now) return new Blob([json], { type: ISOPIX_TYPE.type });
@@ -1188,7 +1191,7 @@ function sayResult(r, what) {
 // Returns true once the drawing is in a file. A file kept from an earlier
 // Save is written again only when it is the same kind (PNG or project file).
 async function saveFile({ asNew = false } = {}) {
-  const png = app.settings.savePng;
+  const png = savesPng();
   if (png && !pngCanvas()) { toast('Nothing to save yet'); return false; }
   const ext = saveExt(), h = app.file.handle;
   const handle = !asNew && h && String(h.name || '').endsWith(ext) ? h : null;
