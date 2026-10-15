@@ -126,7 +126,7 @@ export const SECTIONS = [
     items: [
       { name: 'Swatch', text: '●', says: 'Tap a color. With the Eraser on, picking a color switches to the Pencil. The two small tones show auto-shade.' },
       { name: 'Auto-shade', glyph: 'cube', says: 'One color becomes three tones on cube faces: top light, left mid, right dark.' },
-      { name: 'Any color', text: '⊕', says: 'Pick a color of your own. On the Eraser, this also switches to the Pencil.' },
+      { name: 'Any color', glyph: 'eyedropper', says: 'Pick a color of your own. On the Eraser, this also switches to the Pencil.' },
       { name: 'Paper', text: '◐', says: 'Settings → Drawing → Paper: each drawing keeps its own light or dark paper. The inks follow the paper.' },
     ],
   },

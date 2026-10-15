@@ -46,6 +46,12 @@ test('every tool button and brush shape has a Help line with its real icon', () 
   for (const b of brushes) assert.ok(items.some((it) => it.glyph === b), `brush ${b} missing from Help`);
 });
 
+test('the palette\'s pick-any-color button and its Help line show the same icon', () => {
+  const m = app.match(/custom\.innerHTML = `\$\{GLYPHS\.([a-z-]+)\}/);
+  assert.ok(m, 'the palette draws its pick-any-color icon from GLYPHS');
+  assert.equal(items.find((it) => it.name === 'Any color')?.glyph, m[1]);
+});
+
 test('every button and slider on the page and in the Drawing sheet is on the Help sheet, and every icon it borrows exists', () => {
   const drawing = html.slice(html.indexOf('<dialog id="drawing"'), html.indexOf('</dialog>', html.indexOf('<dialog id="drawing"')));
   const page = html.slice(0, html.indexOf('<dialog')) + drawing;
