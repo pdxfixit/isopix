@@ -37,6 +37,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Welcome card** (2026-10-15, branch only): once, on a first visit over an empty drawing, a card with a cube of six triangles to tap (they fill with the color in use, shaded by face), three lines on how to touch the app, and Start drawing; Settings → About → Show the welcome again (`web/welcome.js`, `test/welcome.test.mjs`, `just look welcome welcome-first`). 
 
+**Loading screen** (2026-10-15, branch only): paper from the first frame; after 0.5 s the grid sweeps in clockwise like a progress ring under a bar with the icon's cube building and "Getting the paper ready"; it completes and fades when the app is ready, and says "Still loading" with Reload after 10 s (`web/loading.js`, `test/loading.test.mjs`, `just look loading loading-slow`). Timed on throttled 3G in headless Chrome: a first visit is ready in 4.8–5.1 s (4.0 s before; the new files and the finishing turn add about 1 s); a return visit's paper is gone at 0.3 s and never shows the sweep. Preloading the modules (`<link rel="modulepreload">`) measured about 15% faster on a first visit and is not done yet.
+
 **Silly names** (2026-10-15, branch only): New and the first drawing in a browser get a name like "Bouncy Badger" (96 adjectives, 96 nouns, same first letter); 🎲 by the name rolls another; file names are lowercase (`web/sillynames.js`, `test/sillynames.test.mjs`, `just look name-roll`).
 
 **Help**: Settings → About → Help or `?` opens a sheet of every control (with its icon), gesture and key, generated from the same key table the app binds (`web/help.js`, `web/keys.js`, `test/help.test.mjs`, `just look help`).

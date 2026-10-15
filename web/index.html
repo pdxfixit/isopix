@@ -15,6 +15,15 @@
   <script type="module" src="app.js"></script>
 </head>
 <body>
+  <div id="loading" class="loading" role="status">
+    <div class="loading-sweep" aria-hidden="true"><div class="loading-paper"></div></div>
+    <div class="loading-bar">
+      <svg class="loading-cube" viewBox="0 0 100 100" aria-hidden="true"><polygon class="f1" points="50,22 75.98,37 50,52 24.02,37" fill="#6ea8ff"/><polygon class="f2" points="50,52 50,82 24.02,67 24.02,37" fill="#3a86ff"/><polygon class="f3" points="50,52 75.98,37 75.98,67 50,82" fill="#1f5fcc"/></svg>
+      <span class="loading-words"><span class="loading-name">Isopix</span><span class="loading-tag">Getting the paper ready</span></span>
+    </div>
+    <p class="loading-slow" hidden>Still loading. A slow connection takes a while the first time. <button type="button" id="loading-reload" class="btn wide">Reload</button></p>
+  </div>
+  <script src="loading.js"></script>
   <canvas id="stage" role="img" aria-label="Drawing canvas. One finger draws with the tool in use; two fingers move and zoom the view. The hand button on the left makes one finger move the view." tabindex="0"></canvas>
 
   <div class="cluster topleft">

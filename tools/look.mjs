@@ -9,7 +9,7 @@
 // screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
-//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll
+//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll loading loading-slow
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -118,6 +118,14 @@ const SILLY = /^([A-Z])[a-z]+ \1[a-z]+$/;
 VIEWS['welcome-first'] = { fresh: true, js: `if (!document.querySelector('#welcome').open) throw new Error('a first visit did not open the welcome');
   if (!${SILLY}.test(window.isopix.drawingName)) throw new Error('the first drawing has no silly name: ' + window.isopix.drawingName);
   ${TAP3}` };
+// The loading screen, shown again over the app: mid-sweep, and after 10 s.
+const LOADING = (p, slow) => `const l = document.getElementById('loading'), s = l.querySelector('.loading-sweep');
+  l.className = 'loading${slow ? ' slow' : ''}'; l.hidden = false; l.querySelector('.loading-slow').hidden = ${!slow};
+  for (const e of [s, l.querySelector('.loading-bar')]) { e.style.animation = 'none'; e.style.opacity = '1'; }
+  s.style.setProperty('--p', '${p}');
+  if (getComputedStyle(l).display === 'none') throw new Error('the loading screen did not show');`;
+VIEWS.loading = { js: LOADING('220deg', false) };
+VIEWS['loading-slow'] = { js: LOADING('324deg', true) };
 // The Drawing sheet after 🎲: a different silly name, in the field too.
 VIEWS['name-roll'] = { js: `${q('#drawing-open')} ${nap}
   const before = window.isopix.drawingName; ${q('#name-roll')} ${nap}
@@ -313,6 +321,8 @@ for (const screen of opts.screens) {
     await send('Page.navigate', { url: `${base}?look=${screen}-${w}` });
     await loaded;
     await sleep(500);
+    // The loading screen finishes its turn and fades once the app is ready.
+    await waitFor('the loading screen to go', () => evaluate(`document.getElementById('loading')?.hidden !== false`), 8000).catch(() => {});
     if (live) setLive(live[1]);
     const row = { screen, w, extra: [] };
     try {

@@ -1682,7 +1682,9 @@ async function boot() {
     color: () => app.settings.color, shade, shading: () => app.settings.shading,
     onClose: () => { if (!app.settings.welcomed) set('welcomed', true); },
   });
-  if (welcomeDue({ welcomed: app.settings.welcomed, hasContent: hasContent(), arriving: !!arriving })) app.welcome.open();
+  // The controls work now: the loading screen finishes its turn and fades, then the welcome.
+  const loaded = self.ISOPIX_LOADING ? self.ISOPIX_LOADING.done() : Promise.resolve();
+  if (welcomeDue({ welcomed: app.settings.welcomed, hasContent: hasContent(), arriving: !!arriving })) loaded.then(() => app.welcome.open());
   else if (!app.settings.welcomed) set('welcomed', true);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
   window.addEventListener('pagehide', saveNow);
