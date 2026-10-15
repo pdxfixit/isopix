@@ -1,6 +1,6 @@
 # Questions for the owner
 
-Open questions for the owner, one card each. The owner answered cards 1 to 6 on 2026-10-12;
+Open questions for the owner, one card each. The owner answered cards 1 to 6 on 2026-10-12, 7 the same day, and 8 to 10 on 2026-10-15;
 [decisions.md](decisions.md) has the answers.
 
 ## How this works
@@ -25,49 +25,6 @@ ambiguity: one clear question beats a wrong build.
 2. Deletes the card (keep the numbers going up; do not reuse one).
 3. Adds any work he approved to [TODO.md](../TODO.md) "Agents do".
 4. Commits all three together.
-
-## 8. Where Move lives, and how it turns off
-
-**Now** (built 2026-10-14, on `main` 2026-10-15): a
-hand at the foot of the zoom rail (and `H`). While it is lit, one finger moves
-the view and draws nothing; tapping any tool, the hand again or Esc turns it
-off, and it is never remembered. Options:
-
-1. **Keep it on the zoom rail** (recommended): it is a view control like zoom,
-   and the tool row has no room for a seventh button at 320 px.
-2. **Put it in the tool row** as a sixth tool, moving the brush-shape button
-   into a long-press on the Pencil. Easier to find; a bigger change.
-3. **Hold to move**: Move works only while the hand is held down, like Space on
-   a keyboard. No mode to forget, but it needs two hands on a phone.
-
-**The owner:**
-
-## 9. How Save behaves on each device
-
-**Now** (built 2026-10-14): Chrome and Edge on a computer show their Save
-dialog the first time, then Save writes that same file with no dialog (Save as
-new file picks another). iPhone and iPad open the share sheet (Save to Files).
-Everything else downloads, as before. A dot on Save marks changes not in a
-file. Options:
-
-1. **Keep it** (recommended): a real "Save" on computers, and the only reliable
-   way on iPhone and iPad.
-2. **Downloads everywhere except iPhone and iPad**, as before on computers: no
-   dialog, but each Save adds another `name (1).isopix.json` to Downloads.
-3. **Drop the dot**: less to look at, but no sign that the work is only in the
-   browser.
-
-**The owner:**
-
-## 10. Which release items next
-
-[release-plan.md](release-plan.md) lists every idea from the 2026-10-14
-usability pass, in a recommended order, with sizes. Recommended first: several
-drawings in the browser (a gallery), since New replacing the only drawing is
-the biggest way a new user loses work; then pen mode for tablets, and
-two-finger-tap undo. Pick any, in any order.
-
-**The owner:**
 
 ## 11. Cloudflare's analytics beacon
 

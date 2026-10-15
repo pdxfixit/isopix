@@ -72,6 +72,14 @@ test('the Save dot: something drawn that is not in a file, or changed since', ()
   assert.equal(S.unsavedToFile({ at: 1, dirty: true }, true), true);
 });
 
+test('the Save dot shows only for changes since a file was made, never before the first one', () => {
+  assert.equal(S.saveDot(null, true), false, 'drawn, never saved to a file: no dot yet');
+  assert.equal(S.saveDot({ at: null, dirty: true }, true), false);
+  assert.equal(S.saveDot({ at: 1, dirty: false }, true), false, 'saved, unchanged');
+  assert.equal(S.saveDot({ at: 1, dirty: true }, true), true, 'changed since the save');
+  assert.equal(S.saveDot({ at: 1, dirty: true }, false), false, 'nothing drawn');
+});
+
 test('the saved line', () => {
   assert.equal(S.savedAgo(null), 'Not saved in this browser yet.');
   assert.equal(S.savedAgo(5000), 'Saved in this browser a moment ago. Nothing leaves your device.');
