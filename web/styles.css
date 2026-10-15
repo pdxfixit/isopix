@@ -238,6 +238,10 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
 .menu .row { display: flex; gap: 8px; align-items: center; }
 .menu .wrap { flex-wrap: wrap; }
 .menu .note { color: var(--muted); font-size: 14px; margin: 6px 0; }
+/* The Drawing sheet's two status lines: 12 px above, between and below (owner: "the copy needs equal margins/padding"). */
+dialog#drawing .menu { padding-bottom: 12px; }
+#autosave-status, #file-status { margin: 12px 0 0; }
+#autosave-status:empty, #file-status:empty { display: none; }
 .menu fieldset .btn { margin-top: 6px; }
 
 /* ---- Top bar: labeled buttons (Drawing; New, Open, Save from 700 px) ---- */
