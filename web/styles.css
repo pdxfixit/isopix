@@ -67,7 +67,13 @@ body.moving .tools .btn[aria-pressed="true"] { background: transparent; border-c
 @media (prefers-color-scheme: dark) { .btn.danger { color: #ff8787; } }
 
 .cluster { position: fixed; display: flex; gap: 6px; z-index: 3; }
-.topleft { top: calc(8px + env(safe-area-inset-top)); left: calc(8px + env(safe-area-inset-left)); }
+.topleft { top: calc(8px + env(safe-area-inset-top)); left: calc(8px + env(safe-area-inset-left));
+  /* Leave room for the top-right cluster (Keep chip about 48-50 px, a 6 px gap, Settings 48 px)
+     plus at least 12 px clear. Drawing gives way: its name shortens with "…", so a long name
+     never pushes Redo into the chip, whatever the font. */
+  max-width: calc(100vw - 16px - 116px - env(safe-area-inset-left) - env(safe-area-inset-right)); }
+.topleft > .btn { flex: none; }
+.topleft > #drawing-open { flex: 0 1 auto; }
 .topright { top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); }
 .cluster .btn { box-shadow: var(--shadow); }
 
@@ -227,8 +233,9 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
 
 /* ---- Top bar: labeled buttons (Drawing; New, Open, Save from 700 px) ---- */
 .btn.labeled { gap: 6px; padding: 0 12px 0 8px; }
-.btn-words { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.05; }
-.btn-word { font-size: 15px; }
+.btn-words { display: flex; flex-direction: column; align-items: stretch; text-align: left; line-height: 1.05; min-width: 0; }
+.btn.labeled svg { flex: none; }
+.btn-word { font-size: 15px; white-space: nowrap; }
 .btn-sub { font-size: 11px; font-weight: 500; color: var(--muted); max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .btn-sub:empty { display: none; }
 .wide-only { display: none; }

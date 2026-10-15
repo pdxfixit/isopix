@@ -29,7 +29,10 @@ const DRAW = `
   const w = innerWidth, h = innerHeight;
   fire('pointerdown', w * 0.3, h * 0.35); for (let i = 1; i <= 10; i++) fire('pointermove', w * (0.3 + i * 0.04), h * (0.35 + i * 0.01)); fire('pointerup', w * 0.7, h * 0.45);`;
 const VIEWS = {
-  draw: { js: '' },
+  // A long drawing name: the widest the top bar's Drawing button gets, so the
+  // top-bar clearance check in MEASURE sees the worst case at every width.
+  draw: { js: `const n = document.querySelector('#drawing-name'); n.value = 'Wobbly Woolly Whirligig Watermelon Wonderland';
+    n.dispatchEvent(new Event('input', { bubbles: true }));` },
   drawn: { js: DRAW },
   settings: { js: q('#settings-open') },
   // Every Settings section open (heads that are shut get a click; the state is remembered).
@@ -309,10 +312,17 @@ const MEASURE = (width) => `(() => {
     const y = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
     if (x > 2 && y > 2 && !shapesApart(a, b, ra, rb)) overlaps.push(name(a) + ' ↔ ' + name(b) + ' (' + Math.round(Math.min(x, y)) + 'px)');
   }
+  // The two top clusters sit in one row: Drawing, Undo, Redo on the left; the
+  // Keep chip and Settings on the right. They must keep 8 px clear (in CI's Chrome
+  // a long drawing name once pushed Redo 4 px into the chip, below the overlap check's 2 px).
+  const edge = (sel, side) => { const rs = [...document.querySelectorAll(sel + ' > *')].filter(reachable).map((e) => e.getBoundingClientRect());
+    return rs.length ? (side === 'right' ? Math.max(...rs.map((r) => r.right)) : Math.min(...rs.map((r) => r.left))) : null; };
+  const tlRight = edge('.topleft', 'right'), trLeft = edge('.topright', 'left');
+  const topGap = tlRight !== null && trLeft !== null && trLeft - tlRight < 8 ? Math.round(trLeft - tlRight) : null;
   return {
     sideways: Math.max(document.documentElement.scrollWidth, innerWidth) > ${width},
     scrollWidth: Math.max(document.documentElement.scrollWidth, innerWidth),
-    small, overlaps, checked,
+    small, overlaps, checked, topGap,
     dialogSideways: [...document.querySelectorAll('dialog[open]')].filter((d) => d.scrollWidth > d.clientWidth).map((d) => '#' + d.id),
   };
 })()`;
@@ -356,6 +366,7 @@ for (const screen of opts.screens) {
     Object.assign(row, m, { errors: [...new Set(errors)], csp: [...new Set(csp)], logs: [...logs], shot });
     for (const d of m.dialogSideways) row.extra.push(`${d} scrolls sideways`);
     for (const o of m.overlaps) row.extra.push(`overlap: ${o}`);
+    if (m.topGap !== null) row.extra.push(`top bar: the left cluster ends ${m.topGap}px from the right one (need 8)`);
     if (!m.checked) row.extra.push('no buttons found: the page did not render');
     row.ok = !m.sideways && !row.errors.length && !row.csp.length && !m.small.length && !row.extra.length;
     rows.push(row);
