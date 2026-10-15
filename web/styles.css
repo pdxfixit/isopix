@@ -258,6 +258,7 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
 .set-about h3 { margin: 12px 0 8px; }
 /* A quiet button that reads as a link (owner: Show the welcome again "should be less dominating"); still 44 px tall. */
 .link-btn { display: block; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link-btn.about-foot { margin: 14px auto -10px; color: var(--muted); font-weight: 500; }
 .link-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 /* The privacy note: one line, the whole of it folded under (owner: "shrink or otherwise present the privacy notice"). */
 .usage-more summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--accent); font-weight: 600; font-size: 14px; }

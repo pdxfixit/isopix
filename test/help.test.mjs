@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { KEYS, keyFor } from '../web/keys.js';
-import { SECTIONS, helpHTML } from '../web/help.js';
+import { SECTIONS, helpHTML, helpIds } from '../web/help.js';
 
 const html = fs.readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
 const app = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
@@ -75,8 +75,12 @@ test('the paint-can chip is explained in all three modes, and the words are defi
   }
 });
 
-test('each Help section folds, closed at first, its head naming the body it opens', () => {
-  const heads = [...sheet.matchAll(/<button type="button" class="set-head" aria-expanded="false" aria-controls="(help-b\d+)">/g)].map((m) => m[1]);
-  assert.equal(heads.length, SECTIONS.length + 1, 'every section and Keys has a fold head');
+test('each Help section folds, closed unless opened before, its head naming the body it opens', () => {
+  const heads = [...sheet.matchAll(/<button type="button" class="set-head" aria-expanded="false" aria-controls="(help-[a-z-]+)">/g)].map((m) => m[1]);
+  assert.deepEqual(heads, helpIds(), 'every section and Keys has a closed fold head');
   for (const id of heads) assert.match(sheet, new RegExp(`<div class="set-body" id="${id}" hidden>`));
+  const opened = helpHTML(() => '', new Set(['help-tools']));
+  assert.match(opened, /aria-expanded="true" aria-controls="help-tools"/);
+  assert.match(opened, /<div class="set-body" id="help-tools">/);
+  assert.equal(new Set(helpIds()).size, helpIds().length, 'section titles give distinct ids');
 });

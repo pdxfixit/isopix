@@ -60,7 +60,6 @@ export function newChoices(hasContent, unsaved = true) {
 
 // ---------- Settings sections ----------
 export const SECTION_IDS = ['set-drawing', 'set-grid', 'set-selection', 'set-learning'];
-export const OPEN_FIRST = 'set-drawing';
 
 // The chip on each section's heading: the current value, in a few words.
 export function chipText(id, s, paper = 'light') {
@@ -85,20 +84,17 @@ export function chipText(id, s, paper = 'light') {
   }
 }
 
-// Which sections this device keeps open. Stored as a JSON list: the ids of
-// sections opened, and "!<id>" for the open-first section once folded.
+// Which folding sections this device keeps open (Settings', and Help's).
+// Every section starts closed until the person opens it; then it stays open
+// until they close it (owner: "start with sections collapsed unless the user
+// has done differently (and its remembered)"). Stored as a JSON list of the
+// open ids; an older "!set-drawing" entry reads as closed, the new default.
 export function rememberedOpen(raw) {
   try {
     const list = JSON.parse(raw ?? '[]');
     return new Set(Array.isArray(list) ? list.filter((x) => typeof x === 'string') : []);
   } catch { return new Set(); }
 }
-export const startsOpen = (id, remembered) => (id === OPEN_FIRST ? !remembered.has(`!${id}`) : remembered.has(id));
-export function rememberOpen(openIds) {
-  const list = [];
-  for (const id of SECTION_IDS) {
-    const open = openIds.has(id);
-    if (id === OPEN_FIRST ? !open : open) list.push(id === OPEN_FIRST ? `!${id}` : id);
-  }
-  return JSON.stringify(list);
-}
+export const startsOpen = (id, remembered) => remembered.has(id);
+// ids: the sections there are (Settings' by default); others are dropped.
+export const rememberOpen = (openIds, ids = SECTION_IDS) => JSON.stringify(ids.filter((id) => openIds.has(id)));
