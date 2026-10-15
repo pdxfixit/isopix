@@ -42,6 +42,8 @@
   <link rel="modulepreload" href="telemetry.js">
   <link rel="modulepreload" href="update.js">
   <link rel="modulepreload" href="welcome.js">
+  <link rel="modulepreload" href="tour.js">
+  <link rel="modulepreload" href="lessons.js">
 </head>
 <body>
   <div id="loading" class="loading" role="status">
@@ -340,8 +342,7 @@
       <button class="btn welcome-close" value="close" aria-label="Close the welcome">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
-      <svg id="welcome-cube" class="welcome-cube" viewBox="0 0 170 132" role="group" aria-label="A cube to build: six triangles"></svg>
-      <p id="welcome-caption" class="welcome-caption" aria-live="polite"></p>
+      <svg class="welcome-art" viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,14 81.2,32 50,50 18.8,32" fill="#6ea8ff"/><polygon points="50,50 50,86 18.8,68 18.8,32" fill="#3a86ff"/><polygon points="50,50 81.2,32 81.2,68 50,86" fill="#1f5fcc"/></svg>
       <h2 id="welcome-title">Welcome to Isopix</h2>
       <p class="welcome-say">Draw with triangles. Small ones for detail, big ones to fill fast.</p>
       <ul class="welcome-list">
@@ -349,8 +350,10 @@
         <li><span class="welcome-ic" aria-hidden="true">2</span>Two fingers move and zoom.</li>
         <li><span class="welcome-ic lit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19.8 7.5v9L12 21l-7.8-4.5v-9Z"/></svg></span>The hexagon picks the size.</li>
       </ul>
-      <button id="welcome-start" class="btn welcome-start" value="start" autofocus>Start drawing</button>
-      <p class="note welcome-foot">Help, in ⚙️ Settings, shows every button.</p>
+      <!-- The lessons start here (owner: "card needs to stay, and invite the user to a tour"). -->
+      <button id="welcome-tour" class="btn welcome-start" value="tour" autofocus>Show me around</button>
+      <button id="welcome-start" class="btn wide" value="start">Start drawing</button>
+      <p class="note welcome-foot">More lessons, and every button, are in Help (?).</p>
     </form>
   </dialog>
 </body>

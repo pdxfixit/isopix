@@ -105,7 +105,7 @@ Detail: [docs/telemetry.md](docs/telemetry.md).
 
 | Path | What it holds |
 |---|---|
-| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `telemetry.js` (usage counts), `glyphs.js`, `welcome.js` (the first-visit card), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
+| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `telemetry.js` (usage counts), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `worker/` | The isopix.app Worker: `index.js` (`POST /api/visit`, everything else to the static files) and `schema.sql` (its D1 tables). |
 | `test/` | `node --test` suites for the engine. |

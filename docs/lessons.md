@@ -1,6 +1,6 @@
 # Lessons
 
-The tutorial, as short lessons on the real canvas. **Status: approved by the owner (2026-10-15), being built.**
+The tutorial, as short lessons on the real canvas. **Status: approved by the owner (2026-10-15), built (release 1.2.64).** The steps live in `web/lessons.js`; this file is the plan they follow.
 The owner edits this file (or answers in chat); a changed step is built to match. Decisions behind it: [decisions.md](decisions.md) (Lessons).
 
 ## How a lesson runs

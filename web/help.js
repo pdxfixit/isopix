@@ -7,6 +7,7 @@
 // index.html whose svg is the icon, text?: a short label drawn as the icon}.
 import { KEYS } from './keys.js';
 import { GLYPHS, notchGlyph } from './glyphs.js';
+import { LESSONS } from './lessons.js';
 
 export const SECTIONS = [
   {
@@ -65,7 +66,7 @@ export const SECTIONS = [
       { name: 'Save', from: '#top-save', says: 'On wider screens: Save drawing, as in the Drawing sheet. A dot means changes since the last save to a file.' },
       { name: 'Help', from: '#help-top', says: 'This sheet: every button, gesture and key. It sits next to Settings when there is room, and always in Settings, next to ✕.' },
       { name: 'Settings', from: '#settings-open', says: 'Drawing, Grid, Selection, Learning and About. Each part folds; its chip shows what is set.' },
-      { name: 'Welcome', from: '#welcome-again', text: '👋', says: 'Settings → About → Show the welcome again opens the card a first visit shows. Its cube is practice: tap the six triangles and each shades itself. It is not part of your drawing.' },
+      { name: 'Welcome', from: '#welcome-again', text: '👋', says: 'Settings → About → Show the welcome again opens the card a first visit shows. Its Show me around starts the Basics lesson.' },
       { name: 'Undo', from: '#undo', says: 'Takes back the last change. There is no limit.' },
       { name: 'Redo', from: '#redo', says: 'Puts it back.' },
       { name: 'Keep', from: '#mode-chip', says: 'What a big stroke does over finer detail. Keep: it skips cells that already have finer detail (the preview hatches them). Tap to switch.' },
@@ -155,10 +156,22 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 // Each section's id, from its title, so a remembered open section survives
 // sections being added or moved.
 export const helpId = (title) => `help-${String(title).toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '')}`;
-export const helpIds = () => [...SECTIONS.map((s) => s.title), 'Keys'].map(helpId);
+export const lessonFoldId = (id) => `lesson-${id}`;
+export const helpIds = () => [...LESSONS.map((l) => lessonFoldId(l.id)), ...[...SECTIONS.map((s) => s.title), 'Keys'].map(helpId)];
 
-// open: the ids of the sections to draw open (app.js remembers them per device).
-export function helpHTML(iconOf = () => '', open = new Set()) {
+// The lessons, first: one folding row each, its chip saying ✓ once done on
+// this device, and Start inside (app.js starts the lesson from data-lesson).
+function lessonsHTML(open, done) {
+  const rows = LESSONS.map((l) => {
+    const id = lessonFoldId(l.id), on = open.has(id), chip = done.has(l.id) ? '✓ done' : `${l.steps.length} steps`;
+    return `<section class="set-fold" aria-labelledby="${id}-h"><h3><button type="button" class="set-head" aria-expanded="${on}" aria-controls="${id}"><span class="set-head-caret" aria-hidden="true">${on ? '▾' : '▸'}</span><span id="${id}-h">${esc(l.title)}</span><span class="set-head-chip lesson-chip">${chip}</span></button></h3><div class="set-body" id="${id}"${on ? '' : ' hidden'}><p class="note">${esc(l.about)}</p><button type="button" class="btn wide" data-lesson="${l.id}">Start ${esc(l.title)}</button></div></section>`;
+  }).join('');
+  return `<h3 class="help-group">Lessons</h3><p class="note">Short tours on the real paper, in a practice drawing you can keep or throw away.</p>${rows}<h3 class="help-group">Every button, gesture and key</h3>`;
+}
+
+// open: the ids of the sections to draw open (app.js remembers them per
+// device); done: the lessons finished on this device.
+export function helpHTML(iconOf = () => '', open = new Set(), done = new Set()) {
   const icon = (it) => {
     if (it.html) return it.html;
     if (it.glyph) return GLYPHS[it.glyph];
@@ -171,7 +184,7 @@ export function helpHTML(iconOf = () => '', open = new Set()) {
   const sections = [...SECTIONS, { title: 'Keys', intro: 'For a keyboard.', items: keyItems() }];
   // Each section folds like Settings' (owner: "keep sections collapsible to
   // make the length less daunting"), closed unless this device opened it.
-  return sections.map((s) => { const id = helpId(s.title), on = open.has(id); return `<section class="set-fold" aria-labelledby="${id}-h"><h3><button type="button" class="set-head" aria-expanded="${on}" aria-controls="${id}"><span class="set-head-caret" aria-hidden="true">${on ? '▾' : '▸'}</span><span id="${id}-h">${esc(s.title)}</span></button></h3><div class="set-body" id="${id}"${on ? '' : ' hidden'}>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${
+  return lessonsHTML(open, done) + sections.map((s) => { const id = helpId(s.title), on = open.has(id); return `<section class="set-fold" aria-labelledby="${id}-h"><h3><button type="button" class="set-head" aria-expanded="${on}" aria-controls="${id}"><span class="set-head-caret" aria-hidden="true">${on ? '▾' : '▸'}</span><span id="${id}-h">${esc(s.title)}</span></button></h3><div class="set-body" id="${id}"${on ? '' : ' hidden'}>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${
     s.items.map((it) => `<li><span class="help-icon${it.key ? ' help-key' : ''}" aria-hidden="true">${icon(it)}</span><span><b>${esc(it.name)}</b> ${esc(it.says)}</span></li>`).join('')
   }</ul></div></section>`; }).join('');
 }

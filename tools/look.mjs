@@ -122,21 +122,58 @@ const PROTECT = `
   a.settings.lockedLevel = 2; a.level = 2; a.settings.brush = 'hexagon';
   f('pointerdown', x + 10, y + 3); f('pointerup', x + 10, y + 3, 0);
   if (document.querySelector('#protect-note').hidden) throw new Error('the skip notice did not show');`;
-// The welcome card: from Settings → About, half built (three of six taps).
-const TAP3 = `const tris = () => [...document.querySelectorAll('#welcome-cube .cube-todo')];
-  for (let i = 0; i < 3; i++) tris()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  const cap = document.querySelector('#welcome-caption').textContent;
-  if (tris().length !== 3 || !cap.includes('3 left')) throw new Error('the cube did not take three taps: ' + cap);`;
+// The welcome card: from Settings → About; Show me around starts Basics in a practice drawing.
+const TOUR = `if (!document.querySelector('#welcome-tour')) throw new Error('the card has no Show me around');`;
 VIEWS.welcome = { js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${nap}
   if (!document.querySelector('#welcome').open) throw new Error('Show the welcome again did not open it');
   if (document.querySelector('#settings').open) throw new Error('Settings stayed open under the welcome');
-  ${TAP3}` };
+  ${TOUR}` };
 // A first visit: a fresh profile (storage cleared, never marked welcomed)
 // opens on the card by itself, over an empty drawing.
 const SILLY = /^([A-Z])[a-z]+ \1[a-z]+$/;
 VIEWS['welcome-first'] = { fresh: true, js: `if (!document.querySelector('#welcome').open) throw new Error('a first visit did not open the welcome');
   if (!${SILLY}.test(window.isopix.drawingName)) throw new Error('the first drawing has no silly name: ' + window.isopix.drawingName);
-  ${TAP3}` };
+  ${TOUR}` };
+// Lessons (web/lessons.js, web/tour.js). A stroke on the paper, through the real handlers.
+const STROKE = `const st = document.querySelector('#stage');
+  const fp = (type, x, y) => st.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 7, pointerType: 'touch', isPrimary: true, bubbles: true, button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
+  const stroke = async (x, y) => { fp('pointerdown', x, y); for (let i = 1; i <= 8; i++) fp('pointermove', x + i * 9, y + i * 3); fp('pointerup', x + 72, y + 24); await new Promise((r) => setTimeout(r, 120)); };`;
+const STEP = `const tour = () => window.isopix.tour.state(); const say = () => document.querySelector('#tour .tour-say').textContent;
+  const at = (i) => { if (tour()?.index !== i) throw new Error('lesson at step ' + (tour()?.index) + ', not ' + i + ': ' + say()); };`;
+// Show me around: Basics starts in a practice drawing; a stroke moves it to the cube step.
+VIEWS.lesson = { js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${nap} ${q('#welcome-tour')} ${nap} ${STROKE} ${STEP}
+  if (window.isopix.drawingName !== 'Practice') throw new Error('not a practice drawing: ' + window.isopix.drawingName);
+  at(0); await stroke(innerWidth * 0.4, innerHeight * 0.4); at(1);
+  if (window.isopix.settings.brush !== 'hexagon') throw new Error('the cube step did not pick the Hexagon brush');
+  if (!document.querySelector('#options').classList.contains('tour-target')) throw new Error('the cube step does not point at the shapes button');` };
+// All of Basics over a drawing of one's own: Back to my drawing gives it back
+// untouched; a second run, kept, asks first (that drawing is in no file).
+VIEWS['lesson-end'] = { js: `${DRAW} ${STROKE} ${STEP} const a = window.isopix; const mine = a.drawing.cells.size, name = a.drawingName;
+  const run = async () => {
+    a.tour.start('basics'); await new Promise((r) => setTimeout(r, 150)); at(0);
+    await stroke(innerWidth * 0.4, innerHeight * 0.45); at(1);
+    await stroke(innerWidth * 0.5, innerHeight * 0.5); at(2);
+    document.querySelector('#notches .notch[data-n="1"]').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    await stroke(innerWidth * 0.45, innerHeight * 0.55); at(3);
+    ${q('#undo')} at(4); ${q('#redo')} at(5); ${q('#zoom-in')} at(6); ${q('#fit-view')}
+    await new Promise((r) => setTimeout(r, 150));
+    if (!tour()?.ending) throw new Error('Basics did not end: ' + say());
+  };
+  await run();
+  const btn = (t) => [...document.querySelectorAll('#tour button')].find((b) => b.textContent === t);
+  btn('Back to my drawing').click(); await new Promise((r) => setTimeout(r, 150));
+  if (a.drawing.cells.size !== mine || a.drawingName !== name) throw new Error('Back did not bring the drawing back: ' + a.drawing.cells.size + ' cells, ' + a.drawingName);
+  if (a.tour.active()) throw new Error('the lesson is still on');
+  await run(); const practice = a.drawing.cells.size;
+  btn('Keep it').click(); await new Promise((r) => setTimeout(r, 100));
+  if (!btn('Save mine first') || !btn('Replace it')) throw new Error('Keep it did not ask first: ' + say());
+  btn('Replace it').click(); await new Promise((r) => setTimeout(r, 150));
+  if (a.drawing.cells.size !== practice || a.drawingName === 'Practice' || a.tour.active()) throw new Error('Keep it did not keep the practice drawing');` };
+// Help lists the lessons first, each folded with its step count and Start inside.
+VIEWS['help-lessons'] = { js: `${q('#settings-open')} ${nap} ${q('#settings-help')} ${nap}
+  const head = document.querySelector('#help-body .set-head[aria-controls="lesson-basics"]');
+  if (!head) throw new Error('Help has no Basics lesson'); if (head.getAttribute('aria-expanded') !== 'true') head.click(); // folds are remembered
+  if (!document.querySelector('[data-lesson="basics"]').getClientRects().length) throw new Error('Start Basics is not shown');` };
 // The loading screen, shown again over the app: mid-sweep, and after 10 s.
 const LOADING = (p, slow) => `const l = document.getElementById('loading'), s = l.querySelector('.loading-sweep');
   l.className = 'loading${slow ? ' slow' : ''}'; l.hidden = false; l.querySelector('.loading-slow').hidden = ${!slow};

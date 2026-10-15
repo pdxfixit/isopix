@@ -76,11 +76,13 @@ test('the paint-can chip is explained in all three modes, and the words are defi
 });
 
 test('each Help section folds, closed unless opened before, its head naming the body it opens', () => {
-  const heads = [...sheet.matchAll(/<button type="button" class="set-head" aria-expanded="false" aria-controls="(help-[a-z-]+)">/g)].map((m) => m[1]);
-  assert.deepEqual(heads, helpIds(), 'every section and Keys has a closed fold head');
+  const heads = [...sheet.matchAll(/<button type="button" class="set-head" aria-expanded="false" aria-controls="((?:help|lesson)-[a-z-]+)">/g)].map((m) => m[1]);
+  assert.deepEqual(heads, helpIds(), 'every lesson, section and Keys has a closed fold head');
   for (const id of heads) assert.match(sheet, new RegExp(`<div class="set-body" id="${id}" hidden>`));
   const opened = helpHTML(() => '', new Set(['help-tools']));
   assert.match(opened, /aria-expanded="true" aria-controls="help-tools"/);
   assert.match(opened, /<div class="set-body" id="help-tools">/);
   assert.equal(new Set(helpIds()).size, helpIds().length, 'section titles give distinct ids');
+  assert.match(helpHTML(() => '', new Set(), new Set(['basics'])), /aria-controls="lesson-basics">.*?<span class="set-head-chip lesson-chip">✓ done<\/span>/, 'a lesson done shows ✓');
+  assert.match(sheet, /data-lesson="basics"/, 'each lesson has its Start button');
 });
