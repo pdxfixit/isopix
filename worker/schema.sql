@@ -1,7 +1,7 @@
 -- Isopix's D1 database, `isopix` (binding DB on the isopix-app Worker): the
 -- full schema. Every statement is IF NOT EXISTS, so running it again changes
--- nothing. Apply: in flarepress, `just d1 isopix.app execute isopix --remote
--- --file <path to this file>`. What each field means: docs/telemetry.md.
+-- nothing. Apply (the owner, from this repo): `D1_DATABASE_ID=<id>
+-- ~/src/flarepress/tools/wrangler.sh site d1 execute isopix --remote --file worker/schema.sql`. What each field means: docs/telemetry.md.
 -- Times are milliseconds since 1970.
 
 -- One row per visit (a page load), replaced as the visit sends its tally.

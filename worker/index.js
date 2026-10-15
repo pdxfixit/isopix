@@ -1,5 +1,5 @@
-// The isopix.app Worker (flarepress isopix.app/wrangler.toml: main, the ASSETS
-// binding and D1 database `isopix` as DB). Static files are served by Workers
+// The isopix.app Worker (site/wrangler.toml: main, the ASSETS binding and D1
+// database `isopix` as DB). Static files are served by Workers
 // Static Assets before this runs; it sees only paths no file matches.
 //
 // POST /api/visit: one visit's usage counts (web/telemetry.js), checked with

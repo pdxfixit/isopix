@@ -1,11 +1,15 @@
-# Isopix at https://isopix.app: static assets only (web/), one hostname.
+# Isopix at https://isopix.app: static assets (web/) and the usage-counts
+# Worker (worker/: POST /api/visit into D1 `isopix`), one hostname.
 # Deployed by flarepress (github.com/pdxfixit/flarepress) through this repo's
 # tools/deploy.sh: by .github/workflows/deploy.yml, or the owner's
 # `just --yes deploy`. The old addresses are move Workers kept by the owner
 # outside this repo; their page loads move.js from here.
-# The usage-counts Worker (worker/) is not bound yet: see docs/state.md.
+# This repo is public: the database id is ${D1_DATABASE_ID}, filled at deploy
+# time from the repo secret (or the owner's environment on his Mac). Until it
+# is set, every deploy stops before uploading anything.
 name = "isopix-app"
 compatibility_date = "2026-10-15"
+main = "../worker/index.js"
 
 routes = [
   { pattern = "isopix.app", custom_domain = true }
@@ -13,3 +17,9 @@ routes = [
 
 [assets]
 directory = "../web"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "isopix"
+database_id = "${D1_DATABASE_ID}"
