@@ -1070,6 +1070,13 @@ function openHelp() {
   });
   openSheet('#help');
 }
+// Help's sections fold (help.js): a head opens or closes the body it controls.
+function toggleFold(head) {
+  const open = head.getAttribute('aria-expanded') !== 'true';
+  head.setAttribute('aria-expanded', String(open));
+  head.querySelector('.set-head-caret').textContent = open ? '▾' : '▸';
+  document.getElementById(head.getAttribute('aria-controls')).hidden = !open;
+}
 
 // ---------- sheets ----------
 // Each sheet is a modal <dialog> (it keeps focus inside, and Esc closes it).
@@ -1309,6 +1316,7 @@ function wireMenu() {
   $('#opt-trace').addEventListener('input', (e) => { set('traceOpacity', +e.target.value); requestRender(); });
   $('#paper-flip').addEventListener('click', flipPaper);
   $('#help-open').addEventListener('click', openHelp);
+  $('#help-body').addEventListener('click', (e) => { const head = e.target.closest('.set-head'); if (head) toggleFold(head); });
   $('#welcome-again').addEventListener('click', () => { $('#settings').close(); app.welcome.open(); });
   $('#sym-center').addEventListener('click', () => { app.pickCenter = true; $('#settings').close(); toast('Tap a grid point for the symmetry center'); });
   $('#trace-open').addEventListener('click', openTrace);

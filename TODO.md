@@ -8,7 +8,7 @@ Approved work, in order. Delete a line in the commit that finishes it.
 2. Pen mode on tablets: once a pen is used, only the pen draws and fingers move the view (item 2).
 3. Two-finger tap undoes, three-finger tap redoes (item 3).
 
-4. Lessons: build [docs/lessons.md](docs/lessons.md) once the owner approves its steps and answers its open questions (Keep it with one drawing per browser). The welcome card's six-triangle cube goes; Show me around starts Basics.
+4. Lessons: build [docs/lessons.md](docs/lessons.md) (approved). The welcome card's six-triangle cube goes; Show me around starts Basics; Help lists the lessons, folded.
 
 Offered, not yet approved (ask the owner first):
 

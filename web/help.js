@@ -162,7 +162,9 @@ export function helpHTML(iconOf = () => '') {
     return `<span class="help-text-icon">${it.key ? text.replace(/\+(?=.)/g, '+<wbr>') : text}</span>`;
   };
   const sections = [...SECTIONS, { title: 'Keys', intro: 'For a keyboard.', items: keyItems() }];
-  return sections.map((s, i) => `<section aria-labelledby="help-h${i}"><h3 id="help-h${i}">${esc(s.title)}</h3>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${
+  // Each section folds, closed at first, like Settings' (owner: "keep
+  // sections collapsible to make the length less daunting"); app.js opens them.
+  return sections.map((s, i) => `<section class="set-fold" aria-labelledby="help-h${i}"><h3><button type="button" class="set-head" aria-expanded="false" aria-controls="help-b${i}"><span class="set-head-caret" aria-hidden="true">▸</span><span id="help-h${i}">${esc(s.title)}</span></button></h3><div class="set-body" id="help-b${i}" hidden>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${
     s.items.map((it) => `<li><span class="help-icon${it.key ? ' help-key' : ''}" aria-hidden="true">${icon(it)}</span><span><b>${esc(it.name)}</b> ${esc(it.says)}</span></li>`).join('')
-  }</ul></section>`).join('');
+  }</ul></div></section>`).join('');
 }
