@@ -1319,7 +1319,8 @@ function wireMenu() {
   $('#opt-hint-levels').addEventListener('change', (e) => { set('hintLevels', +e.target.value); requestRender(); });
   $('#opt-trace').addEventListener('input', (e) => { set('traceOpacity', +e.target.value); requestRender(); });
   $('#paper-flip').addEventListener('click', flipPaper);
-  $('#help-open').addEventListener('click', openHelp);
+  $('#settings-help').addEventListener('click', openHelp);
+  $('#help-top').addEventListener('click', openHelp);
   $('#help-body').addEventListener('click', (e) => { const head = e.target.closest('.set-head'); if (head) toggleFold(head); });
   $('#welcome-again').addEventListener('click', () => { $('#settings').close(); app.welcome.open(); });
   $('#sym-center').addEventListener('click', () => { app.pickCenter = true; $('#settings').close(); toast('Tap a grid point for the symmetry center'); });

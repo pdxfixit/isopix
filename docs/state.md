@@ -43,7 +43,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Silly names** (2026-10-15, on `main` at 1.2.39, not deployed yet): New and the first drawing in a browser get a name like "Bouncy Badger" (96 adjectives, 96 nouns, same first letter); 🎲 by the name rolls another; file names are lowercase (`web/sillynames.js`, `test/sillynames.test.mjs`, `just look name-roll`).
 
-**Help**: Settings → About → Help or `?` opens a sheet of every control (with its icon), gesture and key, generated from the same key table the app binds (`web/help.js`, `web/keys.js`, `test/help.test.mjs`, `just look help`).
+**Help**: the ? next to Settings (where the top bar has room), the ? next to ✕ in Settings, or the `?` key opens a sheet of every control (with its icon), gesture and key, generated from the same key table the app binds (`web/help.js`, `web/keys.js`, `test/help.test.mjs`, `just look help`).
 
 **Tools**: `just serve | test | look | version | export-check | perf | prove | live-check | icons`, plus the deploy recipes from `deploy.just` (`deploy-check | deploy-plan | deploy | deploy-verify | live | rollback | ship`). `test/docs.test.mjs` keeps the docs honest: every recipe and look view they name exists, every link and repo path resolves, and AGENTS.md stays under 16,000 bytes.
 

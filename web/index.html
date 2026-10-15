@@ -80,6 +80,9 @@
     <button id="mode-chip" class="btn mode-chip" aria-label="Keep fine detail is on. Tap for Paint behind." title="Big strokes over fine detail">
       <svg id="mode-icon" viewBox="0 0 24 24" aria-hidden="true"></svg><span id="mode-label" aria-hidden="true">Keep</span>
     </button>
+    <button id="help-top" class="btn roomy-only" aria-haspopup="dialog" aria-label="Help" title="Help (?)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r="1" fill="currentColor" stroke="none"/></svg>
+    </button>
     <button id="settings-open" class="btn" aria-haspopup="dialog" aria-label="Settings" title="Settings (M)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 1.6 2.6 3-.7.7 3 2.6 1.6-1.4 2.5 1.4 2.5-2.6 1.6-.7 3-3-.7L12 21.5l-1.6-2.6-3 .7-.7-3-2.6-1.6L5.5 12 4.1 9.5l2.6-1.6.7-3 3 .7Z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
@@ -207,7 +210,8 @@
     <form method="dialog" class="menu">
       <header>
         <h2 id="settings-title">Settings</h2>
-        <button class="btn" value="close" aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <span class="head-btns"><button type="button" id="settings-help" class="btn" aria-label="Help: every button, gesture and key" title="Help (?)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r="1" fill="currentColor" stroke="none"/></svg></button>
+        <button class="btn" value="close" aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span>
       </header>
       <section class="set-fold" id="set-drawing" aria-labelledby="set-drawing-title">
         <h3><button type="button" class="set-head" aria-expanded="false" aria-controls="set-drawing-body"><span class="set-head-caret" aria-hidden="true">▸</span><span id="set-drawing-title">Drawing</span><span class="set-head-chip" id="set-drawing-chip"></span></button></h3>
@@ -269,7 +273,6 @@
       </section>
       <section class="set-about" aria-labelledby="set-about-title">
         <h3 id="set-about-title">About</h3>
-        <button type="button" id="help-open" class="btn wide">Help: every button, gesture and key (?)</button>
         <label class="row"><input type="checkbox" id="opt-usage" aria-describedby="usage-short"> Send usage counts</label>
         <p class="note" id="usage-short">📊 Which buttons get used, never your drawings or what you type.</p>
         <details class="usage-more" id="usage-more"><summary>What is counted, and what never is</summary>
