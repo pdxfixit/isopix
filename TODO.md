@@ -13,6 +13,5 @@ Offered, not yet approved (ask the owner first):
 
 ## The owner does
 
-- Push the two move pages from the Mac (isopix.app itself is live): the steps are in [docs/state.md](docs/state.md) "In flight".
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
 - Answer cards 8 to 10 in [docs/questions.md](docs/questions.md).
