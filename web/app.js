@@ -24,6 +24,8 @@ import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './eng
 import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
 import { readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
 import { welcomeDue, initWelcome } from './welcome.js';
+import { initTour } from './tour.js';
+import { deviceOf, doneLessons } from './lessons.js';
 import { sillyName } from './sillynames.js';
 import * as PNGP from './engine/pngproject.js';
 import { initUsage, countName } from './telemetry.js';
@@ -82,6 +84,9 @@ export const app = {
   trace: null,
   replaying: null,
   welcome: null,         // the welcome card (web/welcome.js)
+  tour: null,            // the lessons (web/tour.js, web/lessons.js)
+  practice: null,        // during a lesson: the person's own drawing, set aside
+  lastPointer: '',       // the last pointer used (the lessons word their steps for it)
   pickCenter: false,
   moveMode: false,       // the hand on the zoom rail: one finger moves the view
   lastDensity: null,
@@ -107,6 +112,8 @@ function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
+// What the person just did, for the lesson under way (web/lessons.js lists the events).
+const emit = (type, detail = {}) => app.tour?.event({ type, ...detail });
 const symCenter = () => ({ l: app.settings.symL, p: app.settings.symP, q: app.settings.symQ });
 function palette() {
   const s = app.settings, pp = paperOf(app.drawing.paper);
@@ -259,6 +266,7 @@ function chooseNotch(n) {
   computeLevel(true);
   showReadout();
   requestRender();
+  emit('level', { level: app.level });
 }
 function updateLevelUI() {
   const s = app.settings;
@@ -315,7 +323,7 @@ function buildPalette() {
     b.setAttribute('aria-label', inkName(app.drawing.paper, c) || `Custom color ${c}`);
     b.style.setProperty('--c', c);
     if (s.shading) b.innerHTML = `<span class="tones" aria-hidden="true"><i style="background:${shade(c, 'T')}"></i><i style="background:${shade(c, 'L')}"></i><i style="background:${shade(c, 'R')}"></i></span>`;
-    b.addEventListener('click', () => { set('color', c); buildPalette(); pickedColor(); });
+    b.addEventListener('click', () => { set('color', c); buildPalette(); pickedColor(); emit('color', { custom: false }); });
     box.append(b);
   }
   // The add-color and auto-shade buttons stay pinned at the end, so a narrow
@@ -334,20 +342,22 @@ function buildPalette() {
   if (!s.limited) {
     const custom = document.createElement('label');
     custom.className = 'swatch tool';
+    custom.id = 'pick-any';
     custom.setAttribute('aria-label', 'Pick any color');
     custom.innerHTML = `${GLYPHS.eyedropper}<input type="color" aria-label="Pick any color">`;
     const input = custom.querySelector('input');
     input.value = s.custom || s.color;
-    input.addEventListener('change', () => { set('custom', input.value); set('color', input.value); buildPalette(); pickedColor(); });
+    input.addEventListener('change', () => { set('custom', input.value); set('color', input.value); buildPalette(); pickedColor(); emit('color', { custom: true }); });
     pinned.append(custom);
   }
   const sh = document.createElement('button');
   sh.className = 'swatch tool';
+  sh.id = 'shade-toggle';
   sh.setAttribute('aria-pressed', String(s.shading));
   sh.setAttribute('aria-label', 'Auto-shade cube faces');
   sh.title = 'Auto-shade cube faces';
   sh.innerHTML = GLYPHS.cube;
-  sh.addEventListener('click', () => { set('shading', !s.shading); buildPalette(); syncMenu(); toast(s.shading ? 'Auto-shade on: top light, left mid, right dark' : 'Auto-shade off'); });
+  sh.addEventListener('click', () => { set('shading', !s.shading); buildPalette(); syncMenu(); toast(s.shading ? 'Auto-shade on: top light, left mid, right dark' : 'Auto-shade off'); emit('shading', { on: s.shading }); });
   pinned.append(sh);
   if (s.limited && !palette().includes(s.color)) set('color', palette()[0]);
 }
@@ -474,6 +484,7 @@ function cycleMode() {
   updateModeChip();
   syncMenu();
   toast(MODE_SAYS[app.settings.protect]);
+  emit('mode', { mode: app.settings.protect });
 }
 function applyEdges(edges, color) {
   for (const e of S.expandEdges(edges, symCenter(), app.settings.symmetry)) app.drawing.paintEdge(e, color ? { c: color } : null);
@@ -517,12 +528,14 @@ function doFill(x, y) {
     }
   }
   commit();
+  emit('fill');
   if (coarser) toast('A big area: filled with bigger cells to keep it quick.');
 }
 
 function commit() {
-  app.drawing.commit();
+  const diff = app.drawing.commit();
   afterChange();
+  return diff;
 }
 // changed: false after loading a drawing, which is no change to save to a file.
 function afterChange({ changed = true } = {}) {
@@ -540,8 +553,9 @@ function undo() {
   if (app.lastDensity && d === app.lastDensity.diff && app.selection) app.selection.region = app.lastDensity.before;
   toast('Undone');
   afterChange();
+  emit('undo');
 }
-function redo() { cancelGesture(); if (app.drawing.redo()) { toast('Redone'); afterChange(); } }
+function redo() { cancelGesture(); if (app.drawing.redo()) { toast('Redone'); afterChange(); emit('redo'); } }
 
 // ---------- selection and density ----------
 function marqueeRegion(A, wx, wy) {
@@ -574,7 +588,7 @@ function updateSelbar() {
 function setDensity(T) {
   const sel = app.selection;
   if (!sel) return false;
-  const before = sel.region;
+  const before = sel.region, d0 = selDensity();
   app.drawing.begin('density');
   const r = D.changeDensity(app.drawing, before, T, densityOpts());
   if (!r) { app.drawing.rollback(); toast('The selection edges do not line up with bigger cells. Select a bigger shape.'); return false; }
@@ -583,6 +597,7 @@ function setDensity(T) {
   app.lastDensity = diff ? { diff, before, T } : null;
   toast(`Density: level ${selDensity()}`);
   afterChange();
+  emit('density', { dir: Math.sign(selDensity() - d0) });
   return true;
 }
 function densityOpts() {
@@ -655,6 +670,7 @@ function previewEnd(keep = true) {
     const diff = app.drawing.commit();
     app.lastDensity = diff ? { diff, before: preview.before, T: preview.T } : null;
     toast(`Density: level ${preview.T}`);
+    emit('density', { dir: Math.sign(preview.T - preview.d0) });
   } else {
     app.drawing.rollback();
     app.selection.region = preview.before;
@@ -733,6 +749,7 @@ function onDown(e) {
   closePopover();
   try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or already gone */ }
   const [x, y] = local(e);
+  app.lastPointer = e.pointerType;
   pointers.set(e.pointerId, { x, y, type: e.pointerType });
   if (pointers.size === 2) { startTwoFinger(); return; }
   if (pointers.size > 2) return;
@@ -889,7 +906,7 @@ function onUp(e) {
   if (!g) return;
   if (g.kind === 'pinch' || g.kind === 'density') {
     if (pointers.size < 2) {
-      if (g.kind === 'density') previewEnd(true);
+      if (g.kind === 'density') previewEnd(true); else emit('view');
       // The finger left after a pinch moves the view; it never draws.
       const [rest] = [...pointers.values()];
       gesture = !rest ? null : g.kind === 'pinch' && oneFinger({ afterPinch: true }) === 'pan' ? { kind: 'pan', x: rest.x, y: rest.y } : { kind: 'none' };
@@ -900,8 +917,14 @@ function onUp(e) {
   if (pointers.size) return;
   gesture = null;
   updateCursor();
+  if (g.kind === 'pan') emit('view');
   if (g.tx) {
-    if (e.type === 'pointercancel') { app.drawing.rollback(); app.strokeSkips.clear(); } else { commit(); reportSkips(); }
+    if (e.type === 'pointercancel') { app.drawing.rollback(); app.strokeSkips.clear(); } else {
+      const skipped = app.strokeSkips.size, diff = commit();
+      reportSkips();
+      const s = app.settings;
+      emit('stroke', { tool: s.tool, brush: s.brush, lineStyle: s.lineStyle, level: app.level, cells: diff ? diff.cells.length + diff.edges.length : 0, skipped });
+    }
   }
   if (g.kind === 'marquee') {
     clearTimeout(g.timer);
@@ -912,6 +935,7 @@ function onUp(e) {
     } else if (g.region) {
       app.selection = { region: g.region, anchor: g.A };
       app.lastDensity = null;
+      emit('select');
     }
     updateSelbar();
   }
@@ -947,12 +971,14 @@ function onWheel(e) {
     app.view.pan(-e.deltaX, -e.deltaY);
   }
   requestRender();
+  emit('view');
 }
 
 function zoomBy(f) {
   app.view.zoomAt(app.view.w / 2, app.view.h / 2, f);
   computeLevel();
   requestRender();
+  emit('view');
 }
 // ---------- zoom slider ----------
 // The left rail: + and − double and halve the zoom (one level each), the
@@ -1020,6 +1046,7 @@ function fitView() {
   }
   computeLevel(true);
   requestRender();
+  emit('fit');
 }
 
 // ---------- keyboard ----------
@@ -1053,7 +1080,12 @@ function onKey(e) {
     save: () => saveFile(),
     saveas: () => saveFile({ asNew: true }),
     open: () => askFirst('open'),
-    escape: () => { closePopover(); if (app.moveMode) setMoveMode(false); if (app.selection) { app.selection = null; updateSelbar(); requestRender(); } },
+    escape: () => {
+      const nothingElse = $('#popover').hidden && !app.moveMode && !app.selection;
+      closePopover(); if (app.moveMode) setMoveMode(false);
+      if (app.selection) { app.selection = null; updateSelbar(); requestRender(); emit('seldone'); }
+      if (nothingElse && app.tour?.active()) app.tour.stop();
+    },
     undo, redo,
   }[what];
   if (run) run();
@@ -1067,7 +1099,7 @@ function openHelp() {
   $('#help-body').innerHTML = helpHTML((sel) => {
     const svg = document.querySelector(`${sel} svg`);
     return svg ? svg.outerHTML.replace(/ id="[^"]*"/g, '') : '';
-  }, readOpen(HELP_OPEN_KEY));
+  }, readOpen(HELP_OPEN_KEY), readDone());
   openSheet('#help');
 }
 // Help's sections fold (help.js): a head opens or closes the body it
@@ -1090,6 +1122,7 @@ function openSheet(sel) {
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
   opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : opener;
   $(sel).showModal();
+  emit('sheet', { id: sel.slice(1) });
 }
 for (const d of document.querySelectorAll('dialog')) {
   d.addEventListener('close', () => { if (opener && document.contains(opener) && !document.querySelector('dialog[open]')) opener.focus({ preventScroll: true }); });
@@ -1189,6 +1222,7 @@ function updateFileUI() {
 // The file record outlives a reload (IndexedDB can keep a file handle in
 // Chrome; where it cannot, it is kept without one).
 async function rememberFile() {
+  if (app.practice) return; // a lesson's practice drawing is never this browser's drawing
   if (!(await store.idbSet('file', app.file))) await store.idbSet('file', { ...app.file, handle: null });
 }
 // Every change: the dot follows whether something drawn is not in a file
@@ -1225,6 +1259,7 @@ async function saveFile({ asNew = false } = {}) {
   sayResult(r, 'drawing');
   if (r.cancelled || r.failed) return false;
   fileSaved(r, 'save');
+  emit('saved', { what: 'drawing' });
   return true;
 }
 // The share sheet needs the picture at once, so it is encoded here, in the tap.
@@ -1306,16 +1341,16 @@ function wireMenu() {
     });
   }
   for (const name of ['protect', 'symmetry', 'hint']) {
-    for (const el of document.querySelectorAll(`input[name="${name}"]`)) el.addEventListener('change', () => { set(name, el.value); updateModeChip(); updateChips(); requestRender(); });
+    for (const el of document.querySelectorAll(`input[name="${name}"]`)) el.addEventListener('change', () => { set(name, el.value); updateModeChip(); updateChips(); requestRender(); if (name === 'symmetry') emit('symmetry', { mode: el.value }); });
   }
   const check = (id, key, after) => $(id).addEventListener('change', (e) => { set(key, e.target.checked); after?.(); updateChips(); requestRender(); });
-  check('#opt-shading', 'shading', buildPalette);
+  check('#opt-shading', 'shading', () => { buildPalette(); emit('shading', { on: app.settings.shading }); });
   check('#opt-gutters', 'gutters');
   check('#opt-handle', 'densityHandle', updateSelbar);
   check('#opt-pinch', 'densityPinch');
   check('#opt-longpress', 'densityLongpress');
   check('#opt-limited', 'limited', buildPalette);
-  check('#opt-gray', 'gray', syncMenu);
+  check('#opt-gray', 'gray', () => { syncMenu(); emit('gray', { on: app.settings.gray }); });
   check('#opt-save-png', 'savePng', () => { updateFileUI(); syncMenu(); });
   check('#opt-usage', 'usage');
   $('#opt-hint-levels').addEventListener('change', (e) => { set('hintLevels', +e.target.value); requestRender(); });
@@ -1323,15 +1358,20 @@ function wireMenu() {
   $('#paper-flip').addEventListener('click', flipPaper);
   $('#settings-help').addEventListener('click', openHelp);
   $('#help-top').addEventListener('click', openHelp);
-  $('#help-body').addEventListener('click', (e) => { const head = e.target.closest('.set-head'); if (head) toggleFold(head); });
+  $('#help-body').addEventListener('click', (e) => {
+    const head = e.target.closest('.set-head');
+    if (head) toggleFold(head);
+    const lesson = e.target.closest('[data-lesson]');
+    if (lesson) startLesson(lesson.dataset.lesson);
+  });
   $('#welcome-again').addEventListener('click', () => { $('#settings').close(); app.welcome.open(); });
   $('#sym-center').addEventListener('click', () => { app.pickCenter = true; $('#settings').close(); toast('Tap a grid point for the symmetry center'); });
   $('#trace-open').addEventListener('click', openTrace);
   $('#trace-clear').addEventListener('click', () => { app.trace = null; scheduleSave(); updateChips(); requestRender(); });
   $('#replay').addEventListener('click', () => { $('#settings').close(); startReplay(); });
   // The Drawing sheet and the top bar's New, Open and Save.
-  $('#drawing-name').addEventListener('input', (e) => { setName(e.target.value); scheduleSave(); });
-  $('#name-roll').addEventListener('click', () => { setName(sillyName(Math.random, app.drawingName)); $('#drawing-name').value = app.drawingName; scheduleSave(); });
+  $('#drawing-name').addEventListener('input', (e) => { setName(e.target.value); scheduleSave(); emit('name'); });
+  $('#name-roll').addEventListener('click', () => { setName(sillyName(Math.random, app.drawingName)); $('#drawing-name').value = app.drawingName; scheduleSave(); emit('name'); });
   $('#drawing-name').addEventListener('change', (e) => { e.target.value = app.drawingName; });
   $('#file-new').addEventListener('click', () => askFirst('new'));
   $('#top-new').addEventListener('click', () => askFirst('new'));
@@ -1520,6 +1560,79 @@ async function takeMovedDrawing(arriving) {
   } catch { /* a drawing that will not load stays at the old address */ }
 }
 
+// ---------- lessons (web/lessons.js, web/tour.js) ----------
+// A lesson draws in a practice drawing: the person's own drawing, its file
+// record, settings, stamps and view are set aside and come back at the end
+// (or the practice one replaces it: Keep it). Nothing of the practice drawing
+// reaches IndexedDB until it is kept (saveNow and rememberFile skip it).
+const DONE_KEY = 'isopix-lessons-done';
+const readDone = () => { try { return doneLessons(localStorage.getItem(DONE_KEY)); } catch { return new Set(); } };
+function beginPractice() {
+  const theirs = app.drawing;
+  app.practice = { obj: projectData(), file: { ...app.file }, lastSaved: app.lastSaved, settings: { ...app.settings }, stamps: app.stamps, name: app.drawingName, has: hasContent() };
+  cancelGesture();
+  if (app.replaying) stopReplay();
+  app.drawing = newDrawing();
+  app.drawing.paper = theirs.paper;
+  app.stamps = []; app.selection = null; app.lastDensity = null; app.trace = null;
+  app.file = { name: null, at: null, via: null, dirty: false, handle: null };
+  setName('Practice');
+  for (const d of document.querySelectorAll('dialog[open]')) d.close();
+  buildPalette(); syncMenu(); afterChange({ changed: false }); updateFileUI();
+}
+function endPractice(keep) {
+  const was = app.practice;
+  if (!was) return;
+  const practiceName = app.drawingName;
+  if (!keep) {
+    loadProjectObject(was.obj);
+    app.file = was.file;
+    app.lastSaved = was.lastSaved;
+  }
+  // The person's settings come back either way (the lesson picked tools and brushes for them).
+  app.settings = { ...was.settings, welcomed: app.settings.welcomed };
+  store.saveSettings(app.settings);
+  app.practice = null;
+  if (keep) {
+    if (practiceName === 'Practice') setName(sillyName());
+    rememberFile();
+    savePending = true; saveNow();
+  }
+  for (const d of document.querySelectorAll('dialog[open]')) d.close();
+  buildPalette(); setTool(app.settings.tool); updateModeChip(); syncMenu(); computeLevel(true); afterChange({ changed: false }); updateFileUI();
+  toast(keep ? 'Kept: this is your drawing now' : 'Back to your drawing');
+}
+// Keep it asks first when the person's own drawing has something not in a file.
+const practiceNeedsAsk = () => !!app.practice && app.practice.has && unsavedToFile(app.practice.file, true);
+// "Save mine first": their drawing back for a moment, saved to a file, then the practice one again.
+async function saveMineFirst() {
+  const was = app.practice, practice = projectData(), practiceFile = app.file;
+  loadProjectObject(was.obj); app.file = was.file;
+  const ok = await saveFile();
+  loadProjectObject(practice); app.file = practiceFile;
+  updateFileUI();
+  return ok;
+}
+// A step's setup (lessons.js): the tool and brush it needs, or a sheet open at the right place.
+function lessonSetup(su) {
+  if (su.brush) set('brush', su.brush);
+  if (su.lineStyle) set('lineStyle', su.lineStyle);
+  if (su.marquee) set('marquee', su.marquee);
+  if (su.shading != null && app.settings.shading !== su.shading) { set('shading', su.shading); buildPalette(); }
+  if (su.protect) { set('protect', su.protect); updateModeChip(); }
+  if (su.tool) setTool(su.tool); else updateOptionsButton();
+  if (su.open === 'drawing' && !$('#drawing').open) openDrawing();
+  if (su.open?.startsWith('settings:')) {
+    if (!$('#settings').open) openSettings();
+    showFold(su.open.slice(9), true);
+  }
+}
+function startLesson(id) {
+  for (const d of document.querySelectorAll('dialog[open]')) d.close();
+  app.usage?.count(countName('lesson', id));
+  app.tour.start(id);
+}
+
 // ---------- autosave ----------
 // Every change lands in IndexedDB 800 ms later, and at once when the app is
 // put away (switching apps, closing the tab), so a quick close loses nothing.
@@ -1534,6 +1647,7 @@ async function saveNow() {
   clearTimeout(saveTimer);
   if (!savePending) return;
   savePending = false;
+  if (app.practice) return; // the person's own drawing stays as it was in IndexedDB
   if (await store.idbSet('autosave', projectData())) {
     app.lastSaved = Date.now();
     if ($('#drawing').open) updateSavedLine();
@@ -1549,7 +1663,7 @@ async function saveNow() {
 // Not now: mid-stroke or drag, a density preview, a replay, picking the
 // symmetry center, the open rail, or the menu or a picker open.
 export function isBusy() {
-  return !!gesture || !!preview || !!app.replaying || app.pickCenter
+  return !!gesture || !!preview || !!app.replaying || app.pickCenter || !!app.tour?.active()
     || !!document.querySelector('dialog[open]') || !$('#popover').hidden || $('#levels').classList.contains('open')
     || $('#handle').classList.contains('dragging');
 }
@@ -1590,6 +1704,7 @@ function startReplay() {
   };
   app.replaying.timer = setTimeout(tick, 300);
   requestRender();
+  emit('replay');
 }
 function stopReplay() {
   if (!app.replaying) return;
@@ -1637,7 +1752,7 @@ function wire() {
     placeHandle();
   });
   $('#sel-snap').addEventListener('click', () => { set('snap', !app.settings.snap); updateSelbar(); });
-  $('#sel-done').addEventListener('click', () => { app.selection = null; app.lastDensity = null; updateSelbar(); requestRender(); });
+  $('#sel-done').addEventListener('click', () => { app.selection = null; app.lastDensity = null; updateSelbar(); requestRender(); emit('seldone'); });
   $('#sel-erase').addEventListener('click', () => {
     if (!app.selection) return;
     app.drawing.begin('erase selection');
@@ -1655,6 +1770,7 @@ function wire() {
     set('brush', 'stamp');
     scheduleSave();
     toast('Saved as a stamp. Pick the pencil to place it.');
+    emit('stamp');
   });
 
   // The density handle: drag up for finer, down for coarser, a notch every 36 px.
@@ -1705,12 +1821,17 @@ async function boot() {
   if (arriving) await takeMovedDrawing(arriving);
   afterChange({ changed: false });
   updateFileUI();
+  app.tour = initTour({
+    device: () => deviceOf({ pointerType: app.lastPointer, coarse: matchMedia('(pointer: coarse)').matches }),
+    begin: beginPractice, end: endPractice, needsAsk: practiceNeedsAsk, saveMineFirst, setup: lessonSetup,
+    practiceHasContent: hasContent,
+    markDone: (id) => { const done = readDone(); done.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...done])); } catch { /* storage blocked */ } },
+  });
   // The welcome card, once, on a first visit. Anyone who already has a drawing
   // here (or is bringing one) is not new, so it never opens for them later.
   app.welcome = initWelcome({
-    dialog: $('#welcome'), cube: $('#welcome-cube'), caption: $('#welcome-caption'), start: $('#welcome-start'),
-    color: () => app.settings.color, shade, shading: () => app.settings.shading,
-    onClose: () => { if (!app.settings.welcomed) set('welcomed', true); },
+    dialog: $('#welcome'),
+    onClose: (how) => { if (!app.settings.welcomed) set('welcomed', true); if (how === 'tour') startLesson('basics'); },
   });
   // The controls work now: the loading screen finishes its turn and fades, then the welcome.
   const loaded = self.ISOPIX_LOADING ? self.ISOPIX_LOADING.done() : Promise.resolve();
