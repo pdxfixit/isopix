@@ -71,8 +71,13 @@ def check():
     print(f"✅ web/version.js {stamp}: PATCH is the commit count ({want})")
 
 
-def staged_problem(stamp, head_count):
-    """Why a staged stamp is wrong for the next commit, or None. Pure."""
+def staged_problem(stamp, head_count, parents=()):
+    """Why a staged stamp is wrong for the next commit, or None. Pure.
+    head_count: commits behind the one being made (for a merge, both sides).
+    parents: a merge's parent stamps; keeping one of them is fine, since the
+    commit that set it already carries its number."""
+    if stamp in parents:
+        return None
     m = SEMVER.match(stamp)
     want = head_count + 1
     if m and int(m.group(3)) == want:
@@ -84,7 +89,13 @@ def staged_problem(stamp, head_count):
 def staged():
     if subprocess.run(["git", "-C", str(ROOT), "diff", "--cached", "--quiet", "--", "web/version.js"]).returncode == 0:
         return  # version.js is not in this commit
-    problem = staged_problem(stamp_of(git("show", ":web/version.js")).group(1), commits())
+    stamp = stamp_of(git("show", ":web/version.js")).group(1)
+    merging = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "-q", "--verify", "MERGE_HEAD"], capture_output=True).returncode == 0
+    if merging:
+        parents = tuple(stamp_of(git("show", f"{r}:web/version.js")).group(1) for r in ("HEAD", "MERGE_HEAD"))
+        problem = staged_problem(stamp, int(git("rev-list", "--count", "HEAD", "MERGE_HEAD")), parents)
+    else:
+        problem = staged_problem(stamp, commits())
     if problem:
         sys.exit(f"🛑 {problem}")
 

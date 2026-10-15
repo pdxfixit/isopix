@@ -145,12 +145,14 @@ VIEWS.pinchpan = { js: `${q('[data-tool="pencil"]')} const a = window.isopix, c 
   if (a.drawing.cells.size) throw new Error('two fingers left ' + a.drawing.cells.size + ' cells drawn');
   if (!(a.view.cx < cx)) throw new Error('the finger left after a pinch did not pan');` };
 // Save file with the browser's Save dialog (stubbed: headless has no dialog):
-// the first Save asks, the next writes the same file, and the dot follows changes.
-VIEWS['save-file'] = { js: `${DRAW} const a = window.isopix; let asked = 0, writes = 0;
-  const handle = { name: 'look.isopix.json', queryPermission: async () => 'granted', createWritable: async () => ({ write: async () => { writes++; }, close: async () => {} }) };
+// the first Save asks, the next writes the same file, and the dot follows
+// changes, but only once there is a file (never before the first save).
+VIEWS['save-file'] = { js: `window.isopix.file = { name: null, at: null, via: null, dirty: false, handle: null }; // each width starts with no file
+  ${DRAW} const a = window.isopix; let asked = 0, writes = 0;
+  const handle = { name: 'look.isopix.png', queryPermission: async () => 'granted', createWritable: async () => ({ write: async () => { writes++; }, close: async () => {} }) };
   window.showSaveFilePicker = async () => { asked++; return handle; };
   const dot = () => document.querySelector('#file-save').classList.contains('unsaved');
-  ${q('#drawing-open')} if (!dot()) throw new Error('no unsaved dot after drawing');
+  ${q('#drawing-open')} if (dot()) throw new Error('a Save dot before the drawing was ever saved to a file');
   ${q('#file-save')} await new Promise((r) => setTimeout(r, 100));
   if (asked !== 1 || writes !== 1 || dot()) throw new Error('first Save: asked ' + asked + ', wrote ' + writes + ', dot ' + dot());
   ${q('#file-save')} await new Promise((r) => setTimeout(r, 100));

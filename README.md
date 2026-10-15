@@ -29,13 +29,13 @@ LAN gets the app, but not the install.
 
 - **Draw**: Pencil, then drag. Two fingers pan and pinch-zoom; a first finger
   that had not really drawn yet is taken back, and the finger left after a
-  pinch keeps panning. **Move** (the hand at the foot of the zoom rail, `H`):
+  pinch keeps panning. **Move** (the hand at the top of the zoom rail, `H`):
   one finger moves the view and draws nothing, until you tap it or a tool. With
   a mouse: drag draws, middle button or Space + drag pans, Ctrl + wheel (or a
   trackpad pinch) zooms, the wheel pans.
-- **Zoom rail** (left edge): zoom in at the top, a slider (each step doubles
+- **Zoom rail** (left edge): the Move hand at the top, zoom in, a slider (each step doubles
   or halves the zoom), zoom out, ⌖ Fit drawing (frames everything drawn;
-  on empty paper, back to the start) and the Move hand. On a short screen (under 580 px
+  on empty paper, back to the start). On a short screen (under 580 px
   tall, or a phone held sideways) only the two buttons show.
 - **Grid size**: the column of hexagons, big to small (a bar along the top on a tablet).
   By default the level **follows zoom**: a notch picks a brush size on screen,
@@ -79,13 +79,18 @@ and at once when the app is put away (with its undo log, so undo and time-lapse
 survive a reload). Isopix asks the browser to keep that storage (not Firefox,
 which would prompt). If the browser will not store it (a private window), a
 notice says so once, with a Save file button. Settings live in `localStorage`.
-**Save file** writes a `.isopix.json` file: cells, bold edges, hidden
-children, the undo log and stamps. How it saves depends on the device
+**Save file** writes a PNG picture with the whole project inside
+(`name.isopix.png`; `web/engine/pngproject.js`): it opens in any photo app,
+and Open reads the drawing back out. Settings → Drawing → "Save as a
+picture" off makes it **Save Isopix drawing**, which writes an `.isopix` file
+(the project JSON, gzip-compressed). Either holds the cells, bold edges,
+hidden children, the undo log and stamps; older `.isopix.json` files still open. How it saves depends on the device
 (`saveMethod` in `web/storage.js`): Chrome and Edge on a computer show their
 Save dialog once and then write the same file on each Save (the file handle
 is kept in IndexedDB); iPhone and iPad open the share sheet (Save to Files),
-since a download there is unreliable; everything else downloads. A dot on
-Save means changes not in a file yet; New and Open ask first only then. Open
+since a download there is unreliable; everything else downloads. Once the
+drawing is in a file, a dot on Save marks changes since; New and Open ask
+first when something drawn is not in a file. Open
 checks the file's shape and refuses one that breaks the grid's rules. Nothing
 leaves the device.
 
@@ -94,7 +99,7 @@ leaves the device.
 | Path | What it holds |
 |---|---|
 | `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `glyphs.js`, `welcome.js` (the first-visit card), `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
-| `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
+| `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `test/` | `node --test` suites for the engine. |
 | `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |
 | `docs/` | `state.md`, `decisions.md`, `questions.md`, `design-brief.md`, `deploy-cloudflare.md`, `environment.md`, `justfile-style.md`. |
