@@ -1,0 +1,15 @@
+# Isopix at https://isopix.app: static assets only (web/), one hostname.
+# Deployed by flarepress (github.com/pdxfixit/flarepress) through this repo's
+# tools/deploy.sh: by .github/workflows/deploy.yml, or the owner's
+# `just --yes deploy`. The old addresses are move Workers kept by the owner
+# outside this repo; their page loads move.js from here.
+# The usage-counts Worker (worker/) is not bound yet: see docs/state.md.
+name = "isopix-app"
+compatibility_date = "2026-10-15"
+
+routes = [
+  { pattern = "isopix.app", custom_domain = true }
+]
+
+[assets]
+directory = "../web"

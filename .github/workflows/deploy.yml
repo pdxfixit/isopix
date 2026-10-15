@@ -1,0 +1,48 @@
+# Deploys https://isopix.app with this repo's own Cloudflare token: the same
+# `just --yes deploy` the owner runs (tools/deploy.sh: check, which waits for
+# test.yml to be green on this commit; gate; stamp; push through flarepress;
+# verify, with `just look` on the live site). No agent holds a token.
+#
+# Started by hand for now (Actions → deploy → Run workflow): main holds the
+# usage counts, which must not go live before their Worker and D1 database
+# (docs/state.md). Once they are bound in site/wrangler.toml, the push trigger
+# below goes on, for commits that change web/, worker/ or site/.
+#
+# Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+name: deploy
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths: ['web/**', 'worker/**', 'site/**']
+permissions:
+  contents: read
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      FLAREPRESS: ${{ github.workspace }}/.flarepress
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0  # git describe, and the version-bump rule, read history
+      - uses: actions/checkout@v7.0.1
+        with:
+          repository: pdxfixit/flarepress
+          ref: 25285d502a77e85810626ae621520a6f23f258c6  # flarepress main, 2026-10-15; move the pin to take a newer one
+          path: .flarepress
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.11.0
+      - name: Install just (pinned release)
+        run: curl -sSfL https://github.com/casey/just/releases/download/1.36.0/just-1.36.0-x86_64-unknown-linux-musl.tar.gz | sudo tar xz -C /usr/local/bin just && just --version
+      - name: just --yes deploy
+        run: just --yes deploy

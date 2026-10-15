@@ -1,4 +1,4 @@
-# Isopix deploys: https://isopix.app, through flarepress.
+# Isopix deploys: https://isopix.app, through flarepress (public, github.com/pdxfixit/flarepress).
 # Imported by the justfile (`import? 'deploy.just'`). The logic is in
 # tools/deploy.sh, which calls flarepress's tools/site.sh for the steps every app
 # site shares; these recipes are the menu. See docs/deploy-cloudflare.md.
@@ -6,8 +6,8 @@
 
 # (The shell setting, bash -uc, comes from the justfile that imports this file: a setting cannot be set twice.)
 
-# Deploys go through ~/src/flarepress, the owner's Cloudflare deploy repo; its isopix.app/public links to this repo's web/.
-# FLAREPRESS=/path points at a clone somewhere else.
+# The site folder is site/ here (wrangler.toml, site.conf, harvest.conf); flarepress is a clone of the public repo at
+# ~/src/flarepress (FLAREPRESS=/path for another). GitHub runs `just --yes deploy` too (.github/workflows/deploy.yml).
 flarepress := env("FLAREPRESS", env("HOME") / "src/flarepress")
 
 # tools/deploy.sh reads the same location.
@@ -19,7 +19,7 @@ deploy-check:
 
 # 🧪 Dry run of the deploy (wrangler validates and lists the files, sends nothing); runs deploy-check first
 deploy-plan: deploy-check
-    just --justfile {{flarepress}}/Justfile --working-directory {{flarepress}} plan isopix.app
+    @tools/deploy.sh plan
 
 # 📥 Copy Isopix's usage counts (D1) and Cloudflare's stats into the archive on this Mac; read-only. Every deploy runs it first
 harvest *args:
@@ -36,7 +36,7 @@ deploy:
     @tools/deploy.sh check
     @tools/deploy.sh gate
     @tools/deploy.sh stamp
-    just --justfile {{flarepress}}/Justfile --working-directory {{flarepress}} push isopix.app
+    @tools/deploy.sh push
     @tools/deploy.sh verify
 
 # 🔎 After a deploy: waits for the live version, then checks 200s, manifest, service-worker cache header and (if the app has it) `just look` on the live site; exit 1 names what failed
