@@ -59,10 +59,10 @@ export const SECTIONS = [
   {
     title: 'Top buttons',
     items: [
-      { name: 'Drawing', from: '#drawing-open', says: 'Opens the Drawing sheet: the name of this drawing, New, Open, Save file and Save picture. On a phone this narrow it shows only its folder.' },
+      { name: 'Drawing', from: '#drawing-open', says: 'Opens the Drawing sheet: the name of this drawing, New, Open, Save drawing and Save picture. On a phone this narrow it shows only its folder.' },
       { name: 'New', from: '#top-new', says: 'On wider screens: starts a new drawing. It asks first if this one has anything in it.' },
-      { name: 'Open', from: '#top-open', says: 'On wider screens: opens a project file.' },
-      { name: 'Save', from: '#top-save', says: 'On wider screens: saves the project file, like Save file in the Drawing sheet. A dot means changes since the last save to a file.' },
+      { name: 'Open', from: '#top-open', says: 'On wider screens: opens a drawing Isopix saved.' },
+      { name: 'Save', from: '#top-save', says: 'On wider screens: Save drawing, as in the Drawing sheet. A dot means changes since the last save to a file.' },
       { name: 'Help', from: '#help-top', says: 'This sheet: every button, gesture and key. It sits next to Settings when there is room, and always in Settings, next to ✕.' },
       { name: 'Settings', from: '#settings-open', says: 'Drawing, Grid, Selection, Learning and About. Each part folds; its chip shows what is set.' },
       { name: 'Welcome', from: '#welcome-again', text: '👋', says: 'Settings → About → Show the welcome again opens the card a first visit shows. Its cube is practice: tap the six triangles and each shades itself. It is not part of your drawing.' },
@@ -79,13 +79,13 @@ export const SECTIONS = [
     items: [
       { name: 'Name', text: 'Aa', says: 'The drawing\'s name. A new drawing gets a silly one; type your own any time. Saved files are named after it, in lowercase.' },
       { name: 'Roll a name', from: '#name-roll', text: '🎲', says: 'Rolls another silly name for this drawing: two words with the same first letter.' },
-      { name: 'New', from: '#file-new', says: 'Starts a new drawing. If this one has anything in it, you choose: Save file first, New anyway, or Cancel.' },
+      { name: 'New', from: '#file-new', says: 'Starts a new drawing. If this one has anything in it, you choose: Save drawing first, New anyway, or Cancel.' },
       { name: 'Open', from: '#file-open', says: 'Opens a drawing Isopix saved: its PNG, an .isopix file, or an older .isopix.json. It replaces this drawing, so it asks first if this one has changes not in a file.' },
-      { name: 'Save file', from: '#file-save', says: 'Saves the whole drawing with its undo history, stamps, paper and trace picture, as a PNG picture that opens in any photo app and reopens here, ready to keep drawing (except on iPhone and iPad, Settings → Drawing can turn that off: the button then reads Save Isopix drawing and makes an .isopix file). On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
-      { name: 'Save as new file', from: '#file-saveas', text: '⇩', says: 'Shows after Save has a file to write to: saves a copy as a new file instead.' },
-      { name: 'Save picture', from: '#file-png', says: 'Saves a PNG picture of the drawing.' },
-      { name: 'Save vector (SVG)', from: '#file-svg', text: 'SVG', says: 'Saves an SVG: a vector file that stays sharp at any size.' },
-      { name: 'Time-lapse', from: '#file-replay', text: '▶', says: 'Plays the drawing back from the start.' },
+      { name: 'Save drawing', from: '#file-save', says: 'Keeps your drawing in a file that opens again in Isopix, ready to keep drawing: its undo history, stamps, paper and trace picture all come along. It is a PNG that photo apps show too (except on iPhone and iPad, Settings → Drawing can make it an .isopix file instead). To share or print, use Save picture: it holds only the picture. On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
+      { name: 'Save a copy', from: '#file-saveas', text: '⇩', says: 'Shows after Save drawing has a file to write to: saves the drawing as a new file instead.' },
+      { name: 'Save picture', from: '#file-png', says: 'A plain PNG picture of the drawing, to share or print. Nothing else is inside it.' },
+      { name: 'Sharp picture (SVG)', from: '#file-svg', text: 'SVG', says: 'A picture that stays sharp at any size, for printing big or for design apps.' },
+      { name: 'Watch it being drawn', from: '#file-replay', text: '▶', says: 'Plays the drawing back from the start, like a time-lapse. Tap Stop, or the paper, to end it.' },
     ],
   },
   {

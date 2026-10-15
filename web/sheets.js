@@ -27,10 +27,11 @@ function ago(ms) {
   return ms < 60000 ? 'a moment ago' : min < 60 ? `${min} ${min === 1 ? 'minute' : 'minutes'} ago` : `${Math.floor(min / 60)} h ago`;
 }
 
-// "Saved in this browser …" for the time since the last autosave.
+// "Kept in this browser …" for the time since the last autosave; nothing
+// before the first one lands (a "not saved" line there read like an error).
 export function savedAgo(ms) {
-  if (ms == null || !Number.isFinite(ms)) return 'Not saved in this browser yet.';
-  return `Saved in this browser ${ago(ms)}. Nothing leaves your device.`;
+  if (ms == null || !Number.isFinite(ms)) return '';
+  return `Kept in this browser ${ago(ms)}.`;
 }
 
 // The file line under it: whether this drawing is in a file, and whether it
@@ -38,11 +39,11 @@ export function savedAgo(ms) {
 // 'save' | 'open', dirty, linked (Save writes that same file again)}.
 export function fileLine(file, hasContent, now = Date.now()) {
   const f = file || {};
-  if (!f.at || !Number.isFinite(f.at)) return hasContent ? 'Not saved to a file yet. Save file keeps a copy you can open on any device.' : '';
+  if (!f.at || !Number.isFinite(f.at)) return hasContent ? 'Not in a file yet. Save drawing to keep it on any device.' : '';
   const when = ago(Math.max(0, now - f.at));
-  if (f.dirty) return `Changed since ${f.via === 'open' ? 'you opened' : 'you saved'} ${f.name} ${when}. Save file to keep the changes.`;
+  if (f.dirty) return `Changed since ${f.via === 'open' ? 'you opened' : 'you saved'} ${f.name} ${when}. Save drawing to keep the changes.`;
   const done = f.via === 'open' ? `Opened ${f.name} ${when}.` : `Saved as ${f.name} ${when}.`;
-  return f.linked ? `${done} Save writes to the same file.` : done;
+  return f.linked ? `${done} Save drawing writes to the same file.` : done;
 }
 
 // Whether something drawn is not in a file (New and Open ask first then).

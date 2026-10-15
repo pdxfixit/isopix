@@ -57,7 +57,8 @@ LAN gets the app, but not the install.
 - **Auto-shade** (the cube swatch): one color becomes three tones by cube face:
   top light, left mid, right dark.
 - **Drawing** (top left, `D`): the drawing's name and big buttons for New,
-  Open, Save file and Save picture, plus Save vector (SVG) and Time-lapse. From
+  Open, then Save drawing (reopens in Isopix) and Save picture (to share or
+  print), Sharp picture (SVG) and Watch it being drawn. From
   700 px wide, New, Open and Save also sit in the top bar.
 - **Settings** (⚙️ top right, `M`): folding sections with a chip that shows
   what is set. Drawing (big strokes over fine detail, paper, auto-shade,
@@ -78,11 +79,11 @@ The drawing saves itself to IndexedDB in this browser 800 ms after each change,
 and at once when the app is put away (with its undo log, so undo and time-lapse
 survive a reload). Isopix asks the browser to keep that storage (not Firefox,
 which would prompt). If the browser will not store it (a private window), a
-notice says so once, with a Save file button. Settings live in `localStorage`.
-**Save file** writes a PNG picture with the whole project inside
+notice says so once, with a Save drawing button. Settings live in `localStorage`.
+**Save drawing** writes a PNG picture with the whole project inside
 (`name.isopix.png`; `web/engine/pngproject.js`): it opens in any photo app,
 and Open reads the drawing back out. Settings → Drawing → "Save as a
-picture" off (not offered on iPhone and iPad) makes it **Save Isopix drawing**, which writes an `.isopix` file
+picture" off (not offered on iPhone and iPad) makes it write an `.isopix` file
 (the project JSON, gzip-compressed). Either holds the cells, bold edges,
 hidden children, the undo log and stamps; older `.isopix.json` files still open. How it saves depends on the device
 (`saveMethod` in `web/storage.js`): Chrome and Edge on a computer show their

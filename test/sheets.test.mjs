@@ -60,10 +60,10 @@ test('New asks only when there is something to lose, with three clear choices', 
 test('the file line says whether the drawing is in a file, and whether it changed since', () => {
   const now = 1e12;
   assert.equal(S.fileLine(null, false, now), '');
-  assert.match(S.fileLine(null, true, now), /^Not saved to a file yet/);
+  assert.equal(S.fileLine(null, true, now), 'Not in a file yet. Save drawing to keep it on any device.');
   assert.equal(S.fileLine({ name: 'cube.isopix.json', at: now - 5000, via: 'save' }, true, now), 'Saved as cube.isopix.json a moment ago.');
-  assert.equal(S.fileLine({ name: 'cube.isopix.json', at: now - 3 * 60000, via: 'save', linked: true }, true, now), 'Saved as cube.isopix.json 3 minutes ago. Save writes to the same file.');
-  assert.equal(S.fileLine({ name: 'a.json', at: now - 1000, via: 'open', dirty: true }, true, now), 'Changed since you opened a.json a moment ago. Save file to keep the changes.');
+  assert.equal(S.fileLine({ name: 'cube.isopix.json', at: now - 3 * 60000, via: 'save', linked: true }, true, now), 'Saved as cube.isopix.json 3 minutes ago. Save drawing writes to the same file.');
+  assert.equal(S.fileLine({ name: 'a.json', at: now - 1000, via: 'open', dirty: true }, true, now), 'Changed since you opened a.json a moment ago. Save drawing to keep the changes.');
   assert.equal(S.fileLine({ name: 'a.json', at: now, via: 'open' }, true, now), 'Opened a.json a moment ago.');
 });
 
@@ -83,8 +83,8 @@ test('the Save dot shows only for changes since a file was made, never before th
 });
 
 test('the saved line', () => {
-  assert.equal(S.savedAgo(null), 'Not saved in this browser yet.');
-  assert.equal(S.savedAgo(5000), 'Saved in this browser a moment ago. Nothing leaves your device.');
+  assert.equal(S.savedAgo(null), '', 'nothing before the first autosave');
+  assert.equal(S.savedAgo(5000), 'Kept in this browser a moment ago.');
   assert.match(S.savedAgo(3 * 60000), /3 minutes ago/);
   assert.match(S.savedAgo(61000), /1 minute ago/);
 });
