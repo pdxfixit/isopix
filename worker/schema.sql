@@ -1,0 +1,32 @@
+-- Isopix's D1 database, `isopix` (binding DB on the isopix-app Worker): the
+-- full schema. Every statement is IF NOT EXISTS, so running it again changes
+-- nothing. Apply: in flarepress, `just d1 isopix.app execute isopix --remote
+-- --file <path to this file>`. What each field means: docs/telemetry.md.
+-- Times are milliseconds since 1970.
+
+-- One row per visit (a page load), replaced as the visit sends its tally.
+-- Kept 90 days (worker/index.js KEEP_MS); the harvest copies it to the Mac.
+CREATE TABLE IF NOT EXISTS visits (
+  visit      TEXT PRIMARY KEY,  -- random, one per page load
+  device     TEXT NOT NULL,     -- random, changes every 90 days on the device
+  first_seen INTEGER NOT NULL,
+  last_seen  INTEGER NOT NULL,
+  day        TEXT NOT NULL,     -- UTC date of the first send, YYYY-MM-DD
+  app        TEXT,              -- release, e.g. 1.3.20
+  country    TEXT,              -- ISO 3166 code, from Cloudflare
+  region     TEXT,              -- state or province code, from Cloudflare
+  width      INTEGER,           -- screen width, rounded down to a bucket
+  touch      INTEGER,           -- 1: has a touch screen
+  pwa        INTEGER,           -- 1: opened as an installed app
+  dark       INTEGER,           -- 1: the device prefers dark mode
+  reduced    INTEGER,           -- 1: the device asks for reduced motion
+  lang       TEXT,              -- language, two or three letters
+  since      TEXT,              -- time since this device first used Isopix: new week month quarter year older
+  seconds    INTEGER,           -- how long the visit has lasted
+  cells      TEXT,              -- drawing size bucket: 0 1-99 100-999 1k-10k 10k+
+  longtasks  INTEGER,           -- main-thread tasks over 50 ms (Chrome only)
+  counts     TEXT NOT NULL,     -- JSON {"tool:pencil": 3, ...}
+  errors     TEXT NOT NULL      -- JSON ["TypeError app.js:120", ...], at most 5
+);
+CREATE INDEX IF NOT EXISTS visits_last_seen ON visits (last_seen);
+CREATE INDEX IF NOT EXISTS visits_device ON visits (device);

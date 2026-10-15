@@ -14,7 +14,7 @@ import { shade } from './engine/color.js';
 import { Renderer, drawCells, drawEdges } from './render.js';
 import * as store from './storage.js';
 import { GLYPHS, notchGlyph } from './glyphs.js';
-import { initUpdate, buildStamp, aboutVersion, versionURL, issueURL } from './update.js';
+import { initUpdate, buildStamp, aboutVersion, versionURL, reportURL } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
 import { helpHTML } from './help.js';
@@ -26,6 +26,7 @@ import { readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
 import { welcomeDue, initWelcome } from './welcome.js';
 import { sillyName } from './sillynames.js';
 import * as PNGP from './engine/pngproject.js';
+import { initUsage, countName } from './telemetry.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -41,6 +42,7 @@ const DEFAULTS = {
   custom: '',
   welcomed: false, // the welcome card was closed on this device
   savePng: true, // Save writes a PNG with the drawing inside; off: a .isopix.json file
+  usage: true, // Send usage counts (telemetry.js; Settings → About)
 };
 const BRUSH_LABEL = { triangle: 'Triangle', rhombus: 'Rhombus', hexagon: 'Hexagon', trapezoid: 'Trapezoid', bigtri: 'Big triangle', face: 'Drag a face', cube: 'Drag a cube', stamp: 'Stamp' };
 const DRAG_BRUSHES = new Set(['face', 'cube', 'stamp']);
@@ -94,7 +96,9 @@ export const app = {
 window.isopix = app; // for debugging and the look tool
 
 // ---------- small helpers ----------
-const set = (k, v) => { app.settings[k] = v; store.saveSettings(app.settings); };
+// Picks no click names (a brush, a line style, a selection shape) are counted here.
+const PICKS = { brush: 'brush', lineStyle: 'line', marquee: 'marquee' };
+const set = (k, v) => { if (PICKS[k] && app.settings[k] !== v) app.usage?.count(countName(PICKS[k], v)); app.settings[k] = v; store.saveSettings(app.settings); };
 let toastTimer;
 function toast(msg) {
   const t = $('#toast');
@@ -1058,7 +1062,7 @@ function onKey(e) {
 // ---------- help ----------
 function openHelp() {
   // The report link is filled in now: this copy's version, browser and screen.
-  $('#report-link').href = issueURL({ app: self.ISOPIX_VERSION, json: app.versionJson ?? null, ua: navigator.userAgent,
+  $('#report-link').href = reportURL({ app: self.ISOPIX_VERSION, json: app.versionJson ?? null, ua: navigator.userAgent,
     screen: `${screen.width}×${screen.height}`, installed: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true });
   $('#help-body').innerHTML = helpHTML((sel) => {
     const svg = document.querySelector(`${sel} svg`);
@@ -1112,6 +1116,7 @@ function syncMenu() {
   $('#opt-limited').checked = s.limited;
   $('#opt-gray').checked = s.gray;
   $('#opt-save-png').checked = s.savePng;
+  $('#opt-usage').checked = s.usage;
   $('#opt-save-png-row').hidden = !store.offersIsopixFile({ ios: store.isIOS() });
   $('#file-save-label').textContent = savesPng() ? 'Save file' : 'Save Isopix drawing';
   $('#opt-trace').value = String(s.traceOpacity);
@@ -1189,6 +1194,7 @@ function fileSaved(r, via) {
 }
 // What a save says: where it went, or that nothing was saved.
 function sayResult(r, what) {
+  app.usage?.count(countName('saved', `${what}-${r.cancelled ? 'cancelled' : r.failed ? 'failed' : r.how || (r.handle ? 'file' : 'download')}`));
   if (r.cancelled) toast('Not saved');
   else if (r.failed) toast(`Could not save the ${what}: ${r.failed}`);
   else if (r.handle) toast(`Saved to ${r.name}`);
@@ -1298,6 +1304,7 @@ function wireMenu() {
   check('#opt-limited', 'limited', buildPalette);
   check('#opt-gray', 'gray', syncMenu);
   check('#opt-save-png', 'savePng', () => { updateFileUI(); syncMenu(); });
+  check('#opt-usage', 'usage');
   $('#opt-hint-levels').addEventListener('change', (e) => { set('hintLevels', +e.target.value); requestRender(); });
   $('#opt-trace').addEventListener('input', (e) => { set('traceOpacity', +e.target.value); requestRender(); });
   $('#paper-flip').addEventListener('click', flipPaper);
@@ -1658,8 +1665,10 @@ function wire() {
 }
 
 async function boot() {
+  app.usage = initUsage({ enabled: () => app.settings.usage, snapshot: () => ({ cells: app.drawing.cells.size }), keyAction: (e) => keyFor(e)?.action ?? null });
   // A drawing carried here from an old address (move.js).
   const arriving = await readMoveHash();
+  if (arriving) app.usage.count('move:arrived');
   if (arriving) takeMovedSettings(arriving);
   readTheme();
   buildNotches();

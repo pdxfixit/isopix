@@ -21,7 +21,7 @@ setup:
 # (node --check takes one file at a time: given several, it checks only the first)
 # 🧪 Syntax-check every module, then run the engine tests (Node's built-in runner; nothing to install)
 test:
-    @for f in web/*.js web/engine/*.js tools/*.mjs test/*.mjs; do node --check "$f" || exit 1; done
+    @for f in web/*.js web/engine/*.js worker/*.js tools/*.mjs test/*.mjs; do node --check "$f" || exit 1; done
     @python3 -m py_compile tools/serve.py tools/bump_version.py tools/live_check.py
     @for f in tools/*.sh .githooks/*; do bash -n "$f" || exit 1; done
     node --test test/*.test.mjs
