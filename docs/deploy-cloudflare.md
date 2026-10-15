@@ -9,19 +9,20 @@ accounts, no analytics). Drawings stay in the browser that made them.
 ## Old addresses
 
 Browsers keep saved data per address, so a plain 301 would leave every
-drawing behind. Instead, the old addresses carry it over (`web/move.js`):
+drawing behind. Instead, each old address carries it over (`web/move.js`):
 
-- **isopix.pdxfixit.com** (1.0's home) is a second Custom Domain on the same
-  Worker and serves the same files. On start there, the app reads the
-  autosave, settings and file record of that browser, packs them (gzip,
-  base64url) into `https://isopix.app/#move=…`, lets its service worker go,
-  and goes. A fragment is never sent to any server. `?stay` keeps the app
-  there instead, for a drawing too big to carry (over 1 MB packed, even
-  without its trace picture and undo history).
-- **The old Isogrid address** is flarepress's move Worker (its folder's
-  `index.js`): `/` is a small page that imports `https://isopix.app/move.js`
-  (served with CORS, see `web/_headers`) and calls `moveToNewHome()`, which
-  reads Isogrid's database there; every other path 301s to isopix.app.
+- **isopix.pdxfixit.com** (1.0's home) and **the old Isogrid address** are
+  each a small move Worker in flarepress, under names that match their
+  hostnames (`isopix-pdxfixit-com`, and Isogrid's). Their `/` is a page that
+  imports `https://isopix.app/move.js` (served with CORS, see `web/_headers`)
+  and calls `moveToNewHome()`; every other path 301s to isopix.app.
+- `moveToNewHome()` reads that browser's autosave, settings and file record at
+  that address (Isopix's or Isogrid's database names), packs them (gzip,
+  base64url) into `https://isopix.app/#move=…`, lets the old service worker
+  go, and goes. A fragment is never sent to any server. Too big for an address
+  (over 1 MB packed), the trace picture, then the undo history stay behind;
+  past that, the drawing goes to the downloads as a project file and the note
+  at isopix.app says so.
 - **At isopix.app**, the app reads `#move=` on start and removes it from the
   address. With no drawing of its own it takes the arrival silently; with one,
   it keeps its own and offers the arrival in a note ("Open it" asks first). An
@@ -29,6 +30,8 @@ drawing behind. Instead, the old addresses carry it over (`web/move.js`):
   under Isopix's names. The old copy stays where it was.
 - An app installed to a home screen from an old address now opens isopix.app
   in the browser; install again from isopix.app.
+- Ship order: isopix.app first (the move pages load `move.js` from it), then
+  flarepress's `push` for the two old folders.
 
 ## How it is deployed
 
@@ -41,11 +44,10 @@ there.
   `web/`, the same pattern as the owner's other app sites. A deploy ships this checkout's
   `web/` as it is on disk, committed or not. `just deploy-check` refuses
   uncommitted edits in `web/` so the live site is always a commit on `main`.
-- `flarepress/isopix.app/wrangler.toml`: static assets from `./public` and
-  two Custom Domains, `isopix.app` and `isopix.pdxfixit.com` (the old home,
-  which moves visitors on). No Worker script, no database, no `www`.
-  `pdxfixit.com` itself is a separate site in flarepress; this subdomain does
-  not touch it.
+- `flarepress/isopix.app/wrangler.toml`: Worker `isopix-app`, static
+  assets from `./public` and one Custom Domain, `isopix.app`. No Worker
+  script, no database, no `www`. The old addresses have their own folders
+  (above).
 - `flarepress/isopix.app/site.conf` configures
   `flarepress/tools/site.sh`, which does the steps every app site shares (check, gate,
   stamp, verify, live, rollback; the other app sites use the same tool). This repo's
@@ -155,19 +157,17 @@ version_wait=90
 rollback=redeploy
 ```
 
-`~/src/flarepress/isopix.app/wrangler.toml` (the Worker keeps its first name):
+`~/src/flarepress/isopix.app/wrangler.toml`:
 
 ```toml
 # Isopix, a touch drawing app on an isometric grid. The site lives in its own
 # repo (github.com/pdxfixit/isopix); public/ links to its web/ folder. Static
-# assets only: no Worker script, no bindings. Home: isopix.app; the old home,
-# isopix.pdxfixit.com, serves the same files and moves visitors on (move.js).
-name = "isopix-pdxfixit-com"
-compatibility_date = "2026-10-13"
+# assets only: no Worker script, no bindings. Just this one hostname.
+name = "isopix-app"
+compatibility_date = "2026-10-15"
 
 routes = [
-  { pattern = "isopix.app", custom_domain = true },
-  { pattern = "isopix.pdxfixit.com", custom_domain = true }
+  { pattern = "isopix.app", custom_domain = true }
 ]
 
 [assets]
@@ -177,8 +177,8 @@ directory = "./public"
 Flarepress's `plan <folder>` runs `npx wrangler deploy --dry-run` in that
 folder and `push <folder>` runs `npx wrangler deploy`, each with
 `CLOUDFLARE_API_TOKEN` set from the Keychain token when there is one. The
-Worker name must stay `isopix-pdxfixit-com`: a new name makes a second
-Worker and fights over the Custom Domain. `deploy-check` confirms that
+Worker name must stay `isopix-app` (it matches the hostname): a new name
+makes a second Worker and fights over the Custom Domain. `deploy-check` confirms that
 `public` resolves to this checkout's `web/`.
 
 ## Checks after a deploy

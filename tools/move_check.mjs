@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 // `just move-check`: moving house to isopix.app, end to end in a private
-// headless Chrome (web/move.js). Two local servers stand in for the old
-// addresses (Chrome maps their names to 127.0.0.1) and localhost for the new
-// home; https://isopix.app itself is never contacted: the check catches the
-// navigation to it and opens its #move= fragment on localhost instead.
+// headless Chrome (web/move.js). Local servers stand in for the old addresses
+// (Chrome maps their names to 127.0.0.1) and localhost for the new home;
+// https://isopix.app itself is never contacted: the check catches the
+// navigation to it and opens its #move= fragment on localhost instead. On an
+// old address it does what that address's move page does (flarepress): import
+// move.js from the new home, cross-origin, and call moveToNewHome().
 //
-//   1. isopix.pdxfixit.com: draw there (?stay), reload, it heads for isopix.app
+//   1. isopix.pdxfixit.com: draw there with the 1.x app, then its move page
+//      heads for isopix.app
 //   2. the new home takes the drawing and settings silently, clears #move=
 //   3. the same arrival again is ignored
 //   4. another drawing arriving while the home has its own is offered, not
@@ -54,11 +57,17 @@ const state = `({ cells: window.isopix.drawing.cells.size, hash: location.hash, 
 
 // 1. The old Isopix address.
 const old = `http://isopix.pdxfixit.com:${port}`;
-await go(`${old}/?stay`, 1500);
+await go(`${old}/`, 1500);
 const drawn = await evaluate(send, DRAW(120, 300));
 await evaluate(send, `localStorage.setItem('isopix-settings', JSON.stringify({ ...window.isopix.settings, color: '#ff006e', gutters: false }))`);
-await go(`${old}/`, 100);
+// Its move page: the same origin, move.js from the new home (served with CORS).
+// The dev server's CSP allows only its own scripts; the real move page's
+// allows isopix.app (flarepress), so the check sets the CSP aside here.
+await send('Page.setBypassCSP', { enabled: true });
+await go(`${old}/version.json`, 300);
+await evaluate(send, `import('${home}/move.js').then((m) => { m.moveToNewHome(); return true; })`);
 const t1 = await caught();
+await send('Page.setBypassCSP', { enabled: false });
 check(!!t1 && t1.includes('#move=') && drawn > 0, `isopix.pdxfixit.com heads for isopix.app with its drawing (${drawn} cells, ${t1 ? t1.length : 0} chars)`);
 if (!t1) process.exit(1);
 // 2. Arriving at an empty new home.
@@ -76,7 +85,7 @@ check(!s3.note && s3.cells === drawn, 'the same drawing arriving twice is ignore
 const mine = await evaluate(send, DRAW(120, 500));
 const other = await evaluate(send, `(async () => { const m = await import('./move.js'); const P = await import('./engine/project.js');
   const s = JSON.parse(JSON.stringify(P.save(window.isopix.drawing, { savedAt: 42 }))); s.cells = s.cells.slice(0, 1);
-  return m.moveURL({ from: 'isopix.pdxfixit.com', autosave: s, local: {} }); })()`);
+  return (await m.moveURL({ from: 'isopix.pdxfixit.com', autosave: s, local: {} })).url; })()`);
 await go(`${home}/${other.slice(other.indexOf('#'))}`);
 const s4 = await evaluate(send, state);
 check(s4.cells === mine && s4.note && s4.offer, `its own drawing stays (${s4.cells} cells) and the arrival is offered`);
