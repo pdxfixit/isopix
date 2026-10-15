@@ -27,6 +27,8 @@ export const GLYPHS = {
   face: svg('<path d="M4 8l8-4.6 8 4.6-8 4.6Z"/><path d="M17 17l3 3m0-4v4h-4"/>'),
   cube: svg('<path d="M12 3 19.8 7.5v9L12 21l-7.8-4.5v-9Z"/><path d="M12 12v9M12 12l7.8-4.5M12 12 4.2 7.5"/>'),
   stamp: svg('<path d="M8 4h8v6l3 3v3H5v-3l3-3ZM5 20h14"/>'),
+  // Pick any color (owner: "an eyedropper instead of a crosshairs"), in the palette and in Help.
+  eyedropper: svg('<path d="M13.5 7.5l2.6-2.6a2.5 2.5 0 0 1 3.5 3.5l-2.6 2.6"/><path d="M10.5 6.5l7 7"/><path d="M12 9 5 16l-1 4 4-1 7-7"/>', ' stroke-linecap="round" stroke-linejoin="round"'),
   strip: svg('<path d="M4 18 18 4l2 2L6 20Z"/>'),
   edge: svg('<path d="M5 19 19 5" stroke-width="4"/>'),
   'm-triangle': svg(`${HEX_FRAME}<path d="${CELL}" stroke-dasharray="2.2 1.6"/>`),

@@ -335,8 +335,7 @@ function buildPalette() {
     const custom = document.createElement('label');
     custom.className = 'swatch tool';
     custom.setAttribute('aria-label', 'Pick any color');
-    // An eyedropper (the owner: "an eyedropper instead of a crosshairs").
-    custom.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7.5l2.6-2.6a2.5 2.5 0 0 1 3.5 3.5l-2.6 2.6"/><path d="M10.5 6.5l7 7"/><path d="M12 9 5 16l-1 4 4-1 7-7"/></svg><input type="color" aria-label="Pick any color">';
+    custom.innerHTML = `${GLYPHS.eyedropper}<input type="color" aria-label="Pick any color">`;
     const input = custom.querySelector('input');
     input.value = s.custom || s.color;
     input.addEventListener('change', () => { set('custom', input.value); set('color', input.value); buildPalette(); pickedColor(); });
