@@ -8,7 +8,7 @@
 #     its result is cached for about a week):
 #       f=/home/user/isopix/tools/cloud_setup.sh; [ -f "$f" ] && bash "$f" || true
 #   - .claude/hooks/session-start.sh, every session: git settings live in each
-#     fresh clone, and flarepress may only be attached once the session runs.
+#     fresh clone, and the setup script's result is cached.
 #
 # What it does: installs just and wrangler (pinned), runs `just setup` (the
 # pre-commit hook and the PDXfixIT author), finds or clones flarepress and
@@ -45,7 +45,7 @@ if [ -z "$FP" ] || [ ! -f "$FP/Justfile" ]; then
   FP="$(dirname "$ROOT")/flarepress"
   git clone -q https://github.com/pdxfixit/flarepress "$FP" 2>/dev/null \
     && say "flarepress cloned to $FP" \
-    || say "⚠️ no flarepress: attach pdxfixit/flarepress to the session (add_repo), then run tools/cloud_setup.sh again"
+    || say "⚠️ no flarepress: start the session with pdxfixit/flarepress selected beside isopix (docs/environment.md)"
 fi
 if [ -f "$FP/Justfile" ]; then
   # Its public link points at the owner's Mac; here it must point at this checkout.

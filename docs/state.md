@@ -4,7 +4,7 @@ Present tense: what exists, what is in flight, what waits on the owner.
 
 ## What exists
 
-Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history starts at release 1.0.1 on 2026-10-13. It was built from 2026-10-12 as Isogrid, from the owner's [design brief](design-brief.md), and lived at its old address; that history is in a private, archived repo. The site is https://isopix.pdxfixit.com. Hosting: [deploy-cloudflare.md](deploy-cloudflare.md).
+Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history starts at release 1.0.1 on 2026-10-13. It was built from 2026-10-12 as Isogrid, from the owner's [design brief](design-brief.md), and lived at its old address; that history is in a private, archived repo. The site is https://isopix.app (since 2026-10-15; isopix.pdxfixit.com is its old address). Hosting: [deploy-cloudflare.md](deploy-cloudflare.md).
 
 **Engine** (`web/engine/`; `test/` holds the `node --test` suites):
 
@@ -19,11 +19,13 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **App** (`web/`): the canvas with fading gutters and finer-level hints; tools, brush picker, palette with auto-shade and a custom color, the chunked level slider of hexagons (a rail hanging under the top buttons on phones, a top bar from 768 px) with follow-zoom and lock; pan and zoom (pinch, Ctrl+wheel, trackpad pinch, wheel pans, and the zoom rail on the left edge: zoom in, a log-scale slider, zoom out, ⌖ Fit drawing; `test/view.test.mjs`, `just look zoom fit`); a palette whose add-color and auto-shade buttons stay pinned while the inks scroll; on short landscape screens one bottom row; the selection bar (Finer, Coarser, Crisp/Blend, Snap, Save as stamp, Erase, Done), the density handle with a notch track, and the experimental pinch-inside and long-press-then-pinch gestures; the top bar's Drawing button and sheet (name, New, Open, Save file, Save picture, SVG, time-lapse; New, Open and Save also in the bar from 700 px) and ⚙️ Settings in folding sections (Drawing, Grid, Selection, Learning, About) with value chips; picking a color while the Eraser is on switches to the Pencil; autosave to IndexedDB; manifest and a network-first service worker.
 
-**Saving** (2026-10-14, branch only, see In flight): Save picks the way per device (`saveMethod` in `web/storage.js`): the browser's Save dialog once, then the same file each Save (Chrome, Edge on a computer; the handle is kept in IndexedDB); the share sheet on iPhone and iPad; else a download. Ctrl+S, Ctrl+Shift+S (save as new file) and Ctrl+O. A dot on Save marks changes not in a file; the Drawing sheet's file line says which file and whether it changed; New and Open ask first only then. The autosave also runs at once when the page is hidden; `navigator.storage.persist` is asked for (not in Firefox); a private window gets a one-time notice with Save file (`just look save-file`, `test/sheets.test.mjs`, `test/storage.test.mjs`).
+**Saving** (2026-10-14, live at isopix.app since 1.2.13): Save picks the way per device (`saveMethod` in `web/storage.js`): the browser's Save dialog once, then the same file each Save (Chrome, Edge on a computer; the handle is kept in IndexedDB); the share sheet on iPhone and iPad; else a download. Ctrl+S, Ctrl+Shift+S (save as new file) and Ctrl+O. A dot on Save marks changes not in a file; the Drawing sheet's file line says which file and whether it changed; New and Open ask first only then. The autosave also runs at once when the page is hidden; `navigator.storage.persist` is asked for (not in Firefox); a private window gets a one-time notice with Save file (`just look save-file`, `test/sheets.test.mjs`, `test/storage.test.mjs`).
 
-**Moving house** (2026-10-15, branch only): https://isopix.app is the home (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers whose page carries a browser's drawing, settings and file record over in the `#move=` fragment and goes (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
+**Moving house** (2026-10-15, live): https://isopix.app is the home (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers whose page carries a browser's drawing, settings and file record over in the `#move=` fragment and goes (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
 
-**Drawing or moving** (2026-10-14, branch only): the Move hand at the foot of the zoom rail (and `H`) makes one finger pan; a tool tap, the hand or Esc ends it. A second finger takes back a stroke under 500 ms old or under 24 px long; the finger left after a pinch pans (`web/engine/gesture.js`, `test/gesture.test.mjs`, `just look move pinchpan`).
+**Save as a picture** (2026-10-15, on `main`): Save file writes `name.isopix.png`, a picture with the whole project inside; Open reads it back; a setting in Settings → Drawing switches it to **Save Isopix drawing**, an `.isopix` file (gzip JSON; older `.isopix.json` still opens) (`web/engine/pngproject.js`, `test/pngproject.test.mjs`, four `just export-check` checks; the file also checked with Python's own PNG reading).
+
+**Drawing or moving** (2026-10-14, live at isopix.app since 1.2.13): the Move hand at the top of the zoom rail (and `H`) makes one finger pan; a tool tap, the hand or Esc ends it. A second finger takes back a stroke under 500 ms old or under 24 px long; the finger left after a pinch pans (`web/engine/gesture.js`, `test/gesture.test.mjs`, `just look move pinchpan`).
 
 **Keep fine detail made visible** (named Protect until 2026-10-12): the Keep / Behind / Replace chip by ⌖ (the same tipped fill can as the Fill tool, the word tells the mode), hatched skipped cells in the hover preview and after a stroke, and a once-a-session "skipped N cells" notice (`web/engine/protect.js`, `test/protect.test.mjs`, `just look protect hoverskip`). The owner's "larger tile isn't overpainting" report was this mode: reproduced in headless Chrome (a level-2 tile over level-5 detail: Keep and Paint behind keep the detail, Replace overpaints, with or without follow-zoom, symmetry or drag brushes).
 
@@ -39,7 +41,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Tools**: `just serve | test | look | version | export-check | perf | prove | live-check | icons`, plus the deploy recipes from `deploy.just` (`deploy-check | deploy-plan | deploy | deploy-verify | live | rollback | ship`). `test/docs.test.mjs` keeps the docs honest: every recipe and look view they name exists, every link and repo path resolves, and AGENTS.md stays under 16,000 bytes.
 
-**Hosting**: flarepress has the site folder `isopix.pdxfixit.com` (its `public` links to `web/`; its `site.conf` configures the shared `flarepress/tools/site.sh`, which `tools/deploy.sh` calls for check, stamp, verify, live and rollback); its first publish is release 1.0.1. First install on a real device (install to the home screen, offline start) is not yet tried. Recipes and rollback: [deploy-cloudflare.md](deploy-cloudflare.md).
+**Hosting**: flarepress has the site folder `isopix.app` (Worker `isopix-app`, first published 2026-10-15; its `public` links to `web/`; its `site.conf` configures the shared `flarepress/tools/site.sh`, which `tools/deploy.sh` calls for check, stamp, verify, live and rollback). First install on a real device (install to the home screen, offline start) is not yet tried. Recipes and rollback: [deploy-cloudflare.md](deploy-cloudflare.md).
 
 ## Verified, and how
 
@@ -60,7 +62,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 Once the branch is live:
 
-1. Tap the hand at the foot of the zoom rail and drag with one finger: the view moves, nothing is drawn. Tap the Pencil to draw again.
+1. Tap the hand at the top of the zoom rail and drag with one finger: the view moves, nothing is drawn. Tap the Pencil to draw again.
 2. Rest one finger, then pinch: no dot is left. Lift one finger mid-pinch and keep moving the other: it keeps panning.
 3. On an iPhone or iPad: Drawing → Save file opens the share sheet; Save to Files. On a computer in Chrome: Save asks where once, then Save (or Ctrl+S) writes the same file.
 
@@ -101,12 +103,8 @@ Before that:
 
 ## In flight
 
-**Moving house to isopix.app** (2026-10-15, the owner bought it and set up its DNS): on `main` here and in flarepress (2026-10-15), **not deployed**: the cloud session that built it has no Cloudflare credentials. Release 1.2.12. What it does: [deploy-cloudflare.md](deploy-cloudflare.md#old-addresses). To ship, from the owner's Mac, in this order:
+**Moving house to isopix.app** (2026-10-15): **done and live.** Release 1.2.13 (`cbf65a5`) is at https://isopix.app (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers (each under its old Worker name), pushed from the owner's Mac. flarepress's `sites` check: 200 at `/` on all three, 301 to isopix.app at `/moved` on the old two. Checked live in headless Chrome from a cloud session: a drawing (2 cells) and a setting seeded at isopix.pdxfixit.com arrived at isopix.app, `#move=` cleared. Not tried: a real phone, an installed home-screen copy, or the old Isogrid address end to end (its `sites` row only). A Mac whose resolver has not yet seen a new domain gets `000` from `deploy-verify` while the site answers elsewhere (seen at the first publish). What it does: [deploy-cloudflare.md](deploy-cloudflare.md#old-addresses).
 
-1. Both repos' `main` carry it (flarepress: `isopix.app/` is the new Worker `isopix-app`; `isopix.pdxfixit.com/` and the Isogrid folder are move Workers; `sites_check.py` knows move pages).
-2. `git -C ~/src/flarepress pull` and `git pull` here, then here `just deploy-plan`, then `FIRST_PUBLISH=1 just --yes deploy` (a new Worker; isopix.pdxfixit.com keeps serving 1.0.4 meanwhile). If wrangler refuses the isopix.app Custom Domain over an existing DNS record (one made when the DNS was set up), show the record and delete it only with the owner's go, then deploy again ([deploy-cloudflare.md](deploy-cloudflare.md#if-the-custom-domain-will-not-attach)).
-3. Only after isopix.app serves `move.js`: in flarepress, run its `push` recipe on `isopix.pdxfixit.com` and on the old Isogrid site's folder (their pages load `move.js` from isopix.app), then its `sites` recipe for those and `isopix.app`; then `just live` here.
+Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); the owner chose the next three (gallery, pen mode, two-finger-tap undo; [TODO.md](../TODO.md)).
 
-Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); cards 8 to 10 in [questions.md](questions.md) wait on the owner.
-
-On `main`: nothing half done. Release 1.0.4 is live at https://isopix.pdxfixit.com (deployed 2026-10-13 from `a131cfb`).
+On `main`: release 1.2.20 (`4fbf6fb`) is live at https://isopix.app (the owner deployed it from his Mac, 2026-10-15). **Not deployed:** 1.2.22, the `.isopix` file (Save Isopix drawing). Cloud sessions that deploy start with `pdxfixit/flarepress` selected ([environment.md](environment.md#a-cloud-session-claudeaicode)).

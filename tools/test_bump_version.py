@@ -27,6 +27,10 @@ class Staged(unittest.TestCase):
         # 2026-10-15: bumped at 18 commits, then a docs commit, then the release.
         self.assertIn("PATCH must be 19", bv.staged_problem("1.2.18", 18))
 
+    def test_a_merge_may_keep_either_parents_stamp(self):
+        self.assertIsNone(bv.staged_problem("1.2.22", 26, ("1.2.20", "1.2.22")))
+        self.assertIn("PATCH must be 27", bv.staged_problem("1.2.23", 26, ("1.2.20", "1.2.22")))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -58,6 +58,9 @@
   <div id="level-readout" class="readout" aria-hidden="true"></div>
 
   <div id="zoom" class="zoom" role="group" aria-label="Zoom">
+    <button id="move-mode" class="btn" aria-pressed="false" aria-label="Move: one finger moves the view instead of drawing" title="Move the view (H)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v7M14 10.5V5.5a1.5 1.5 0 0 1 3 0V11M17 9.5a1.5 1.5 0 0 1 3 0V14c0 4.4-3 7-7 7-2.6 0-4.4-1.2-5.8-3.2L4.2 13.6a1.5 1.5 0 0 1 2.5-1.7L8 13.6"/></svg>
+    </button>
     <button id="zoom-in" class="btn" aria-label="Zoom in" title="Zoom in (+)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"/></svg>
     </button>
@@ -69,9 +72,6 @@
     </button>
     <button id="fit-view" class="btn" aria-label="Fit the drawing on screen" title="Fit drawing (0)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
-    </button>
-    <button id="move-mode" class="btn" aria-pressed="false" aria-label="Move: one finger moves the view instead of drawing" title="Move the view (H)">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v7M14 10.5V5.5a1.5 1.5 0 0 1 3 0V11M17 9.5a1.5 1.5 0 0 1 3 0V14c0 4.4-3 7-7 7-2.6 0-4.4-1.2-5.8-3.2L4.2 13.6a1.5 1.5 0 0 1 2.5-1.7L8 13.6"/></svg>
     </button>
   </div>
 
@@ -183,6 +183,7 @@
           <div class="row"><button type="button" id="paper-flip" class="btn wide" aria-describedby="paper-note">Paper: light</button></div>
           <p class="note" id="paper-note">Each drawing keeps its own paper. The inks follow it; strokes keep their colors.</p>
           <label class="row"><input type="checkbox" id="opt-shading"> Auto-shade cube faces (top light, left mid, right dark)</label>
+          <label class="row"><input type="checkbox" id="opt-save-png"> Save as a picture, with the drawing inside (off: an .isopix file)</label>
           <fieldset>
             <legend>Symmetry</legend>
             <label><input type="radio" name="symmetry" value="off"> Off</label>
@@ -247,7 +248,7 @@
       <div class="big-buttons">
         <button type="button" id="file-new" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span>New</span></button>
         <button type="button" id="file-open" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>Open</span></button>
-        <button type="button" id="file-save" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Save file</span></button>
+        <button type="button" id="file-save" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span id="file-save-label">Save file</span></button>
         <button type="button" id="file-png" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></svg><span>Save picture</span></button>
       </div>
       <div class="row wrap">
