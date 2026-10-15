@@ -285,11 +285,12 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
 .welcome-ic svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .welcome-start { min-height: 52px; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-size: 18px; border-radius: 14px; }
 .welcome-foot { margin: 0; }
-/* The build stamp: release and commit, small, in the strip under the tool bar; a link to the repo.
+/* The build stamp: release and commit, in the strip under the tool bar, as tall as the strip
+   (11 px, the bottom padding of .bottom); a link to the repo.
    Too small for a finger by design, so About's version line is the 44 px link. */
 .build-stamp {
-  position: fixed; z-index: 4; right: calc(10px + env(safe-area-inset-right)); bottom: calc(1px + env(safe-area-inset-bottom));
-  font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); opacity: 0.8;
+  position: fixed; z-index: 4; right: calc(10px + env(safe-area-inset-right)); bottom: env(safe-area-inset-bottom);
+  font: 11px/11px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); opacity: 0.8;
   text-decoration: none; user-select: none; -webkit-user-select: none;
 }
 .build-stamp:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
