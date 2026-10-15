@@ -74,3 +74,9 @@ test('the paint-can chip is explained in all three modes, and the words are defi
     assert.ok(items.some((it) => it.name === w), `${w} missing`);
   }
 });
+
+test('each Help section folds, closed at first, its head naming the body it opens', () => {
+  const heads = [...sheet.matchAll(/<button type="button" class="set-head" aria-expanded="false" aria-controls="(help-b\d+)">/g)].map((m) => m[1]);
+  assert.equal(heads.length, SECTIONS.length + 1, 'every section and Keys has a fold head');
+  for (const id of heads) assert.match(sheet, new RegExp(`<div class="set-body" id="${id}" hidden>`));
+});

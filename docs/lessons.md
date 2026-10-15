@@ -1,15 +1,17 @@
-# Lessons (draft for the owner)
+# Lessons
 
-The tutorial, as short lessons on the real canvas. **Status: draft, not built.**
-The owner edits this file (or answers in chat); an agent builds from it once he
-approves the steps. Decisions behind it: [decisions.md](decisions.md) (Lessons).
+The tutorial, as short lessons on the real canvas. **Status: approved by the owner (2026-10-15), being built.**
+The owner edits this file (or answers in chat); a changed step is built to match. Decisions behind it: [decisions.md](decisions.md) (Lessons).
 
 ## How a lesson runs
 
 - **Where:** on the real canvas, in a **practice drawing**. The tour sets the
   person's drawing aside and starts a blank one; nothing they had is touched.
 - **The end:** two buttons, **Keep it** (the practice drawing becomes their
-  drawing) and **Back to my drawing** (it is thrown away). See open question 1.
+  drawing) and **Back to my drawing** (it is thrown away). When their own
+  drawing has something not in a file, Keep it asks the way New does: *Save
+  yours to a file first / Replace it / Cancel* (with the gallery, TODO 1, it
+  will simply add a drawing).
 - **A step** is one bubble pointing at one thing, with one ask. It moves on
   when they do it (no Next button, except on steps that only show something).
   **Skip lesson** and Esc are always there. "Step 2 of 5" shows progress.
@@ -178,14 +180,3 @@ Each lesson folds; open the one you are editing.
 - Pinch inside a selection, long-press then pinch: experimental, off by default.
 - The Words section of Help: definitions, not controls.
 - Settings → Grid (gutters, finer-level hints): view preferences.
-
-## Open questions
-
-1. **Keep it, while this browser holds one drawing.** If they had a drawing
-   before the lesson, Keep it would replace it. Options: (a) Keep it asks the
-   way New does: *Save yours to a file first / Replace it / Cancel*; (b) Keep it
-   saves the practice drawing as a file and goes back to theirs; (c) wait for
-   the gallery (TODO 1), where Keep it just adds a drawing. Recommendation: (a)
-   now, and it becomes (c) for free when the gallery lands.
-2. **Lesson order in Help.** As above, or by what a kid reaches for first?
-3. **Anything missing or too much** in a lesson: edit the steps here.
