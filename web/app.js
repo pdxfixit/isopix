@@ -14,7 +14,7 @@ import { shade } from './engine/color.js';
 import { Renderer, drawCells, drawEdges } from './render.js';
 import * as store from './storage.js';
 import { GLYPHS, notchGlyph } from './glyphs.js';
-import { initUpdate, buildStamp, aboutVersion } from './update.js';
+import { initUpdate, buildStamp, aboutVersion, versionURL, issueURL } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
 import { helpHTML } from './help.js';
@@ -1053,6 +1053,9 @@ function onKey(e) {
 
 // ---------- help ----------
 function openHelp() {
+  // The report link is filled in now: this copy's version, browser and screen.
+  $('#report-link').href = issueURL({ app: self.ISOPIX_VERSION, json: app.versionJson ?? null, ua: navigator.userAgent,
+    screen: `${screen.width}×${screen.height}`, installed: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true });
   $('#help-body').innerHTML = helpHTML((sel) => {
     const svg = document.querySelector(`${sel} svg`);
     return svg ? svg.outerHTML.replace(/ id="[^"]*"/g, '') : '';
@@ -1676,10 +1679,13 @@ async function boot() {
   const label = $('#version-label');
   const stamp = $('#build-stamp');
   label.textContent = aboutVersion(self.ISOPIX_VERSION, null);
+  label.href = versionURL(null);
   stamp.textContent = buildStamp(self.ISOPIX_VERSION, null);
   // The deploy label this copy was loaded with: the update bar compares against it.
   fetch('version.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => {
     stamp.textContent = buildStamp(self.ISOPIX_VERSION, v);
+    app.versionJson = v;
+    label.href = versionURL(v);
     if (v && typeof v.version === 'string') { app.loadedVersion = v.version; label.textContent = aboutVersion(self.ISOPIX_VERSION, v); }
   }).catch(() => {});
   app.update = initUpdate({
