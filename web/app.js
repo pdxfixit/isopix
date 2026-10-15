@@ -14,7 +14,7 @@ import { shade } from './engine/color.js';
 import { Renderer, drawCells, drawEdges } from './render.js';
 import * as store from './storage.js';
 import { GLYPHS, notchGlyph } from './glyphs.js';
-import { initUpdate, buildStamp, aboutVersion } from './update.js';
+import { initUpdate, buildStamp, aboutVersion, versionURL, issueURL } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
 import { helpHTML } from './help.js';
@@ -1057,6 +1057,9 @@ function onKey(e) {
 
 // ---------- help ----------
 function openHelp() {
+  // The report link is filled in now: this copy's version, browser and screen.
+  $('#report-link').href = issueURL({ app: self.ISOPIX_VERSION, json: app.versionJson ?? null, ua: navigator.userAgent,
+    screen: `${screen.width}×${screen.height}`, installed: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true });
   $('#help-body').innerHTML = helpHTML((sel) => {
     const svg = document.querySelector(`${sel} svg`);
     return svg ? svg.outerHTML.replace(/ id="[^"]*"/g, '') : '';
@@ -1109,7 +1112,8 @@ function syncMenu() {
   $('#opt-limited').checked = s.limited;
   $('#opt-gray').checked = s.gray;
   $('#opt-save-png').checked = s.savePng;
-  $('#file-save-label').textContent = s.savePng ? 'Save file' : 'Save Isopix drawing';
+  $('#opt-save-png-row').hidden = !store.offersIsopixFile({ ios: store.isIOS() });
+  $('#file-save-label').textContent = savesPng() ? 'Save file' : 'Save Isopix drawing';
   $('#opt-trace').value = String(s.traceOpacity);
   document.body.classList.toggle('gray', s.gray);
   const dark = paperName(app.drawing.paper) === 'dark';
@@ -1146,7 +1150,9 @@ const PNG_TYPE = { type: 'image/png', accept: { description: 'Isopix drawing (a 
 // Save's file: a PNG with the whole project inside (engine/pngproject.js), or
 // with that setting off, an .isopix file (Owner: "call it save isopix drawing,
 // and use the idea of an .isopix extension here"; "this was instead of the json file").
-const saveExt = () => (app.settings.savePng ? '.isopix.png' : '.isopix');
+// The PNG unless the setting is off on a device that offers .isopix files.
+const savesPng = () => app.settings.savePng || !store.offersIsopixFile({ ios: store.isIOS() });
+const saveExt = () => (savesPng() ? '.isopix.png' : '.isopix');
 function isopixFile({ now = false } = {}) {
   const json = new TextEncoder().encode(JSON.stringify(projectData()));
   if (now) return new Blob([json], { type: ISOPIX_TYPE.type });
@@ -1192,7 +1198,7 @@ function sayResult(r, what) {
 // Returns true once the drawing is in a file. A file kept from an earlier
 // Save is written again only when it is the same kind (PNG or project file).
 async function saveFile({ asNew = false } = {}) {
-  const png = app.settings.savePng;
+  const png = savesPng();
   if (png && !pngCanvas()) { toast('Nothing to save yet'); return false; }
   const ext = saveExt(), h = app.file.handle;
   const handle = !asNew && h && String(h.name || '').endsWith(ext) ? h : null;
@@ -1691,10 +1697,13 @@ async function boot() {
   const label = $('#version-label');
   const stamp = $('#build-stamp');
   label.textContent = aboutVersion(self.ISOPIX_VERSION, null);
+  label.href = versionURL(null);
   stamp.textContent = buildStamp(self.ISOPIX_VERSION, null);
   // The deploy label this copy was loaded with: the update bar compares against it.
   fetch('version.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => {
     stamp.textContent = buildStamp(self.ISOPIX_VERSION, v);
+    app.versionJson = v;
+    label.href = versionURL(v);
     if (v && typeof v.version === 'string') { app.loadedVersion = v.version; label.textContent = aboutVersion(self.ISOPIX_VERSION, v); }
   }).catch(() => {});
   app.update = initUpdate({

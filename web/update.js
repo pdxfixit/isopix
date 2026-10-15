@@ -52,6 +52,25 @@ export function aboutVersion(app, json) {
   return sha ? `Version ${releaseOf(app)} (${sha})` : `Version ${releaseOf(app)}`;
 }
 
+// Where problems go: the public repo's issues (Owner: "GH issues, but the
+// version should be linked, and have a link at the bottom of the help menu").
+export const REPO = 'https://github.com/pdxfixit/isopix';
+const hasSha = (json) => { const s = shaOf(json); return s && s !== 'dev' ? s : null; };
+// Settings → About's version links to the commit this copy was built from
+// (a dev copy, or a stamp without one, to the repo). Pure.
+export const versionURL = (json) => (hasSha(json) ? `${REPO}/commit/${hasSha(json)}` : REPO);
+// A new issue, filled in with what helps fix it: the version (linked to its
+// commit), the browser, the screen, whether it runs installed. Nothing is
+// sent until the person submits it on GitHub. Pure.
+export function issueURL({ app, json, ua = '', screen = '', installed = false } = {}) {
+  const version = hasSha(json) ? `[${buildStamp(app, json)}](${versionURL(json)})` : buildStamp(app, json);
+  const body = [
+    '**What happened?**', '', '', '**What did you expect?**', '', '',
+    '---', `Isopix ${version}`, `Browser: ${String(ua).slice(0, 240)}`, `Screen: ${String(screen).slice(0, 40)}`, `Installed: ${installed ? 'yes' : 'no'}`,
+  ].join('\n');
+  return `${REPO}/issues/new?${new URLSearchParams({ body })}`;
+}
+
 // Wires the bar. `deps` lets the tests drive it:
 //   loaded() the version this page loaded; busy() true while not to disturb;
 //   beforeReload() async, saves and readies the new worker;
