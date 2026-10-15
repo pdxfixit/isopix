@@ -1129,7 +1129,8 @@ function syncMenu() {
   $('#opt-save-png').checked = s.savePng;
   $('#opt-usage').checked = s.usage;
   $('#opt-save-png-row').hidden = !store.offersIsopixFile({ ios: store.isIOS() });
-  $('#file-save-label').textContent = savesPng() ? 'Save file' : 'Save Isopix drawing';
+  // With the picture setting off it writes an .isopix file; the label stays, the line under it says so.
+  $('#file-save-says').textContent = savesPng() ? 'Opens again in Isopix to keep drawing' : 'An .isopix file that opens again in Isopix';
   $('#opt-trace').value = String(s.traceOpacity);
   document.body.classList.toggle('gray', s.gray);
   const dark = paperName(app.drawing.paper) === 'dark';
@@ -1137,7 +1138,8 @@ function syncMenu() {
   updateChips();
 }
 
-// The Drawing sheet: the name, New, Open, Save file, Save picture, SVG, time-lapse.
+// The Drawing sheet: the name, New, Open; Your drawing (Save drawing, Save a copy);
+// Share a picture (Save picture, Sharp picture); Watch it being drawn.
 function openDrawing() {
   $('#drawing-name').value = app.drawingName;
   $('#new-confirm').hidden = true;
@@ -1179,7 +1181,7 @@ function updateFileUI() {
   const dot = saveDot(app.file, hasContent());
   for (const b of ['#top-save', '#file-save']) {
     $(b).classList.toggle('unsaved', dot);
-    $(b).setAttribute('aria-label', `Save the project file${dot ? ' (changes since the last save)' : ''}`);
+    $(b).setAttribute('aria-label', `Save drawing${dot ? ' (changes since the last save)' : ''}`);
   }
   $('#file-saveas').hidden = !app.file.handle;
   if ($('#drawing').open) updateSavedLine();
@@ -1220,7 +1222,7 @@ async function saveFile({ asNew = false } = {}) {
   const ext = saveExt(), h = app.file.handle;
   const handle = !asNew && h && String(h.name || '').endsWith(ext) ? h : null;
   const r = await store.saveBlob({ name: `${fileBase(app.drawingName)}${ext}`, ...(png ? PNG_TYPE : ISOPIX_TYPE), make: png ? projectPng : isopixFile, handle });
-  sayResult(r, 'project file');
+  sayResult(r, 'drawing');
   if (r.cancelled || r.failed) return false;
   fileSaved(r, 'save');
   return true;
@@ -1252,7 +1254,7 @@ async function savePicture() {
 }
 async function saveVector() {
   if (!app.drawing.cells.size && !app.drawing.edges.size) return toast('Nothing to save yet');
-  sayResult(await store.saveBlob({ name: `${fileBase(app.drawingName)}.svg`, type: 'image/svg+xml', accept: { description: 'SVG vector picture', ext: ['.svg'] }, make: () => svgBlob() }), 'vector picture');
+  sayResult(await store.saveBlob({ name: `${fileBase(app.drawingName)}.svg`, type: 'image/svg+xml', accept: { description: 'SVG vector picture', ext: ['.svg'] }, make: () => svgBlob() }), 'sharp picture');
 }
 function startNew() {
   app.drawing = newDrawing(); app.selection = null; app.lastDensity = null; app.trace = null;
@@ -1267,9 +1269,9 @@ function startNew() {
 // something not yet in a file (sheets.js newChoices). `pending` is which.
 let pending = 'new';
 const CONFIRM = {
-  new: { ask: 'Start a new drawing? This browser keeps one drawing, so New replaces this one. Save a file first to keep it.', go: 'New anyway', run: () => startNew() },
-  open: { ask: 'Open a file? It replaces this drawing in this browser. Save a file first to keep this one.', go: 'Open anyway', run: () => openProject() },
-  moved: { ask: 'Open the drawing from Isopix\'s old address? It replaces this one in this browser. Save a file first to keep this one.', go: 'Open it', run: () => openMoved() },
+  new: { ask: 'Start a new drawing? This browser keeps one drawing, so New replaces this one. Save drawing first to keep it in a file.', go: 'New anyway', run: () => startNew() },
+  open: { ask: 'Open a drawing? It replaces this one in this browser. Save drawing first to keep this one in a file.', go: 'Open anyway', run: () => openProject() },
+  moved: { ask: 'Open the drawing from Isopix\'s old address? It replaces this one in this browser. Save drawing first to keep this one in a file.', go: 'Open it', run: () => openMoved() },
 };
 function askFirst(what) {
   if (newChoices(hasContent(), unsavedToFile(app.file, true))[0] === 'new-now') return CONFIRM[what].run();

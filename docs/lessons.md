@@ -157,11 +157,11 @@ Each lesson folds; open the one you are editing.
 <summary><b>Saving and sharing</b> (4 steps)</summary>
 
 1. **Name it.** Opens the Drawing sheet. *Roll a silly name, or type one.* Done: the name changed.
-2. **Save file.** Per device: *iPhone and iPad: the share sheet opens, pick
+2. **Save drawing.** Per device: *iPhone and iPad: the share sheet opens, pick
    Save to Files / Chrome or Edge on a computer: choose a place once / elsewhere:
    it goes to your downloads.* Skip allowed. Done: saved.
-3. **Save picture and SVG.** Shows only: what each is for. Next.
-4. **Time-lapse.** *Tap ▶ to watch your drawing being made.* Done: replay started.
+3. **Save picture and Sharp picture.** Shows only: Save picture is the one to share or print; Save drawing is the one that opens again here. Next.
+4. **Watch it being drawn.** *Tap ▶ to watch your drawing being made.* Done: replay started.
 
 </details>
 

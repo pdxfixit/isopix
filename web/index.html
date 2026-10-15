@@ -65,7 +65,7 @@
     <button id="top-open" class="btn labeled wide-only" aria-label="Open a project file" title="Open">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span class="btn-word">Open</span>
     </button>
-    <button id="top-save" class="btn labeled wide-only" aria-label="Save the project file" title="Save file">
+    <button id="top-save" class="btn labeled wide-only" aria-label="Save drawing" title="Save drawing (Ctrl+S)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="btn-word">Save</span>
     </button>
     <button id="undo" class="btn" aria-label="Undo" title="Undo (Ctrl+Z)" disabled>
@@ -187,9 +187,9 @@
     </span>
   </div>
   <div id="save-note" class="update-bar" role="status" aria-live="polite" hidden>
-    <span class="update-text">⚠️ This browser is not keeping your drawing (a private window, or no space). Save a file to keep it.</span>
+    <span class="update-text">⚠️ This browser is not keeping your drawing (a private window, or no space). Save drawing keeps it in a file.</span>
     <span class="update-buttons">
-      <button type="button" class="btn update-reload" id="save-note-save">Save file</button>
+      <button type="button" class="btn update-reload" id="save-note-save">Save drawing</button>
       <button type="button" class="btn update-close" id="save-note-close" aria-label="Close this message">✕</button>
     </span>
   </div>
@@ -268,7 +268,7 @@
             <button type="button" id="trace-clear" class="btn wide">Remove picture</button>
           </div>
           <label class="row">Picture strength <input type="range" id="opt-trace" min="0.05" max="0.8" step="0.05"></label>
-          <button type="button" id="replay" class="btn wide">Time-lapse replay</button>
+          <button type="button" id="replay" class="btn wide"><span aria-hidden="true">▶</span> Watch it being drawn</button>
         </div>
       </section>
       <section class="set-about" aria-labelledby="set-about-title">
@@ -298,18 +298,23 @@
       <div class="big-buttons">
         <button type="button" id="file-new" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span>New</span></button>
         <button type="button" id="file-open" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>Open</span></button>
-        <button type="button" id="file-save" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span id="file-save-label">Save file</span></button>
-        <button type="button" id="file-png" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></svg><span>Save picture</span></button>
       </div>
-      <div class="row wrap">
-        <button type="button" id="file-saveas" class="btn wide" hidden>Save as new file</button>
-        <button type="button" id="file-svg" class="btn wide">Save vector (SVG)</button>
-        <button type="button" id="file-replay" class="btn wide">Time-lapse</button>
-      </div>
+      <!-- Named by what each is for, not its file type (owner: "it's just not clear which is a png/image, vs a json/isopix drawing"; option A). -->
+      <section class="sheet-group" aria-labelledby="group-drawing">
+        <h3 id="group-drawing" class="sheet-group-title">Your drawing</h3>
+        <button type="button" id="file-save" class="btn big-row" aria-describedby="file-save-says"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 17.6 5.8v6.4L12 15.5l-5.6-3.3V5.8Z"/><path d="M12 9v6.5M12 9l5.6-3.2M12 9 6.4 5.8"/><path d="M4 17v3.5h16V17"/></svg><span class="big-row-words"><span id="file-save-label">Save drawing</span><span class="big-row-says" id="file-save-says">Opens again in Isopix to keep drawing</span></span></button>
+        <button type="button" id="file-saveas" class="link-btn" hidden>Save a copy</button>
+      </section>
+      <section class="sheet-group" aria-labelledby="group-share">
+        <h3 id="group-share" class="sheet-group-title">Share a picture</h3>
+        <button type="button" id="file-png" class="btn big-row" aria-describedby="file-png-says"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></svg><span class="big-row-words"><span>Save picture</span><span class="big-row-says" id="file-png-says">To share or print</span></span></button>
+        <button type="button" id="file-svg" class="link-btn">Sharp picture (SVG)</button>
+      </section>
+      <button type="button" id="file-replay" class="btn wide watch"><span aria-hidden="true">▶</span> Watch it being drawn</button>
       <div id="new-confirm" class="confirm" hidden role="group" aria-labelledby="new-confirm-text">
         <p id="new-confirm-text"></p>
         <div class="row wrap">
-          <button type="button" id="new-save-first" class="btn wide">Save file first</button>
+          <button type="button" id="new-save-first" class="btn wide">Save drawing first</button>
           <button type="button" id="new-anyway" class="btn wide danger">New anyway</button>
           <button type="button" id="new-cancel" class="btn wide">Cancel</button>
         </div>

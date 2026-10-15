@@ -178,7 +178,7 @@ VIEWS.pinchpan = { js: `${q('[data-tool="pencil"]')} const a = window.isopix, c 
   const cx = a.view.cx; for (let i = 1; i <= 5; i++) f('pointermove', x + 3 + i * 20, y, 11); f('pointerup', x + 103, y, 11);
   if (a.drawing.cells.size) throw new Error('two fingers left ' + a.drawing.cells.size + ' cells drawn');
   if (!(a.view.cx < cx)) throw new Error('the finger left after a pinch did not pan');` };
-// Save file with the browser's Save dialog (stubbed: headless has no dialog):
+// Save drawing with the browser's Save dialog (stubbed: headless has no dialog):
 // the first Save asks, the next writes the same file, and the dot follows
 // changes, but only once there is a file (never before the first save).
 VIEWS['save-file'] = { js: `window.isopix.file = { name: null, at: null, via: null, dirty: false, handle: null }; // each width starts with no file
@@ -193,7 +193,7 @@ VIEWS['save-file'] = { js: `window.isopix.file = { name: null, at: null, via: nu
   if (asked !== 1 || writes !== 1 || dot()) throw new Error('first Save: asked ' + asked + ', wrote ' + writes + ', dot ' + dot());
   ${q('#file-save')} await wrote(2);
   if (asked !== 1 || writes !== 2) throw new Error('second Save asked again or did not write: asked ' + asked + ', wrote ' + writes);
-  if (document.querySelector('#file-saveas').hidden) throw new Error('Save as new file is hidden with a file to write to');
+  if (document.querySelector('#file-saveas').hidden) throw new Error('Save a copy is hidden with a file to write to');
   document.querySelector('#drawing').close(); { ${DRAW} }
   if (!dot()) throw new Error('no dot after a change');
   ${q('#drawing-open')} if (!/Changed since/.test(document.querySelector('#file-status').textContent)) throw new Error('file line: ' + document.querySelector('#file-status').textContent);` };
