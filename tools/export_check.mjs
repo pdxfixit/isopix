@@ -86,6 +86,21 @@ const result = await evaluate(`(async () => {
   d2.undo();
   out.project = { bytes: json.length, same, log: d2.undoStack.length + 1 === a.drawing.undoStack.length, undoWorks: d2.edges.size === 0, invariant: d2.checkInvariant() };
   out.projectJson = json;
+
+  // Save's default: a PNG with the project inside. It must still be a picture
+  // the browser decodes, and Open must get the same drawing back out of it.
+  const pp = await a.projectPng();
+  const ppBmp = await createImageBitmap(pp);
+  const back = await a.projectFromFile(new File([pp], 'check.isopix.png', { type: 'image/png' }));
+  const d3 = P.load(back);
+  const plain = await a.projectFromFile(new File([pngBlob], 'plain.png', { type: 'image/png' })).then(() => 'opened', (e) => e.message);
+  const now = await a.projectPng({ now: true });
+  const backNow = P.load(await a.projectFromFile(new File([now], 'now.png', { type: 'image/png' })));
+  out.projectPng = { size: pp.size, picture: ppBmp.width === bmp.width && ppBmp.height === bmp.height,
+    same: JSON.stringify([...d3.cells].sort()) === JSON.stringify([...a.drawing.cells].sort()) && d3.undoStack.length === a.drawing.undoStack.length,
+    sameNow: JSON.stringify([...backNow.cells].sort()) === JSON.stringify([...a.drawing.cells].sort()),
+    plainRefused: /no Isopix drawing inside/.test(plain), name: back.name };
+  out.projectPngBytes = Array.from(new Uint8Array(await pp.arrayBuffer()));
   a.settings.locked = false;
   return out;
 })()`);
@@ -154,6 +169,7 @@ fs.mkdirSync(dir, { recursive: true });
 fs.writeFileSync(path.join(dir, 'check.png'), Buffer.from(result.pngBytes));
 fs.writeFileSync(path.join(dir, 'check.svg'), result.svgText);
 fs.writeFileSync(path.join(dir, 'check.isopix.json'), result.projectJson);
+fs.writeFileSync(path.join(dir, 'check.isopix.png'), Buffer.from(result.projectPngBytes));
 
 // Within 2 levels a channel: decoders may round a level differently (seen on CI).
 const near = (a, b) => [1, 3, 5].every((i) => Math.abs(parseInt(a.slice(i, i + 2), 16) - parseInt(b.slice(i, i + 2), 16)) <= 2);
@@ -171,6 +187,10 @@ const checks = [
   ['💾 project keeps the undo log', result.project.log],
   ['💾 undo works on the loaded project', result.project.undoWorks],
   ['💾 loaded project keeps the one-cell-or-children rule', result.project.invariant === null],
+  [`🖼️💾 Save's PNG is still the same picture (${Math.round(result.projectPng.size / 1024)} KB)`, result.projectPng.picture],
+  ['🖼️💾 Open gets the same drawing and undo log back out of Save\'s PNG', result.projectPng.same],
+  ['🖼️💾 the share sheet\'s uncompressed PNG opens the same', result.projectPng.sameNow],
+  ['🖼️💾 a plain picture is refused with a way forward (Trace a picture)', result.projectPng.plainRefused],
   ...layer.map(([label, bad, small, max]) => [`🧱 cached cell layer matches a fresh redraw after ${label} (${bad} visible differences; ${small} faint edge values, largest ${max})`, bad === 0]),
   [`🖼️  a 4000x3000 trace photo is made smaller to ${trace1.w}x${trace1.h}, and says so`, trace1.w === 2048 && trace1.h === 1536 && /smaller/.test(trace1.toast)],
   [`💾 the trace picture comes back after a reload (${trace2.w} px wide)`, trace2.w === 2048],
@@ -178,5 +198,5 @@ const checks = [
 ];
 for (const [label, ok] of checks) console.log(`${ok ? '✅' : '❌'} ${label}`);
 for (const e of errors) console.log(`   ${e}`);
-console.log(`\n📂 ${dir}  (check.png ${result.png.w}x${result.png.h}, check.svg, check.isopix.json ${result.project.bytes} bytes)`);
+console.log(`\n📂 ${dir}  (check.png ${result.png.w}x${result.png.h}, check.svg, check.isopix.json ${result.project.bytes} bytes, check.isopix.png)`);
 process.exit(checks.every(([, ok]) => ok) ? 0 : 1);

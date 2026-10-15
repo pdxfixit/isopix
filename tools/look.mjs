@@ -136,7 +136,7 @@ VIEWS.pinchpan = { js: `${q('[data-tool="pencil"]')} const a = window.isopix, c 
 // changes, but only once there is a file (never before the first save).
 VIEWS['save-file'] = { js: `window.isopix.file = { name: null, at: null, via: null, dirty: false, handle: null }; // each width starts with no file
   ${DRAW} const a = window.isopix; let asked = 0, writes = 0;
-  const handle = { name: 'look.isopix.json', queryPermission: async () => 'granted', createWritable: async () => ({ write: async () => { writes++; }, close: async () => {} }) };
+  const handle = { name: 'look.isopix.png', queryPermission: async () => 'granted', createWritable: async () => ({ write: async () => { writes++; }, close: async () => {} }) };
   window.showSaveFilePicker = async () => { asked++; return handle; };
   const dot = () => document.querySelector('#file-save').classList.contains('unsaved');
   ${q('#drawing-open')} if (dot()) throw new Error('a Save dot before the drawing was ever saved to a file');

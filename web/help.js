@@ -77,8 +77,8 @@ export const SECTIONS = [
     items: [
       { name: 'Name', text: 'Aa', says: 'The drawing\'s name. Saved files are named after it.' },
       { name: 'New', from: '#file-new', says: 'Starts a new drawing. If this one has anything in it, you choose: Save file first, New anyway, or Cancel.' },
-      { name: 'Open', from: '#file-open', says: 'Opens a project file (.isopix.json). It replaces this drawing, so it asks first if this one has changes not in a file.' },
-      { name: 'Save file', from: '#file-save', says: 'Saves a project file: the whole drawing with its undo history, stamps, paper and trace picture. On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
+      { name: 'Open', from: '#file-open', says: 'Opens a drawing Isopix saved: its PNG, or an .isopix.json file. It replaces this drawing, so it asks first if this one has changes not in a file.' },
+      { name: 'Save file', from: '#file-save', says: 'Saves the whole drawing with its undo history, stamps, paper and trace picture, as a PNG picture that opens in any photo app and reopens here, ready to keep drawing (Settings → Drawing can make it an .isopix.json file instead). On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
       { name: 'Save as new file', from: '#file-saveas', text: '⇩', says: 'Shows after Save has a file to write to: saves a copy as a new file instead.' },
       { name: 'Save picture', from: '#file-png', says: 'Saves a PNG picture of the drawing.' },
       { name: 'Save vector (SVG)', from: '#file-svg', text: 'SVG', says: 'Saves an SVG: a vector file that stays sharp at any size.' },

@@ -23,6 +23,7 @@ import { paperOf, paperName, inkName, matchInk } from './engine/paper.js';
 import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './engine/protect.js';
 import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
 import { readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
+import * as PNGP from './engine/pngproject.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -36,6 +37,7 @@ const DEFAULTS = {
   densityHandle: true, densityPinch: false, densityLongpress: false,
   coarsen: 'crisp', snap: false, limited: false, limitedCount: 3, gray: false, traceOpacity: 0.3,
   custom: '',
+  savePng: true, // Save writes a PNG with the drawing inside; off: a .isopix.json file
 };
 const BRUSH_LABEL = { triangle: 'Triangle', rhombus: 'Rhombus', hexagon: 'Hexagon', trapezoid: 'Trapezoid', bigtri: 'Big triangle', face: 'Drag a face', cube: 'Drag a cube', stamp: 'Stamp' };
 const DRAG_BRUSHES = new Set(['face', 'cube', 'stamp']);
@@ -1102,6 +1104,7 @@ function syncMenu() {
   $('#opt-longpress').checked = s.densityLongpress;
   $('#opt-limited').checked = s.limited;
   $('#opt-gray').checked = s.gray;
+  $('#opt-save-png').checked = s.savePng;
   $('#opt-trace').value = String(s.traceOpacity);
   document.body.classList.toggle('gray', s.gray);
   const dark = paperName(app.drawing.paper) === 'dark';
@@ -1132,6 +1135,10 @@ const hasContent = () => app.drawing.cells.size > 0 || app.drawing.edges.size > 
 // again), the share sheet on iPhone and iPad, or a download. app.file says
 // whether the drawing is in a file; the Save buttons wear a dot when not.
 const PROJECT_TYPE = { type: 'application/json', accept: { description: 'Isopix drawing', ext: ['.json'] } };
+const PNG_TYPE = { type: 'image/png', accept: { description: 'Isopix drawing (a picture with the drawing inside)', ext: ['.png'] } };
+// Save's file: a PNG with the whole project inside (engine/pngproject.js), or
+// with that setting off, the project file alone.
+const saveExt = () => (app.settings.savePng ? '.isopix.png' : '.isopix.json');
 function updateFileUI() {
   const dot = saveDot(app.file, hasContent());
   for (const b of ['#top-save', '#file-save']) {
@@ -1168,21 +1175,38 @@ function sayResult(r, what) {
   else if (r.how === 'share') toast(`${what[0].toUpperCase()}${what.slice(1)} saved`);
   else toast(`Saved ${r.name} to your downloads`);
 }
-// Returns true once the drawing is in a file.
+// Returns true once the drawing is in a file. A file kept from an earlier
+// Save is written again only when it is the same kind (PNG or project file).
 async function saveFile({ asNew = false } = {}) {
-  const r = await store.saveBlob({ name: `${fileBase(app.drawingName)}.isopix.json`, ...PROJECT_TYPE, make: () => projectBlob(), handle: asNew ? null : app.file.handle });
+  const png = app.settings.savePng;
+  if (png && !pngCanvas()) { toast('Nothing to save yet'); return false; }
+  const ext = saveExt(), h = app.file.handle;
+  const handle = !asNew && h && String(h.name || '').endsWith(ext) ? h : null;
+  const r = await store.saveBlob({ name: `${fileBase(app.drawingName)}${ext}`, ...(png ? PNG_TYPE : PROJECT_TYPE), make: png ? projectPng : () => projectBlob(), handle });
   sayResult(r, 'project file');
   if (r.cancelled || r.failed) return false;
   fileSaved(r, 'save');
   return true;
 }
 // The share sheet needs the picture at once, so it is encoded here, in the tap.
-function canvasBlobNow(c) {
+function canvasBytesNow(c) {
   const bin = atob(c.toDataURL('image/png').split(',')[1]);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes], { type: 'image/png' });
+  return bytes;
 }
+const canvasBlobNow = (c) => new Blob([canvasBytesNow(c)], { type: 'image/png' });
+// The picture with the whole project inside it. now: at once, uncompressed
+// (the share sheet); else compressed.
+function projectPng({ now = false } = {}) {
+  const c = pngCanvas();
+  if (!c) throw new Error('nothing drawn');
+  const text = JSON.stringify(projectData());
+  if (now) return new Blob([PNGP.embedNow(canvasBytesNow(c), text)], { type: 'image/png' });
+  return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('the picture is too big for this browser'))), 'image/png'))
+    .then(async (b) => new Blob([await PNGP.embed(new Uint8Array(await b.arrayBuffer()), text, store.deflate)], { type: 'image/png' }));
+}
+app.projectPng = projectPng; // for tools/export_check.mjs
 async function savePicture() {
   const c = pngCanvas();
   if (!c) return toast('Nothing to save yet');
@@ -1253,6 +1277,7 @@ function wireMenu() {
   check('#opt-longpress', 'densityLongpress');
   check('#opt-limited', 'limited', buildPalette);
   check('#opt-gray', 'gray', syncMenu);
+  check('#opt-save-png', 'savePng', updateFileUI);
   $('#opt-hint-levels').addEventListener('change', (e) => { set('hintLevels', +e.target.value); requestRender(); });
   $('#opt-trace').addEventListener('input', (e) => { set('traceOpacity', +e.target.value); requestRender(); });
   $('#paper-flip').addEventListener('click', flipPaper);
@@ -1339,13 +1364,22 @@ function loadProjectObject(obj) {
   syncMenu();
   afterChange({ changed: false });
 }
+// A project file, or a PNG Isopix saved (the drawing is inside it).
+async function projectFromFile(f) {
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  if (!PNGP.isPNG(bytes)) return JSON.parse(new TextDecoder().decode(bytes));
+  const text = await PNGP.extract(bytes, store.inflate);
+  if (text == null) throw new Error('this picture has no Isopix drawing inside. To draw over a picture, use Settings → Learning → Trace a picture');
+  return JSON.parse(text);
+}
+app.projectFromFile = projectFromFile; // for tools/export_check.mjs
 async function openProject() {
-  const r = await store.openFile({ accept: ['.json', '.isopix'], description: 'Isopix drawing' });
+  const r = await store.openFile({ accept: { 'application/json': ['.json', '.isopix'], 'image/png': ['.png'] }, description: 'Isopix drawing' });
   if (!r) return;
   const f = r.file;
   if (f.size > 50 * 1024 * 1024) return toast('That file is too big for a project');
   try {
-    loadProjectObject(JSON.parse(await f.text()));
+    loadProjectObject(await projectFromFile(f));
     fileSaved({ name: f.name, handle: r.handle }, 'open');
     if ($('#settings').open) $('#settings').close(); if ($('#drawing').open) $('#drawing').close();
     toast(`Opened ${f.name}`);

@@ -79,8 +79,11 @@ and at once when the app is put away (with its undo log, so undo and time-lapse
 survive a reload). Isopix asks the browser to keep that storage (not Firefox,
 which would prompt). If the browser will not store it (a private window), a
 notice says so once, with a Save file button. Settings live in `localStorage`.
-**Save file** writes a `.isopix.json` file: cells, bold edges, hidden
-children, the undo log and stamps. How it saves depends on the device
+**Save file** writes a PNG picture with the whole project inside
+(`name.isopix.png`; `web/engine/pngproject.js`): it opens in any photo app,
+and Open reads the drawing back out. Settings → Drawing → "Save as a
+picture" off writes a `.isopix.json` file instead. Either holds the cells,
+bold edges, hidden children, the undo log and stamps. How it saves depends on the device
 (`saveMethod` in `web/storage.js`): Chrome and Edge on a computer show their
 Save dialog once and then write the same file on each Save (the file handle
 is kept in IndexedDB); iPhone and iPad open the share sheet (Save to Files),
@@ -95,7 +98,7 @@ leaves the device.
 | Path | What it holds |
 |---|---|
 | `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `glyphs.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
-| `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
+| `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `test/` | `node --test` suites for the engine. |
 | `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |
 | `docs/` | `state.md`, `decisions.md`, `questions.md`, `design-brief.md`, `deploy-cloudflare.md`, `environment.md`, `justfile-style.md`. |

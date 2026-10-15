@@ -138,19 +138,25 @@ export async function saveBlob({ name, type, accept, make, handle = null }) {
 
 // Opens one file. Where the browser can (Chrome and Edge on a computer), it
 // also hands back the file itself, so Save can write to it again.
-// Returns {file, handle?} or null when the person cancelled.
+// accept: {'media/type': ['.ext', …]}. Returns {file, handle?} or null when
+// the person cancelled.
 export async function openFile({ accept, description }) {
   if (typeof window.showOpenFilePicker === 'function') {
     try {
-      const [handle] = await window.showOpenFilePicker({ types: [{ description, accept: { 'application/json': accept } }] });
+      const [handle] = await window.showOpenFilePicker({ types: [{ description, accept }] });
       return { file: await handle.getFile(), handle };
     } catch (err) {
       if (aborted(err)) return null;
     }
   }
-  const file = await pickFile(accept.join(',') + ',application/json');
+  const file = await pickFile([...Object.values(accept).flat(), ...Object.keys(accept)].join(','));
   return file ? { file } : null;
 }
+
+// zlib (de)compression through the browser's streams, for the drawing inside a PNG.
+const through = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
+export const deflate = (bytes) => through(bytes, new CompressionStream('deflate'));
+export const inflate = (bytes) => through(bytes, new DecompressionStream('deflate'));
 
 export function pickFile(accept) {
   return new Promise((resolve) => {

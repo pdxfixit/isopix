@@ -15,7 +15,7 @@ const SHELL = [
   './engine/lattice.js', './engine/model.js', './engine/brushes.js', './engine/symmetry.js',
   './engine/fill.js', './engine/density.js', './engine/svg.js', './engine/project.js',
   './engine/view.js', './engine/color.js', './engine/paper.js', './engine/protect.js',
-  './engine/gesture.js',
+  './engine/gesture.js', './engine/pngproject.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 
