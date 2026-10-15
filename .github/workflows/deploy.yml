@@ -13,7 +13,9 @@ name: deploy
 on:
   push:
     branches: [main]
-    paths: ['web/**', 'worker/**', 'site/**']
+    # site/harvest.conf is the telemetry runner's, not deployed: a deploy for it
+    # would ship the same files and pop the update notice for nothing.
+    paths: ['web/**', 'worker/**', 'site/**', '!site/harvest.conf']
   workflow_dispatch:
 permissions:
   contents: read
