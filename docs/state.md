@@ -96,12 +96,12 @@ Before that:
 
 ## In flight
 
-**Moving house to isopix.app** (2026-10-15, the owner bought it and set up its DNS): committed and pushed on branch `claude/ui-cleanup-usability-p711b2` here and in flarepress, **not merged and not deployed** (a cloud session cannot). Release 1.2.12. What it does: [deploy-cloudflare.md](deploy-cloudflare.md#old-addresses). To ship, from the owner's Mac, in this order:
+**Moving house to isopix.app** (2026-10-15, the owner bought it and set up its DNS): on `main` here and in flarepress (2026-10-15), **not deployed**: the cloud session that built it has no Cloudflare credentials. Release 1.2.12. What it does: [deploy-cloudflare.md](deploy-cloudflare.md#old-addresses). To ship, from the owner's Mac, in this order:
 
-1. Merge the branch to `main` in both repos (flarepress: `isopix.app/` is the new Worker `isopix-app`; `isopix.pdxfixit.com/` and the Isogrid folder are move Workers; `sites_check.py` knows move pages).
-2. `git -C ~/src/flarepress pull`, then here `just deploy-plan`, then `FIRST_PUBLISH=1 just --yes deploy` (a new Worker; isopix.pdxfixit.com keeps serving 1.0.4 meanwhile). If wrangler refuses the isopix.app Custom Domain over an existing DNS record (one made when the DNS was set up), show the record and delete it only with the owner's go, then deploy again ([deploy-cloudflare.md](deploy-cloudflare.md#if-the-custom-domain-will-not-attach)).
+1. Both repos' `main` carry it (flarepress: `isopix.app/` is the new Worker `isopix-app`; `isopix.pdxfixit.com/` and the Isogrid folder are move Workers; `sites_check.py` knows move pages).
+2. `git -C ~/src/flarepress pull` and `git pull` here, then here `just deploy-plan`, then `FIRST_PUBLISH=1 just --yes deploy` (a new Worker; isopix.pdxfixit.com keeps serving 1.0.4 meanwhile). If wrangler refuses the isopix.app Custom Domain over an existing DNS record (one made when the DNS was set up), show the record and delete it only with the owner's go, then deploy again ([deploy-cloudflare.md](deploy-cloudflare.md#if-the-custom-domain-will-not-attach)).
 3. Only after isopix.app serves `move.js`: in flarepress, run its `push` recipe on `isopix.pdxfixit.com` and on the old Isogrid site's folder (their pages load `move.js` from isopix.app), then its `sites` recipe for those and `isopix.app`; then `just live` here.
 
-Earlier on the same branch: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); cards 8 to 10 in [questions.md](questions.md) wait on the owner.
+Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); cards 8 to 10 in [questions.md](questions.md) wait on the owner.
 
 On `main`: nothing half done. Release 1.0.4 is live at https://isopix.pdxfixit.com (deployed 2026-10-13 from `a131cfb`).
