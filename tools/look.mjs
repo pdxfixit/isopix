@@ -9,13 +9,13 @@
 // screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
-//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file
+//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { launchChrome, connect, evaluate as evaluateIn, waitFor, sleep, freePort } from './chrome.mjs';
+import { launchChrome, connect, evaluate as evaluateIn, waitFor, sleep, freePort, skipWelcome } from './chrome.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const MIN_TAP = 44;
@@ -103,6 +103,19 @@ const PROTECT = `
   a.settings.lockedLevel = 2; a.level = 2; a.settings.brush = 'hexagon';
   f('pointerdown', x + 10, y + 3); f('pointerup', x + 10, y + 3, 0);
   if (document.querySelector('#protect-note').hidden) throw new Error('the skip notice did not show');`;
+// The welcome card: from Settings → About, half built (three of six taps).
+const TAP3 = `const tris = () => [...document.querySelectorAll('#welcome-cube .cube-todo')];
+  for (let i = 0; i < 3; i++) tris()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  const cap = document.querySelector('#welcome-caption').textContent;
+  if (tris().length !== 3 || !cap.includes('3 left')) throw new Error('the cube did not take three taps: ' + cap);`;
+VIEWS.welcome = { js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${nap}
+  if (!document.querySelector('#welcome').open) throw new Error('Show the welcome again did not open it');
+  if (document.querySelector('#settings').open) throw new Error('Settings stayed open under the welcome');
+  ${TAP3}` };
+// A first visit: a fresh profile (storage cleared, never marked welcomed)
+// opens on the card by itself, over an empty drawing.
+VIEWS['welcome-first'] = { fresh: true, js: `if (!document.querySelector('#welcome').open) throw new Error('a first visit did not open the welcome');
+  ${TAP3}` };
 VIEWS.help = { js: `document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }));
   if (!document.querySelector('#help').open) throw new Error('? did not open Help');` };
 VIEWS.protect = { js: `${PROTECT} window.isopix.settings.locked = false;` };
@@ -198,6 +211,7 @@ listeners.push((m) => {
   }
 });
 await send('Page.enable');
+await skipWelcome(send);
 await send('Runtime.enable');
 await send('Log.enable');
 // Without --light or --dark, Chrome follows this Mac's appearance.
@@ -239,13 +253,27 @@ const MEASURE = (width) => `(() => {
   const pin = (el) => (getComputedStyle(el).position === 'sticky' ? el : up(el, (cs) => cs.position === 'sticky'));
   const scroller = (el) => up(el, (cs) => /auto|scroll/.test(cs.overflowX + cs.overflowY));
   const pinnedOver = (a, b) => !!pin(a) !== !!pin(b) && scroller(a) && scroller(a) === scroller(b);
+  // Two SVG shapes (the welcome cube's triangles) can share a box and not
+  // touch: they overlap only if one sampled point of the shared box lies in both.
+  const inFill = (el, px, py) => { const m = el.getScreenCTM(); if (!m) return false;
+    const p = new DOMPoint(px, py).matrixTransform(m.inverse()); return el.isPointInFill(p); };
+  const shapesApart = (a, b, ra, rb) => {
+    if (!(a instanceof SVGGeometryElement && b instanceof SVGGeometryElement)) return false;
+    const l = Math.max(ra.left, rb.left), r = Math.min(ra.right, rb.right), t = Math.max(ra.top, rb.top), btm = Math.min(ra.bottom, rb.bottom);
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+      // Uneven offsets, so no sample lands on an edge two shapes share (a box diagonal).
+      const px = l + (r - l) * (i + 0.37) / 8, py = t + (btm - t) * (j + 0.61) / 8;
+      if (inFill(a, px, py) && inFill(b, px, py)) return false;
+    }
+    return true;
+  };
   const overlaps = [];
   for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
     const [a, ra] = boxes[i], [b, rb] = boxes[j];
     if (a.contains(b) || b.contains(a) || pinnedOver(a, b)) continue;
     const x = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
     const y = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
-    if (x > 2 && y > 2) overlaps.push(name(a) + ' ↔ ' + name(b) + ' (' + Math.round(Math.min(x, y)) + 'px)');
+    if (x > 2 && y > 2 && !shapesApart(a, b, ra, rb)) overlaps.push(name(a) + ' ↔ ' + name(b) + ' (' + Math.round(Math.min(x, y)) + 'px)');
   }
   return {
     sideways: Math.max(document.documentElement.scrollWidth, innerWidth) > ${width},
@@ -267,6 +295,7 @@ for (const screen of opts.screens) {
     }));
     const live = VIEWS[screen].live;
     setLive(live ? live[0] : null);
+    if (VIEWS[screen].fresh) await send('Storage.clearDataForOrigin', { origin: new URL(base).origin, storageTypes: 'all' });
     await send('Page.navigate', { url: `${base}?look=${screen}-${w}` });
     await loaded;
     await sleep(500);
@@ -274,7 +303,7 @@ for (const screen of opts.screens) {
     const row = { screen, w, extra: [] };
     try {
       // Each width starts from a blank drawing, not the last width's autosave.
-      await evaluate(`(async () => { const a = window.isopix; a.drawing.clear(); a.selection = null; })()`);
+      if (!VIEWS[screen].fresh) await evaluate(`(async () => { const a = window.isopix; a.drawing.clear(); a.selection = null; })()`);
       if (VIEWS[screen].js) await evaluate(`(async () => { ${VIEWS[screen].js} })()`);
       if (opts.js) await evaluate(`(async () => { ${opts.js} })()`);
     } catch (err) { row.extra.push(`script failed: ${err.message.split('\n')[0]}`); }

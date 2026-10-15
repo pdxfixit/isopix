@@ -23,6 +23,7 @@ import { paperOf, paperName, inkName, matchInk } from './engine/paper.js';
 import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './engine/protect.js';
 import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
 import { readMoveHash, keysToCopy, landing, hasDrawing } from './move.js';
+import { welcomeDue, initWelcome } from './welcome.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -36,6 +37,7 @@ const DEFAULTS = {
   densityHandle: true, densityPinch: false, densityLongpress: false,
   coarsen: 'crisp', snap: false, limited: false, limitedCount: 3, gray: false, traceOpacity: 0.3,
   custom: '',
+  welcomed: false, // the welcome card was closed on this device
 };
 const BRUSH_LABEL = { triangle: 'Triangle', rhombus: 'Rhombus', hexagon: 'Hexagon', trapezoid: 'Trapezoid', bigtri: 'Big triangle', face: 'Drag a face', cube: 'Drag a cube', stamp: 'Stamp' };
 const DRAG_BRUSHES = new Set(['face', 'cube', 'stamp']);
@@ -74,6 +76,7 @@ export const app = {
   crosshair: null,
   trace: null,
   replaying: null,
+  welcome: null,         // the welcome card (web/welcome.js)
   pickCenter: false,
   moveMode: false,       // the hand on the zoom rail: one finger moves the view
   lastDensity: null,
@@ -1257,6 +1260,7 @@ function wireMenu() {
   $('#opt-trace').addEventListener('input', (e) => { set('traceOpacity', +e.target.value); requestRender(); });
   $('#paper-flip').addEventListener('click', flipPaper);
   $('#help-open').addEventListener('click', openHelp);
+  $('#welcome-again').addEventListener('click', () => { $('#settings').close(); app.welcome.open(); });
   $('#sym-center').addEventListener('click', () => { app.pickCenter = true; $('#settings').close(); toast('Tap a grid point for the symmetry center'); });
   $('#trace-open').addEventListener('click', openTrace);
   $('#trace-clear').addEventListener('click', () => { app.trace = null; scheduleSave(); updateChips(); requestRender(); });
@@ -1623,6 +1627,15 @@ async function boot() {
   if (arriving) await takeMovedDrawing(arriving);
   afterChange({ changed: false });
   updateFileUI();
+  // The welcome card, once, on a first visit. Anyone who already has a drawing
+  // here (or is bringing one) is not new, so it never opens for them later.
+  app.welcome = initWelcome({
+    dialog: $('#welcome'), cube: $('#welcome-cube'), caption: $('#welcome-caption'), start: $('#welcome-start'),
+    color: () => app.settings.color, shade, shading: () => app.settings.shading,
+    onClose: () => { if (!app.settings.welcomed) set('welcomed', true); },
+  });
+  if (welcomeDue({ welcomed: app.settings.welcomed, hasContent: hasContent(), arriving: !!arriving })) app.welcome.open();
+  else if (!app.settings.welcomed) set('welcomed', true);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
   window.addEventListener('pagehide', saveNow);
   const label = $('#version-label');

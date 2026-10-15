@@ -7,7 +7,7 @@
 //   node tools/perf.mjs [--dpr 2] [--cells 38400]
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { launchChrome, connect, evaluate as evaluateIn, waitFor, sleep, freePort } from './chrome.mjs';
+import { launchChrome, connect, evaluate as evaluateIn, waitFor, sleep, freePort, skipWelcome } from './chrome.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const arg = (name, d) => { const i = process.argv.indexOf(name); return i > 0 ? Number(process.argv[i + 1]) : d; };
@@ -21,6 +21,7 @@ await waitFor('the dev server', async () => (await fetch(base)).ok);
 const chrome = await launchChrome();
 const { send, listeners } = await connect(await chrome.page());
 await send('Page.enable'); await send('Runtime.enable');
+await skipWelcome(send);
 await send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, deviceScaleFactor: dpr, mobile: false });
 const loaded = new Promise((r) => listeners.push((m) => { if (m.method === 'Page.loadEventFired') r(); }));
 await send('Page.navigate', { url: base });
