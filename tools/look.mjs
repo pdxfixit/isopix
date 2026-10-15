@@ -35,6 +35,21 @@ const VIEWS = {
   // Every Settings section open (heads that are shut get a click; the state is remembered).
   'settings-open-all': { js: `${q('#settings-open')} for (const h of document.querySelectorAll('#settings .set-head')) if (h.getAttribute('aria-expanded') !== 'true') h.click();` },
   'drawing-sheet': { js: q('#drawing-open') },
+  // Usage counts (web/telemetry.js): a tool tap, a brush pick, a key and a setting are counted;
+  // letters typed in the name field are not; the About switch and its note show.
+  usage: { js: `const u = window.isopix.usage;
+    ${q('[data-tool="eraser"]')} ${q('[data-tool="pencil"]')}
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true })); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
+    ${q('#drawing-open')} const name = document.querySelector('#drawing-name'); name.focus();
+    for (const key of 'pelf') name.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    document.querySelector('#drawing').close();
+    ${q('#settings-open')} document.querySelector('#opt-gray').click(); document.querySelector('#opt-gray').click();
+    const c = u.payload().counts;
+    const want = { 'tool:eraser': 1, 'tool:pencil': 1, 'key:gutters': 2, 'set:gray-on': 1, 'set:gray-off': 1 };
+    for (const [k, n] of Object.entries(want)) if (c[k] !== n) throw new Error(k + ' counted ' + c[k] + ', not ' + n + ': ' + JSON.stringify(c));
+    for (const k of ['key:tool-eraser', 'key:tool-line', 'key:tool-fill']) if (c[k]) throw new Error('typing a name counted ' + k);
+    if (!document.querySelector('#opt-usage').checked) throw new Error('Send usage counts should start on');
+    document.querySelector('#usage-note').scrollIntoView();` },
   // A real swatch tap on the Eraser switches to the Pencil; on Fill it does not; the auto-shade toggle never does.
   'color-pick': { js: `const pressed = () => document.querySelector('[data-tool][aria-pressed="true"]').dataset.tool;
     ${q('[data-tool="eraser"]')} document.querySelector('#palette .swatch:nth-child(2)').click();
