@@ -21,6 +21,10 @@ deploy-check:
 deploy-plan: deploy-check
     just --justfile {{flarepress}}/Justfile --working-directory {{flarepress}} plan isopix.app
 
+# 📥 Copy Isopix's usage counts (D1) and Cloudflare's stats into the archive on this Mac; read-only. Every deploy runs it first
+harvest *args:
+    @tools/deploy.sh harvest {{args}}
+
 # 🏷️ Write web/version.json (gitignored): git describe, plus -dirty for uncommitted edits in web/
 deploy-stamp:
     @tools/deploy.sh stamp
@@ -28,6 +32,7 @@ deploy-stamp:
 # 🚀 Publish web/ to https://isopix.app (public): check, stamp, push, then verify. Needs: just --yes deploy (the first publish also FIRST_PUBLISH=1)
 [confirm("Deploy Isopix to isopix.app (public)? (y/N)")]
 deploy:
+    @tools/deploy.sh harvest
     @tools/deploy.sh check
     @tools/deploy.sh gate
     @tools/deploy.sh stamp
