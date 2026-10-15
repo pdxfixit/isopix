@@ -17,7 +17,7 @@ import { GLYPHS, notchGlyph } from './glyphs.js';
 import { initUpdate, buildStamp, aboutVersion, versionURL, reportURL } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
-import { helpHTML } from './help.js';
+import { helpHTML, helpIds } from './help.js';
 import { cleanName, fileBase, savedAgo, fileLine, unsavedToFile, saveDot, newChoices, chipText, SECTION_IDS, rememberedOpen, startsOpen, rememberOpen } from './sheets.js';
 import { paperOf, paperName, inkName, matchInk } from './engine/paper.js';
 import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './engine/protect.js';
@@ -1067,15 +1067,19 @@ function openHelp() {
   $('#help-body').innerHTML = helpHTML((sel) => {
     const svg = document.querySelector(`${sel} svg`);
     return svg ? svg.outerHTML.replace(/ id="[^"]*"/g, '') : '';
-  });
+  }, readOpen(HELP_OPEN_KEY));
   openSheet('#help');
 }
-// Help's sections fold (help.js): a head opens or closes the body it controls.
+// Help's sections fold (help.js): a head opens or closes the body it
+// controls, and this device remembers which are open, as Settings does.
+const HELP_OPEN_KEY = 'isopix-help-open';
 function toggleFold(head) {
   const open = head.getAttribute('aria-expanded') !== 'true';
   head.setAttribute('aria-expanded', String(open));
   head.querySelector('.set-head-caret').textContent = open ? '▾' : '▸';
   document.getElementById(head.getAttribute('aria-controls')).hidden = !open;
+  const ids = new Set([...$('#help-body').querySelectorAll('.set-head[aria-expanded="true"]')].map((h) => h.getAttribute('aria-controls')));
+  try { localStorage.setItem(HELP_OPEN_KEY, rememberOpen(ids, helpIds())); } catch { /* storage blocked */ }
 }
 
 // ---------- sheets ----------
@@ -1094,7 +1098,7 @@ for (const d of document.querySelectorAll('dialog')) {
 // Settings: folding sections with a chip naming the current value; which are
 // open is this device's (localStorage, like the other settings).
 const OPEN_KEY = 'isopix-settings-open';
-function readOpen() { try { return rememberedOpen(localStorage.getItem(OPEN_KEY)); } catch { return new Set(); } }
+function readOpen(key = OPEN_KEY) { try { return rememberedOpen(localStorage.getItem(key)); } catch { return new Set(); } }
 function showFold(id, open) {
   const sec = $('#' + id), head = sec.querySelector('.set-head');
   head.setAttribute('aria-expanded', String(open));

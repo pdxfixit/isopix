@@ -151,7 +151,13 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 // HTML for the sheet. `iconOf(selector)` returns the svg of a button in the
 // page (app.js passes one; tests pass a stub).
-export function helpHTML(iconOf = () => '') {
+// Each section's id, from its title, so a remembered open section survives
+// sections being added or moved.
+export const helpId = (title) => `help-${String(title).toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '')}`;
+export const helpIds = () => [...SECTIONS.map((s) => s.title), 'Keys'].map(helpId);
+
+// open: the ids of the sections to draw open (app.js remembers them per device).
+export function helpHTML(iconOf = () => '', open = new Set()) {
   const icon = (it) => {
     if (it.html) return it.html;
     if (it.glyph) return GLYPHS[it.glyph];
@@ -162,9 +168,9 @@ export function helpHTML(iconOf = () => '') {
     return `<span class="help-text-icon">${it.key ? text.replace(/\+(?=.)/g, '+<wbr>') : text}</span>`;
   };
   const sections = [...SECTIONS, { title: 'Keys', intro: 'For a keyboard.', items: keyItems() }];
-  // Each section folds, closed at first, like Settings' (owner: "keep
-  // sections collapsible to make the length less daunting"); app.js opens them.
-  return sections.map((s, i) => `<section class="set-fold" aria-labelledby="help-h${i}"><h3><button type="button" class="set-head" aria-expanded="false" aria-controls="help-b${i}"><span class="set-head-caret" aria-hidden="true">▸</span><span id="help-h${i}">${esc(s.title)}</span></button></h3><div class="set-body" id="help-b${i}" hidden>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${
+  // Each section folds like Settings' (owner: "keep sections collapsible to
+  // make the length less daunting"), closed unless this device opened it.
+  return sections.map((s) => { const id = helpId(s.title), on = open.has(id); return `<section class="set-fold" aria-labelledby="${id}-h"><h3><button type="button" class="set-head" aria-expanded="${on}" aria-controls="${id}"><span class="set-head-caret" aria-hidden="true">${on ? '▾' : '▸'}</span><span id="${id}-h">${esc(s.title)}</span></button></h3><div class="set-body" id="${id}"${on ? '' : ' hidden'}>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${
     s.items.map((it) => `<li><span class="help-icon${it.key ? ' help-key' : ''}" aria-hidden="true">${icon(it)}</span><span><b>${esc(it.name)}</b> ${esc(it.says)}</span></li>`).join('')
-  }</ul></div></section>`).join('');
+  }</ul></div></section>`; }).join('');
 }

@@ -19,14 +19,15 @@ test('section chips show the current value in a few words', () => {
   assert.equal(S.chipText('set-learning', { ...base, gray: true, trace: true }), 'grayscale · picture');
 });
 
-test('folded sections: Drawing starts open until folded, the rest closed until opened; junk reads as nothing', () => {
+test('folded sections: all start closed until opened, then stay open until closed; junk reads as nothing', () => {
   const none = S.rememberedOpen(null);
-  assert.equal(S.startsOpen('set-drawing', none), true);
-  assert.equal(S.startsOpen('set-grid', none), false);
-  const raw = S.rememberOpen(new Set(['set-grid']));
-  const back = S.rememberedOpen(raw);
-  assert.equal(S.startsOpen('set-drawing', back), false, 'Drawing was folded');
+  for (const id of S.SECTION_IDS) assert.equal(S.startsOpen(id, none), false, `${id} starts closed`);
+  const back = S.rememberedOpen(S.rememberOpen(new Set(['set-grid', 'set-drawing'])));
+  assert.equal(S.startsOpen('set-drawing', back), true);
   assert.equal(S.startsOpen('set-grid', back), true);
+  assert.equal(S.startsOpen('set-learning', back), false);
+  assert.equal(S.startsOpen('set-drawing', S.rememberedOpen('["!set-drawing"]')), false, 'the old "folded Drawing" entry');
+  assert.equal(S.rememberOpen(new Set(['help-tools', 'gone']), ['help-tools', 'help-words']), '["help-tools"]', 'any list of sections');
   assert.equal(S.rememberedOpen('{oops').size, 0);
   assert.equal(S.rememberedOpen('[1,"set-grid"]').has('set-grid'), true);
 });
