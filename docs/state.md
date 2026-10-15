@@ -33,7 +33,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Update notice**: when a newer deploy is live, "🆕 An update for Isopix is ready." floats above the bottom bars with Reload (saves, lets the new service worker take over, reloads) and ✕; it waits while you draw or have a menu open (`web/update.js`, tests in `test/update.test.mjs`, `just look update updatesel`).
 
-**Build stamp**: the release and deployed commit, small (10 px), in the bottom-right corner, a link to the GitHub repo; Settings → About's version line links to its commit at 44 px (`buildStamp` in `web/update.js`; the commit is `version.json`'s `commit`, which flarepress's stamp writes).
+**Build stamp**: the release and deployed commit, 11 px, as tall as the strip it sits in, in the bottom-right corner, a link to the GitHub repo's front page; Settings → About's version line links to its commit at 44 px (`buildStamp` in `web/update.js`; the commit is `version.json`'s `commit`, which flarepress's stamp writes).
 
 **Cell layer cache**: the cells are drawn to an offscreen bitmap a little larger than the screen (`web/layer.js` decides blit, patch or full redraw; tests in `test/layer.test.mjs`). Panning moves the bitmap, painting redraws only the changed area (the model records changed keys), and zoom redraws at the new scale.
 
@@ -116,6 +116,8 @@ Before that:
 Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); the owner chose the next three (gallery, pen mode, two-finger-tap undo; [TODO.md](../TODO.md)).
 
 On `main`: release 1.2.20 (`4fbf6fb`) is live at https://isopix.app (the owner deployed it from his Mac, 2026-10-15). **Not deployed:** 1.2.22, the `.isopix` file (Save Isopix drawing). Cloud sessions that deploy start with `pdxfixit/flarepress` selected ([environment.md](environment.md#a-cloud-session-claudeaicode)).
+
+**First GitHub deploy** (2026-10-15): release 1.2.50 (the build stamp at 11 px, the strip's height) is pushed to `main`, and its deploy run ships everything on `main` since 1.2.20, the usage counts included. The live site was still on `bec53d7` because the only earlier deploy run stopped on a red CI (the flaky width check, since fixed).
 
 **Usage counts** (2026-10-15, on `main`, **not deployed, and must not be deployed alone**): `web/telemetry.js` counts a visit and sends it to `POST /api/visit`; `worker/index.js` keeps it in D1 for 90 days (`worker/schema.sql`); Settings → About has the switch and the privacy note; the CSP allows Cloudflare Web Analytics. How: [telemetry.md](telemetry.md). Bound in `site/wrangler.toml` (Worker `../worker/index.js`, `ASSETS`, D1 `isopix` as `DB` with `database_id = "${D1_DATABASE_ID}"`). The owner created the database and its tables and set the repo secret (2026-10-15). The deploy workflow runs on every push to `main` that changes `web/`, `worker/` or `site/`; its first deploy waits on flarepress's `v1` tag (the owner pushes it). The harvest is the telemetry runner's (pdxfixit/telemetry), the only harvester; `site/harvest.conf` gains `table=visits upsert visit` once the runner has the `isopix` database id.
 
