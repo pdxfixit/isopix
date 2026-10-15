@@ -5,7 +5,7 @@ public release. Nothing here is approved yet: the owner picks, and picked
 items move to [TODO.md](../TODO.md) "Agents do". Sizes: **S** under an hour,
 **M** a session, **L** several sessions.
 
-## Done in this pass (on branch `claude/ui-cleanup-usability-p711b2`)
+## Done in this pass (on `main` since 2026-10-15)
 
 - **Saving that works on every device.** Chrome and Edge on a computer: the
   Save dialog once, then Save (and Ctrl+S) writes the same file. iPhone and

@@ -28,7 +28,7 @@ ambiguity: one clear question beats a wrong build.
 
 ## 8. Where Move lives, and how it turns off
 
-**Now** (built 2026-10-14, on branch `claude/ui-cleanup-usability-p711b2`): a
+**Now** (built 2026-10-14, on `main` 2026-10-15): a
 hand at the foot of the zoom rail (and `H`). While it is lit, one finger moves
 the view and draws nothing; tapping any tool, the hand again or Esc turns it
 off, and it is never remembered. Options:
