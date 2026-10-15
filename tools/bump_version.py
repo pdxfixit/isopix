@@ -13,6 +13,9 @@ installed copies fetch fresh files and drop the old cache after the deploy.
     python3 tools/bump_version.py --check   exit 1 unless the stamp's PATCH is
                                             the commit count of the commit that
                                             set it (CI; needs full history)
+    python3 tools/bump_version.py --staged  the same for the commit being made, when
+                                            web/version.js is staged (the
+                                            pre-commit hook)
 """
 import re
 import subprocess
@@ -68,10 +71,30 @@ def check():
     print(f"✅ web/version.js {stamp}: PATCH is the commit count ({want})")
 
 
+def staged_problem(stamp, head_count):
+    """Why a staged stamp is wrong for the next commit, or None. Pure."""
+    m = SEMVER.match(stamp)
+    want = head_count + 1
+    if m and int(m.group(3)) == want:
+        return None
+    return (f"web/version.js says {stamp}, but this commit will be commit {want}: PATCH must be {want}. "
+            f"Another commit landed since 'just version'; run it again and stage web/version.js.")
+
+
+def staged():
+    if subprocess.run(["git", "-C", str(ROOT), "diff", "--cached", "--quiet", "--", "web/version.js"]).returncode == 0:
+        return  # version.js is not in this commit
+    problem = staged_problem(stamp_of(git("show", ":web/version.js")).group(1), commits())
+    if problem:
+        sys.exit(f"🛑 {problem}")
+
+
 def main():
     args = sys.argv[1:]
     if "--check" in args:
         return check()
+    if "--staged" in args:
+        return staged()
     text = FILE.read_text()
     m = stamp_of(text)
     old = m.group(1)
