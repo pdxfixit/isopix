@@ -155,8 +155,15 @@ export async function openFile({ accept, description }) {
       if (aborted(err)) return null;
     }
   }
-  const file = await pickFile([...Object.values(accept).flat(), ...Object.keys(accept)].join(','));
+  const file = await pickFile(pickerAccept(accept, { ios: isIOS() }));
   return file ? { file } : null;
+}
+
+// The file input's filter. On iPhone and iPad none: iOS greys out a type it
+// does not know (.isopix), even one Isopix made on a computer; the app checks
+// what it was given instead.
+export function pickerAccept(accept, { ios = false } = {}) {
+  return ios ? '' : [...Object.values(accept).flat(), ...Object.keys(accept)].join(',');
 }
 
 // zlib (de)compression through the browser's streams, for the drawing inside a PNG.
