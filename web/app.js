@@ -14,7 +14,7 @@ import { shade } from './engine/color.js';
 import { Renderer, drawCells, drawEdges } from './render.js';
 import * as store from './storage.js';
 import { GLYPHS, notchGlyph } from './glyphs.js';
-import { initUpdate, buildStamp, aboutVersion, versionURL, issueURL } from './update.js';
+import { initUpdate, buildStamp, aboutVersion, versionURL, reportURL } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
 import { helpHTML } from './help.js';
@@ -1054,7 +1054,7 @@ function onKey(e) {
 // ---------- help ----------
 function openHelp() {
   // The report link is filled in now: this copy's version, browser and screen.
-  $('#report-link').href = issueURL({ app: self.ISOPIX_VERSION, json: app.versionJson ?? null, ua: navigator.userAgent,
+  $('#report-link').href = reportURL({ app: self.ISOPIX_VERSION, json: app.versionJson ?? null, ua: navigator.userAgent,
     screen: `${screen.width}×${screen.height}`, installed: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true });
   $('#help-body').innerHTML = helpHTML((sel) => {
     const svg = document.querySelector(`${sel} svg`);
