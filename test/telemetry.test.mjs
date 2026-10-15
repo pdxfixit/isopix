@@ -72,6 +72,8 @@ test('every column the Worker writes is in the schema, and the schema has no IP 
 test('the privacy note says what is sent, the 90 days, and what never is', () => {
   const note = html.match(/<p class="note" id="usage-note">([^<]+)<\/p>/)[1];
   assert.match(html, /<input type="checkbox" id="opt-usage"/);
+  // One short line shows; the whole note folds under it, never left out.
+  assert.match(html, /<p class="note" id="usage-short">[^<]*never your drawings[^<]*<\/p>\s*<details class="usage-more" id="usage-more"><summary>[^<]+<\/summary>\s*<p class="note" id="usage-note">/);
   for (const words of ['buttons', 'tools', 'keys', 'settings', 'how long a visit lasts', 'screen size', 'touch', 'language', 'light or dark', 'country and region', 'Never your drawings, names or anything you type', 'never your internet address', 'changes every 90 days', '90 days online', 'never sells or shares']) {
     assert.ok(note.includes(words), `the note should say "${words}"`);
   }

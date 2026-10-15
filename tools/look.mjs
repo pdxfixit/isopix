@@ -52,6 +52,7 @@ const VIEWS = {
     for (const [k, n] of Object.entries(want)) if (c[k] !== n) throw new Error(k + ' counted ' + c[k] + ', not ' + n + ': ' + JSON.stringify(c));
     for (const k of ['key:tool-eraser', 'key:tool-line', 'key:tool-fill']) if (c[k]) throw new Error('typing a name counted ' + k);
     if (!document.querySelector('#opt-usage').checked) throw new Error('Send usage counts should start on');
+    document.querySelector('#usage-more').open = true;
     document.querySelector('#usage-note').scrollIntoView();` },
   // A real swatch tap on the Eraser switches to the Pencil; on Fill it does not; the auto-shade toggle never does.
   'color-pick': { js: `const pressed = () => document.querySelector('[data-tool][aria-pressed="true"]').dataset.tool;
