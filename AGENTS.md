@@ -61,7 +61,7 @@ Hosting is https://isopix.app, deployed through flarepress, the owner's Cloudfla
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
 2. **Commit to `main`** by explicit path, then **`git push`**. `ship` (below) does commit, push and deploy in one step.
 3. **`just deploy-check`** (read-only): on `main`, `web/` committed, `HEAD` pushed (it refuses an unpushed commit), `index.html`, manifest and service worker present, `just test` green, **GitHub's CI run for `HEAD` green** (it waits for one still running; `SKIP_CI=1` only when GitHub is down, and say so), prints the version that would ship. Then **`just deploy-plan`**: wrangler's dry run, which sends nothing.
-4. **`just --yes deploy`** publishes, then runs `deploy-verify` (live version, 200s, service-worker cache header, `version.js` equal to this checkout's). Without `--yes` it asks and, with no terminal, stops. `just --yes ship <msgfile> <files…>` is commit, push and deploy in one step.
+4. **`just --yes deploy`** first copies the usage counts to this Mac (`just harvest`; never blocks), publishes, then runs `deploy-verify` (live version, 200s, service-worker cache header, `version.js` equal to this checkout's). Without `--yes` it asks and, with no terminal, stops. `just --yes ship <msgfile> <files…>` is commit, push and deploy in one step.
 5. **Look at the live site:** `just live` (status, cache headers, etag, versions, ✅/⚠️). Any ❌ from `deploy-verify` means the new version is already live: fix forward, or `just rollback` (prints the steps; `--yes` runs them).
 
 Rules:

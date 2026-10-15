@@ -16,10 +16,14 @@ how it works and what each field means.
    the request, and writes one row per visit to D1 (`worker/schema.sql`). A
    later send from the same visit replaces the row. It never reads the IP
    address. One visit in 50 also deletes rows older than 90 days.
-3. **The harvest** copies D1 to a local SQLite on the owner's Mac, kept for
-   good. It is flarepress's shared `harvest` recipe, run on `isopix.app` (a
-   `harvest.conf` line: `table=visits upsert visit`); the scheduled runner
-   around it is being built elsewhere (state.md, In flight).
+3. **The harvest** copies D1 and Cloudflare's daily stats to a SQLite archive
+   on the owner's Mac, kept for good: `just harvest` here, which runs
+   flarepress's shared harvest tool on `isopix.app` (its `harvest.conf`
+   gains `table=visits upsert visit` once the database exists). Every
+   `just deploy` runs it first and goes on if it fails (no token on a cloud
+   session). The token is a read-only one in the Mac's Keychain (flarepress
+   AGENTS.md, Telemetry harvest). A routine will also run it daily; that runner
+   is being built elsewhere (state.md, In flight).
 4. **Cloudflare Web Analytics** counts page views on its own (no cookies). The
    CSP in `web/_headers` allows its beacon.
 
