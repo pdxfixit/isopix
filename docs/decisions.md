@@ -142,3 +142,17 @@ are open to the owner's change (see [questions.md](questions.md)).
 | Touch targets are at least 44 px; nothing scrolls sideways (the palette row scrolls inside itself). | `just look` checks both. | 2026-10-12 |
 | Each drawing keeps its own paper, light or dark, saved with it (project file, autosave, PNG and SVG background). A new drawing starts on the paper matching the screen's mode; Settings → Drawing → Paper flips it. A project saved before papers existed opens light. | The owner: dark paper with light inks; black strokes vanish on dark paper, so a drawing never changes paper on its own. | 2026-10-12 |
 | The inks follow the drawing's paper: a lighter set on dark paper (its darkest is a slate that still reads). Flipping the paper recolors no strokes; the chosen ink moves to the same position in the other set. | The owner. | 2026-10-12 |
+
+## Lessons
+
+| Rule | Why | Since |
+|---|---|---|
+| The tutorial runs on the real canvas, never in a drawing of its own kind: every step uses the real tool, so it cannot show something the app does not do. | The welcome card's cube shaded six single triangles, which the Triangle brush never does (a lone cell has no cube face). Owner: "what if it was a real canvas, with a button in the card that initiates an optional tutorial?" | 2026-10-15 |
+| It is short lessons, not one long tour: Basics from the welcome card, the rest listed in Help with a ✓ when done. Together they cover basically every control. | Owner: "if it's a tutorial, it'd cover basically all"; on lessons: "agreed", "i agree". | 2026-10-15 |
+| The lessons list in Help folds: one closed row per lesson (name, steps, ✓), opened by a tap, like Settings' sections. | Owner: "keep sections collapsible to make the length less daunting". | 2026-10-15 |
+| A lesson draws in a practice drawing; at the end the person picks Keep it or Back to my drawing. | Owner: "great", "yep". | 2026-10-15 |
+| Each step is worded for the device in use: touch, mouse (with its key) or pen. | Owner: "each device presents unique ways that present in the tour". | 2026-10-15 |
+| A test fails when a control on the Help sheet is in no lesson step and not on the lessons' skip list. | Owner: "wonderful". It keeps the lessons from drifting from the app. | 2026-10-15 |
+| The welcome card stays: it invites the person to the Basics lesson (Show me around) or to Start drawing. The loading screen stays a separate screen. | Owner: "card needs to stay, and invite the user to a tour"; on the loading screen: "separate". | 2026-10-15 |
+
+The steps are drafted in [lessons.md](lessons.md) and wait on the owner.
