@@ -17,7 +17,7 @@ CI pins. Newer usually works; older Node does not.
 | git | everything | any recent | preinstalled |
 | gh (GitHub CLI), signed in | deploys (`deploy-check` waits for CI to be green), reading CI: `gh run list`, `gh run view <id> --log-failed`, `gh run download <id>` | 2.102 | `brew install gh`, then `gh auth login` (The owner's GitHub account owns the repo) |
 | curl | `just live`, `deploy-verify` | any | preinstalled |
-| `npx wrangler` (comes with Node) | deploys only, run by flarepress | whatever `npx` fetches | nothing to install |
+| `npx wrangler` (comes with Node) | deploys only, run by flarepress | 4.151.0 (flarepress pins it) | nothing to install |
 
 Check them all: `node --version; python3 --version; just --version; gh auth status`.
 
@@ -37,8 +37,8 @@ Check them all: `node --version; python3 --version; just --version; gh auth stat
 
 | Thing | What it is for | If it is missing | Who can supply it |
 |---|---|---|---|
-| **flarepress** (`~/src/flarepress`, private repo `github.com/pdxfixit/flarepress`) | Deploys: its folder `isopix.app/` holds `wrangler.toml` and a `public` link to this repo's `web/`; `deploy.just` calls its `plan` and `push` recipes, and `tools/deploy.sh` calls `flarepress/tools/site.sh` (configured by that folder's `site.conf`) for the steps every app site shares. | Clone it to `~/src/flarepress` (or set `FLAREPRESS=/path`). If `tools/deploy.sh` says flarepress has no `flarepress/tools/site.sh`, pull it (`git -C ~/src/flarepress pull`). If the clone lacks the Isopix folder, recreate it from [deploy-cloudflare.md](deploy-cloudflare.md#recreate-the-flarepress-folder). Without any access, you cannot deploy: see [A session that cannot deploy](#a-session-that-cannot-deploy). | The owner (repo access) |
-| **Cloudflare login** | `wrangler deploy` needs credentials for the owner's Cloudflare account: a macOS Keychain token, else wrangler's cached `wrangler login` (OAuth). | `just deploy` fails at the `push` step with an auth error. An agent cannot log in (it needs a browser and the owner's account). Stop and ask the owner to run `npx wrangler login` in a terminal; nothing was published. | The owner only |
+| **flarepress** (public, `github.com/pdxfixit/flarepress`; `~/src/flarepress` on the owner's Mac) | The deploy code: `flarepress/tools/site.sh` (the steps every app site shares, configured by this repo's `site/site.conf`), `flarepress/tools/wrangler.sh` (push and plan, on `site/wrangler.toml`) and the harvest. GitHub's deploy checks out one pinned commit (see `.github/workflows/deploy.yml`). | Only the owner's Mac needs a clone (`git clone https://github.com/pdxfixit/flarepress ~/src/flarepress`, or `FLAREPRESS=/path`). Sessions do not deploy. | — (public) |
+| **Cloudflare login** | `wrangler deploy` needs credentials for the owner's Cloudflare account: on GitHub the repo secret `CLOUDFLARE_API_TOKEN`; on the owner's Mac a Keychain token, else wrangler's cached `wrangler login` (OAuth). | `just deploy` fails at the `push` step with an auth error. An agent cannot log in (it needs a browser and the owner's account). Stop and ask the owner to run `npx wrangler login` in a terminal; nothing was published. | The owner only |
 | **GitHub access** (`github.com/pdxfixit/isopix`, public) | `git push` (deploys refuse an unpushed commit), and reading CI with `gh`. | Without push access you can commit locally but not ship. Without `gh`, read runs at https://github.com/pdxfixit/isopix/actions if you can, or ask the owner. | The owner |
 | **The owner's Justfile house style** | How recipes are written. | Summarized here: [justfile-style.md](justfile-style.md). | — (in repo) |
 | **The design brief** | Background on intent. | In repo: [design-brief.md](design-brief.md). | — (in repo) |
@@ -46,38 +46,20 @@ Check them all: `node --version; python3 --version; just --version; gh auth stat
 
 ## A cloud session (claude.ai/code)
 
-The owner's cloud environment can deploy (2026-10-15). It has:
-
-- **`CLOUDFLARE_API_TOKEN`** as an environment variable (Workers Scripts and
-  Routes edit, DNS edit, Zone read). Wrangler reads it; flarepress's Keychain
-  lookup finds nothing on Linux and leaves it alone.
-- **A setup script** that is a shim to `tools/cloud_setup.sh`:
-  `f=/home/user/isopix/tools/cloud_setup.sh; [ -f "$f" ] && bash "$f" || true`.
-  `.claude/hooks/session-start.sh` runs the same script at every session start
-  (git settings live in each fresh clone). It installs `just` and wrangler
-  (pinned), runs `just setup`, points flarepress's `isopix.app/public` at this
-  checkout's `web/` (and exports `FLAREPRESS`), and reports whether the token
-  and the deploy hosts are reachable.
-- **Allowed domains** the deploy and its checks need: `api.cloudflare.com`,
-  `isopix.app`, `isopix.pdxfixit.com` and the old Isogrid address (for
-  flarepress's `sites`), with the default package-manager list kept.
-- **flarepress**: select `pdxfixit/flarepress` as a second repository,
-  beside `pdxfixit/isopix`, wherever a session starts: a new cloud session and
-  the scheduled deploy task. It is cloned to `/home/user/flarepress`, where
-  `tools/cloud_setup.sh` finds it. Do not attach it mid-session (add_repo):
-  the session's permission check refuses that (2026-10-15), and a session
-  cannot change its own repositories. Without it, the session cannot deploy.
-- **CI without gh**: `deploy-check` reads the public repo's runs from GitHub's
-  API when `gh` is not logged in.
-
-Then deploy as on the Mac (AGENTS.md, Ship). If the setup script's report
-shows a ⚠️, fix that first; otherwise follow the next section.
+Cloud sessions test, look and push; they never deploy and hold no Cloudflare
+token (2026-10-15: GitHub deploys with this repo's own token). The
+environment's setup script is a shim to `tools/cloud_setup.sh`:
+`f=/home/user/isopix/tools/cloud_setup.sh; [ -f "$f" ] && bash "$f" || true`.
+`.claude/hooks/session-start.sh` runs the same script at every session start
+(git settings live in each fresh clone). It installs `just` (pinned), runs
+`just setup`, and warns if a `CLOUDFLARE_API_TOKEN` is still in the
+environment (remove it there). `deploy-check` reads the public repo's CI runs
+from GitHub's API when `gh` is not logged in.
 
 ## A session that cannot deploy
 
-A cloud session, or any session without flarepress, the Cloudflare login or
-the Keychain (`security` is macOS only), can still do everything except
-publish:
+Every agent session, cloud or Mac: deploys are GitHub's (or the owner's own
+`just --yes deploy`). An agent can do everything except publish:
 
 1. Work and verify as usual: `just test`, `just export-check`, and `just look`
    if Chrome is installed (if not, CI's look step runs it; download the
@@ -86,8 +68,9 @@ publish:
    explicit path, `git push`, and read the CI run until it is green.
 3. Do not try to deploy another way, and do not ask for a Cloudflare token.
    In [state.md](state.md) "In flight", write: committed and pushed, **not
-   deployed**, the commit, and that it needs `just --yes deploy` from the owner's
-   Mac. Say the same in your final report.
+   deployed**, the commit, and that it needs the deploy workflow (Actions →
+   deploy → Run workflow) or the owner's `just --yes deploy`. Say the same in
+   your final report.
 4. Expect the daily live check (`live.yml`) to fail once main's
    `web/version.js` has been ahead of the live site for over an hour. That
    failure is the reminder, not a new problem.

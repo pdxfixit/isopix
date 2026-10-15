@@ -3,18 +3,19 @@
 # this is the tool). Subcommands: check, gate, stamp, verify, live, rollback.
 #
 # The shared steps (check, gate, stamp, verify, live, rollback) are flarepress's
-# tools/site.sh, configured by flarepress/isopix.app/site.conf, so
-# every app site deploys the same way. Isopix's own steps are here: the tests
+# tools/site.sh (github.com/pdxfixit/flarepress), configured by site/site.conf
+# here, so every app site deploys the same way; push is its tools/wrangler.sh. Isopix's own steps are here: the tests
 # and the version.js bump before a deploy, and `just look` on the live site after
 # one. Only `push` and `rollback --yes` ever change the live site, and both are
-# reached only through the recipes that demand --yes.
+# reached only through the recipes that demand --yes. GitHub runs the same
+# recipe (.github/workflows/deploy.yml) with this repo's own token.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SITE=isopix.app
+SITE="$PWD/site"
 export FLAREPRESS="${FLAREPRESS:-$HOME/src/flarepress}"
 # DEPLOY_URL points the live checks at another server (for trying this script out).
-URL="${DEPLOY_URL:-https://$SITE}"
+URL="${DEPLOY_URL:-https://isopix.app}"
 TOOL="$FLAREPRESS/tools/site.sh"
 [ -x "$TOOL" ] || { echo "🛑 no $TOOL: update flarepress (git -C $FLAREPRESS pull; docs/environment.md)" >&2; exit 1; }
 site() { "$TOOL" "$SITE" "$@"; }
@@ -82,11 +83,15 @@ case "$sub" in
     # this Mac (flarepress tools/harvest.py; docs/telemetry.md). It only reads
     # from Cloudflare, and never stops a deploy: without the token (a cloud
     # session) it says so and the deploy goes on.
-    if [ -f "$FLAREPRESS/tools/harvest.py" ]; then
-      python3 "$FLAREPRESS/tools/harvest.py" isopix.app --quiet "$@" || echo "⚠️ harvest failed (above); the deploy goes on: just harvest to retry"
+    if [ "${GITHUB_ACTIONS:-}" = true ]; then
+      echo "⏭️ harvest skipped on GitHub (it fills the owner's archive on his Mac)"
+    elif [ -f "$FLAREPRESS/tools/harvest.py" ]; then
+      python3 "$FLAREPRESS/tools/harvest.py" "$SITE" --quiet "$@" || echo "⚠️ harvest failed (above); the deploy goes on: just harvest to retry"
     else
       echo "⚠️ no flarepress tools/harvest.py: usage counts not harvested"
     fi ;;
+  push) "$FLAREPRESS/tools/wrangler.sh" "$SITE" deploy "$@" ;;
+  plan) "$FLAREPRESS/tools/wrangler.sh" "$SITE" deploy --dry-run "$@" ;;
   gate|stamp|live|rollback) site "$sub" "$@" ;;
-  *) echo "usage: deploy.sh check|harvest|gate|stamp|verify [--want V] [--web DIR]|live|rollback [--to COMMIT] [--yes]" >&2; exit 2 ;;
+  *) echo "usage: deploy.sh check|harvest|gate|stamp|push|plan|verify [--want V] [--web DIR]|live|rollback [--to COMMIT] [--yes]" >&2; exit 2 ;;
 esac

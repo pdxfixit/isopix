@@ -5,3 +5,8 @@ web/version.json
 # case-insensitive disk. The app icons are real files: keep them.
 !/web/icons/
 __pycache__/
+
+# wrangler's cache in the site folder (flarepress).
+site/.wrangler/
+site/.wrangler.deploy.toml
+.flarepress/

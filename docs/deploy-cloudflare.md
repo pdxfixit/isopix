@@ -12,7 +12,7 @@ Browsers keep saved data per address, so a plain 301 would leave every
 drawing behind. Instead, each old address carries it over (`web/move.js`):
 
 - **isopix.pdxfixit.com** (1.0's home) and **the old Isogrid address** are
-  each a small move Worker in flarepress, under names that match their
+  each a small move Worker the owner keeps outside this repo, under names that match their
   hostnames (`isopix-pdxfixit-com`, and Isogrid's). Their `/` is a page that
   imports `https://isopix.app/move.js` (served with CORS, see `web/_headers`)
   and calls `moveToNewHome()`; every other path 301s to isopix.app.
@@ -31,28 +31,35 @@ drawing behind. Instead, each old address carries it over (`web/move.js`):
 - An app installed to a home screen from an old address now opens isopix.app
   in the browser; install again from isopix.app.
 - Ship order: isopix.app first (the move pages load `move.js` from it), then
-  flarepress's `push` for the two old folders.
+  the owner pushes the two move Workers from his Mac (flarepress's push recipe in
+  flarepress, their folders under `~/.config/flarepress/sites`).
 
 ## How it is deployed
 
-Through **flarepress** (`~/src/flarepress`, private repo
-`github.com/pdxfixit/flarepress`), the owner's Cloudflare deploy toolchain. Its
-`AGENTS.md` is the authority on that account; read it before changing anything
-there.
+**GitHub deploys, with this repo's own Cloudflare token**
+(`.github/workflows/deploy.yml`, 2026-10-15). It runs the same
+`just --yes deploy` as the owner's Mac. No agent and no cloud session holds a
+token. For now the workflow starts by hand (Actions → deploy → Run workflow):
+`main` holds the usage counts, which must not go live before their Worker and
+D1 database are bound ([state.md](state.md)); then its push trigger goes on, for
+commits that change `web/`, `worker/` or `site/`.
 
-- `flarepress/isopix.app/public` is a symlink to this repo's
-  `web/`, the same pattern as the owner's other app sites. A deploy ships this checkout's
-  `web/` as it is on disk, committed or not. `just deploy-check` refuses
-  uncommitted edits in `web/` so the live site is always a commit on `main`.
-- `flarepress/isopix.app/wrangler.toml`: Worker `isopix-app`, static
-  assets from `./public` and one Custom Domain, `isopix.app`. No Worker
-  script, no database, no `www`. The old addresses have their own folders
+The deploy code is **flarepress**, a public repo
+(`github.com/pdxfixit/flarepress`; the workflow checks out a pinned commit, the Mac uses
+a clone at `~/src/flarepress`). The site's config lives here:
+
+- `site/wrangler.toml`: Worker `isopix-app`, static assets from `../web` and
+  one Custom Domain, `isopix.app`. No Worker script, no database, no `www`
+  yet. The old addresses are move Workers the owner keeps outside this repo
   (above).
-- `flarepress/isopix.app/site.conf` configures
-  `flarepress/tools/site.sh`, which does the steps every app site shares (check, gate,
-  stamp, verify, live, rollback; the other app sites use the same tool). This repo's
-  `tools/deploy.sh` calls it and adds Isopix's own steps: the tests and the
-  `version.js` bump before a deploy, `just look` on the live site after one.
+- `site/site.conf` configures `flarepress/tools/site.sh`, which does the
+  steps every app site shares (check, gate, stamp, verify, live, rollback).
+  `committed=web site`: a deploy refuses uncommitted edits there, so the live
+  site is always a commit on `main`. This repo's `tools/deploy.sh` calls it and
+  adds Isopix's own steps: the tests, the `version.js` bump and a green CI run
+  before a deploy, `just look` on the live site after one; `push` is
+  `flarepress/tools/wrangler.sh`.
+- `site/harvest.conf`: what flarepress's harvest copies (Cloudflare's stats).
 - `web/_headers` (when present) sets response headers. `web/.assetsignore` keeps
   `.DS_Store` out of uploads. Neither file is served.
 - `web/version.json` is the deploy's label (git describe, plus `-dirty`),
@@ -65,32 +72,30 @@ there.
 From this repo (`just` lists them with their notes):
 
 ```
-just deploy-check    # on main, web/ committed, files present, tests pass, shows the version that would ship
-just deploy-plan     # deploy-check, then flarepress `plan`: wrangler lists the files, sends nothing
-just --yes deploy    # check, stamp, flarepress `push`, then deploy-verify (never without --yes)
+just deploy-check    # on main, web/ committed, files present, tests pass, CI green, shows the version that would ship
+just deploy-plan     # deploy-check, then wrangler's dry run: lists the files, sends nothing
+just --yes deploy    # harvest, check, stamp, push, then deploy-verify (never without --yes; GitHub runs it too)
 just deploy-verify   # wait for the live version, then check the live site
 just live            # what is live right now (read-only)
 just rollback        # print the steps to go back to the previous release; add --yes to run them
-just --yes ship msg.txt <files…>   # commit those files to main, push, deploy
+just --yes ship msg.txt <files…>   # commit those files to main, push, deploy (the owner's Mac)
 ```
 
-Auth is flarepress's: a Keychain token if
-present, else wrangler's own login (`wrangler login`, OAuth, cached on the owner's
-Mac). When that login expires, `push` fails with an authentication error and
-nothing is published. An agent cannot renew it (it needs a browser and the owner's
-Cloudflare account): stop, tell the owner, and ask him to run `npx wrangler login` in
-a terminal, then run `just --yes deploy` again. Flarepress's `whoami` recipe
-shows which login is in use. A session with no Mac, no flarepress or no login
-follows [environment.md](environment.md#a-session-that-cannot-deploy).
+Auth, through `flarepress/tools/wrangler.sh`: on GitHub the repo secrets
+`CLOUDFLARE_API_TOKEN` (this repo's own: Account → Workers Scripts: Edit;
+isopix.app → Workers Routes: Edit, DNS: Edit, Zone: Read) and
+`CLOUDFLARE_ACCOUNT_ID`; on the owner's Mac a Keychain token, else
+wrangler's own login (he runs `npx wrangler login` when it expires).
 
 ### When to deploy
 
-After every commit to `main` that changes anything under `web/`: push, then
-`just --yes deploy`, then `just live`. A commit that touches nothing under
-`web/` (docs, tests, tools, workflows) is pushed but not deployed: the live
-files would be byte-for-byte the same, and a deploy would only change
-`version.json`, which pops the update notice on every open copy for nothing.
-The next real release carries the docs commit's label along with it.
+Every commit to `main` that changes anything under `web/` (and, once the
+Worker is bound, `worker/` or `site/`) is deployed: today by the owner running
+the workflow, then by its push trigger. A commit that touches none of them
+(docs, tests, tools, workflows) is not deployed: the live files would be
+byte-for-byte the same, and a deploy would only change `version.json`, which
+pops the update notice on every open copy for nothing. The next real release
+carries the docs commit's label along with it.
 
 ### Edge delay
 
@@ -130,56 +135,6 @@ Only the owner's explicit go in chat starts that. After it, every deploy is the 
 not pushed. When the first publish is done, say so in `state.md`,
 `AGENTS.md` and flarepress's `AGENTS.md` ("set up, not yet published" becomes
 live).
-
-## Recreate the flarepress folder
-
-If `~/src/flarepress` is missing, clone it (private; the owner grants access):
-`git clone git@github.com:pdxfixit/flarepress.git ~/src/flarepress`, or clone
-anywhere and set `FLAREPRESS=/that/path`. Its `AGENTS.md` is the authority on
-the Cloudflare account. If the clone has no `isopix.app/` folder,
-make it again; this is its whole content (2026-10-15):
-
-```
-mkdir -p ~/src/flarepress/isopix.app
-ln -s "$PWD/web" ~/src/flarepress/isopix.app/public   # run from this repo
-```
-
-`~/src/flarepress/isopix.app/site.conf` (2026-10-15; flarepress's
-`flarepress/tools/site.sh` names every key):
-
-```
-url=https://isopix.app
-committed=web
-pwa=1
-compare=version.js
-compare_wait=180
-version_wait=90
-rollback=redeploy
-```
-
-`~/src/flarepress/isopix.app/wrangler.toml`:
-
-```toml
-# Isopix, a touch drawing app on an isometric grid. The site lives in its own
-# repo (github.com/pdxfixit/isopix); public/ links to its web/ folder. Static
-# assets only: no Worker script, no bindings. Just this one hostname.
-name = "isopix-app"
-compatibility_date = "2026-10-15"
-
-routes = [
-  { pattern = "isopix.app", custom_domain = true }
-]
-
-[assets]
-directory = "./public"
-```
-
-Flarepress's `plan <folder>` runs `npx wrangler deploy --dry-run` in that
-folder and `push <folder>` runs `npx wrangler deploy`, each with
-`CLOUDFLARE_API_TOKEN` set from the Keychain token when there is one. The
-Worker name must stay `isopix-app` (it matches the hostname): a new name
-makes a second Worker and fights over the Custom Domain. `deploy-check` confirms that
-`public` resolves to this checkout's `web/`.
 
 ## Checks after a deploy
 
@@ -223,21 +178,20 @@ that change nothing under `web/` are not deployed, so `HEAD~1` could ship the
 same files). `just rollback --to <commit> --yes` runs them:
 
 1. A throwaway `git worktree` of that commit.
-2. A throwaway flarepress site folder: the real `wrangler.toml` copied, every
-   link in the site folder (`public`) re-pointed into the worktree.
-3. `version.json` written there with that commit's version.
-4. flarepress `push` on that folder (it accepts a path), then flarepress's
-   verify for that version (not the live `just look`: run it by hand).
-5. The worktree and the folder are removed.
+2. `version.json` written into its `web/` with that commit's version.
+3. `flarepress/tools/wrangler.sh` deploys that commit's own `site/` folder,
+   then flarepress's verify for that version (not the live `just look`: run it
+   by hand). A commit from before `site/` existed (2026-10-15) cannot be
+   redeployed this way.
+4. The worktree is removed.
 
 Afterwards the live site is **not** `main`'s head. Fix forward, or run `just
 --yes deploy` to put `main` back. Installed copies pick the rolled-back version
 up like any other update (see the service worker notes above).
 
 To take the site down entirely (only on the owner's explicit go): from
-`~/src/flarepress/isopix.app`, `npx wrangler delete` removes the Worker; check the zone's DNS tab afterwards in
-case the Custom Domain record outlives it. Then remove the folder from
-flarepress and its line in flarepress `AGENTS.md`.
+`site/`, `npx wrangler delete` removes the Worker; check the zone's DNS tab
+afterwards in case the Custom Domain record outlives it.
 
 ## If the Custom Domain will not attach
 

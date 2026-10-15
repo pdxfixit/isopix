@@ -10,8 +10,8 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 - **Run:** `just serve`, then http://localhost:8790/. Port 8790 is the owner's own server; agents preview on **8791** (`just serve 8791`).
 - **Look:** `just look drawn select settings drawing-sheet brushes` checks 320, 375, 700, 900 and 1100 px in your own headless Chrome.
 - **Output:** `just export-check` proves PNG, SVG and project files round trip.
-- **Ship:** see [Ship](#ship). A commit that changes `web/` gets `just version`, a push and `just --yes deploy`; any other commit is pushed only.
-- **Can't deploy** (cloud session, no flarepress or Cloudflare login)? Commit, push, get CI green, and say it is not deployed: [docs/environment.md](docs/environment.md#a-session-that-cannot-deploy).
+- **Ship:** see [Ship](#ship). A commit that changes `web/` gets `just version` and a push; GitHub deploys it (`.github/workflows/deploy.yml`, started by hand for now). Agents never deploy.
+- **Agents never deploy** and hold no Cloudflare token: commit, push, get CI green, and say whether it is deployed: [docs/environment.md](docs/environment.md#a-session-that-cannot-deploy).
 
 ## Cold start: read in this order
 
@@ -56,29 +56,28 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 
 ## Ship
 
-Hosting is https://isopix.app, deployed through flarepress, the owner's Cloudflare deploy repo, outside this one (`~/src/flarepress/isopix.app/`, whose `public` links to this repo's `web/`; the old addresses carry drawings over by `web/move.js`; [what to do without it](docs/environment.md#things-outside-this-repo)). Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). **After every commit to `main` that changes `web/`: push, then deploy, then look** (The owner, 2026-10-12: "always deploy following a commit"). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed: a deploy would only pop the update notice for nothing (docs/decisions.md, Shipping; card 7 asks the owner to confirm). Nothing deploys by itself: GitHub only tests and watches, and the live site is whatever `just --yes deploy` last sent.
+Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here (The owner, 2026-10-15: "move towards a GHA focused deploy, so an agent / ide isn't in the mix"). **The workflow starts by hand for now** (Actions → deploy → Run workflow): `main` holds the usage counts, which must not go live before their Worker and D1 database are bound (docs/state.md); then its push trigger goes on for `web/`, `worker/` and `site/`. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
 
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
-2. **Commit to `main`** by explicit path, then **`git push`**. `ship` (below) does commit, push and deploy in one step.
-3. **`just deploy-check`** (read-only): on `main`, `web/` committed, `HEAD` pushed (it refuses an unpushed commit), `index.html`, manifest and service worker present, `just test` green, **GitHub's CI run for `HEAD` green** (it waits for one still running; `SKIP_CI=1` only when GitHub is down, and say so), prints the version that would ship. Then **`just deploy-plan`**: wrangler's dry run, which sends nothing.
-4. **`just --yes deploy`** first copies the usage counts to this Mac (`just harvest`; never blocks), publishes, then runs `deploy-verify` (live version, 200s, service-worker cache header, `version.js` equal to this checkout's). Without `--yes` it asks and, with no terminal, stops. `just --yes ship <msgfile> <files…>` is commit, push and deploy in one step.
-5. **Look at the live site:** `just live` (status, cache headers, etag, versions, ✅/⚠️). Any ❌ from `deploy-verify` means the new version is already live: fix forward, or `just rollback` (prints the steps; `--yes` runs them).
+2. **Commit to `main`** by explicit path, then **`git push`**, and read the CI run until it is green.
+3. **The deploy** is GitHub's: it runs `deploy-check` (on `main`, `web/` and `site/` committed, files present, `just test` and **GitHub's CI run for that commit green**), gate, stamp, push, then `deploy-verify` (live version, 200s, service-worker cache header, `version.js` equal to the commit's, `just look` on the live site). Agents never run `just --yes deploy`; the owner may, from his Mac. **`just deploy-plan`** (wrangler's dry run, sending nothing) is fine anywhere.
+4. **Look at the live site:** `just live` (status, cache headers, etag, versions, ✅/⚠️). A red deploy run after its push step means the new version is already live: fix forward, or the owner runs `just rollback` (prints the steps; `--yes` runs them).
 
 Rules:
 
-- **Push after every commit to `main`; deploy after every one that changes `web/`**, then `just live`. Never deploy with failing tests (`deploy-check` refuses), and bump `web/version.js` with each release that changes `web/` (CI fails without it).
+- **Push after every commit to `main`; every one that changes `web/` is deployed by GitHub**, then `just live`. Never deploy with failing tests (`deploy-check` refuses), and bump `web/version.js` with each release that changes `web/` (CI fails without it).
 - **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go. Isopix's first publish, at isopix.pdxfixit.com, was approved on 2026-10-13 for release 1.0.1; the move to isopix.app, on 2026-10-15 (its first deploy there may need `FIRST_PUBLISH=1`).
 - **Never delete or edit a DNS record without the owner's approval.** If the domain will not attach, show him the exact record (see the doc).
-- Only `web/` is uploaded, so only `web/` must be committed (`ALLOW_DIRTY=1` overrides, and stamps the version `-dirty`).
+- Only `web/` is uploaded, configured by `site/`, so both must be committed (`ALLOW_DIRTY=1` overrides on the Mac, and stamps the version `-dirty`).
 - `web/version.json` is the deploy's label (git describe), written by `deploy-stamp` and gitignored; `web/version.js` is the app's release stamp. They are different files.
 - Never force-push `main`.
-- **Cloudflare login expired** (`push` fails on auth): nothing was published. An agent cannot renew it; ask the owner to run `npx wrangler login`, then deploy again. Details: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
+- **Auth fails at push** (`push` fails on auth): nothing was published. On GitHub the repo secret `CLOUDFLARE_API_TOKEN` needs the owner; on his Mac, `npx wrangler login`. Details: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
 
 ## Standing rules
 
 ### CI (GitHub Actions, `.github/workflows/`)
 
-- `test.yml` runs on every push and pull request: `just test`, `just export-check`, `just look` (screenshots uploaded as an artifact), and the version-bump rule (`tools/version_bumped.sh`). `live.yml` runs daily (`tools/live_check.py`): the live site must answer (3 retries) and serve `main`'s `version.js`, with an hour's grace for a deploy in flight. No secrets, `contents: read`, pinned actions. GitHub never deploys: that would need a Cloudflare token only the owner can make.
+- `test.yml` runs on every push and pull request: `just test`, `just export-check`, `just look` (screenshots uploaded as an artifact), and the version-bump rule (`tools/version_bumped.sh`). `live.yml` runs daily (`tools/live_check.py`): the live site must answer (3 retries) and serve `main`'s `version.js`, with an hour's grace for a deploy in flight. No secrets, `contents: read`, pinned actions. `deploy.yml` deploys with this repo's own Cloudflare token (the only secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
 - After each push, read the run: `gh run list --limit 3`, then `gh run view <id> --log-failed`. Fix a red run before anything else.
 - **Every bug fixed adds a test that fails without the fix** (`just prove`).
 - **Every session closes one CI gap:** a check that would have caught a past mistake. Record it in `docs/state.md` under "CI gaps closed".
@@ -114,7 +113,7 @@ The owner owns Isopix and decides what it does. He reads replies on his phone as
 
 ## Things outside this repo
 
-The repo holds everything except: **flarepress** (the deploy folder and its `wrangler.toml`), the **Cloudflare login**, **GitHub access**, and a **real phone**. [docs/environment.md](docs/environment.md#things-outside-this-repo) says what each is for, what to do when it is missing, and who can supply it (The owner, for all of them). [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md#recreate-the-flarepress-folder) can recreate the flarepress folder from scratch.
+The repo holds everything except: **flarepress** (the public deploy code), the **Cloudflare token** (a GitHub secret, or the owner's login), **GitHub access**, and a **real phone**. [docs/environment.md](docs/environment.md#things-outside-this-repo) says what each is for, what to do when it is missing, and who can supply it (The owner).
 
 ## Handoff
 

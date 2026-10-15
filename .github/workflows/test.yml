@@ -1,6 +1,5 @@
-# Tests on every push and pull request. GitHub only tests and watches: agents
-# deploy from the owner's Mac after each commit (a GitHub deploy would need a
-# Cloudflare token only the owner can make). No secrets.
+# Tests on every push and pull request. No secrets. Deploys are deploy.yml's,
+# which waits for this run to be green on its commit.
 name: test
 on:
   push:
