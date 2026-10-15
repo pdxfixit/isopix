@@ -67,7 +67,13 @@ export function saveMethod({ picker = false, shareFiles = false, ios = false } =
   return 'download';
 }
 
-const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+export const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// Whether Save may make an .isopix file here. Not on iPhone or iPad: iOS does
+// not know the type, so its file picker can grey the file out and the share
+// sheet can refuse it; there Save always makes the PNG with the drawing inside
+// (Owner: "devices where we can't save that stuff, we just shouldn't offer it").
+export const offersIsopixFile = ({ ios = false } = {}) => !ios;
 function canShareFiles(file) {
   try { return !!navigator.canShare && navigator.canShare({ files: [file] }); } catch { return false; }
 }
