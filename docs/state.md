@@ -43,7 +43,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 ## Verified, and how
 
-- Engine and tools: `just test`, 143 Node tests (including `test/docs.test.mjs`, `test/names.test.mjs` and `test/sw.test.mjs`) and 11 Python tests pass (2026-10-14). On the branch, `just look` on all 22 views passes in light and dark at every width, and at 360 px tall; `just export-check` passes.
+- Engine and tools: `just test`, 153 Node tests (including `test/docs.test.mjs`, `test/names.test.mjs`, `test/sw.test.mjs` and `test/welcome.test.mjs`) and 13 Python tests pass (2026-10-15). `just look` on all 24 views passes in light mode at every width (the welcome views in dark too); `just export-check` and `just move-check` pass.
 - Output: `just export-check`, 26 checks pass (PNG face colors, SVG merge, project round trip with undo, the cached layer against a fresh redraw, the trace picture).
 - Layout: CI runs `just look` on every view in light mode at 320, 375, 700, 900 and 1100 px on each push (see `.github/workflows/test.yml`); green on `d6305fb`.
 - Offline: in headless Chrome the service worker registers, controls the page, and the app boots with the network off.
@@ -74,6 +74,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-15: the pre-commit hook runs `bump_version.py --staged`: a staged `web/version.js` must carry the number of the commit being made. It would have stopped `d0e447a`, red in CI because a docs commit landed between `just version` and the release (proven by staging the stale 1.2.19).
 - 2026-10-15: `just look welcome-first` (in CI) clears the profile's storage before each width, so it is the one view that sees what a first visit sees: it fails unless the welcome card opens by itself (proven by taking the open call out). The look tools mark every other page welcomed (`skipWelcome` in `tools/chrome.mjs`), so the card never hides what a view checks. look's overlap check now tests SVG controls by their shapes, not their boxes (the cube's triangles share boxes but never touch); sample points are offset so none lands on a shared edge.
 
 - 2026-10-15: `just move-check` (in CI) moves a drawing end to end in headless Chrome from both old addresses (mapped to localhost) and checks it lands silently, is never taken twice, and is offered, not put in place of a drawing already there; `test/move.test.mjs` covers packing, the size fallbacks and the shape check of an arrival. The dev server now sends each path's `_headers` rules (CORS on `move.js`), as Cloudflare does. The `save-file` look view, run at several widths, caught the Save dot not coming back when the file record was already "changed" and the page empty; fixed.

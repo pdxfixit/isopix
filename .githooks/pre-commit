@@ -9,3 +9,6 @@ if ! out=$(just test 2>&1); then
   echo "🛑 just test fails, so the commit is refused. Run just test to see everything." >&2
   exit 1
 fi
+# A staged web/version.js must carry this commit's number (2026-10-15: a docs
+# commit landed between 'just version' and the release, and CI went red).
+python3 tools/bump_version.py --staged || exit 1

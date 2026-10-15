@@ -19,5 +19,14 @@ class Bumped(unittest.TestCase):
         self.assertEqual(bv.bumped(bv.bumped("1.0.3", "patch", 5), "patch", 5), "1.0.6")
 
 
+class Staged(unittest.TestCase):
+    def test_the_stamp_matches_the_commit_being_made(self):
+        self.assertIsNone(bv.staged_problem("1.2.19", 18))
+
+    def test_a_commit_landed_since_just_version(self):
+        # 2026-10-15: bumped at 18 commits, then a docs commit, then the release.
+        self.assertIn("PATCH must be 19", bv.staged_problem("1.2.18", 18))
+
+
 if __name__ == "__main__":
     unittest.main()
