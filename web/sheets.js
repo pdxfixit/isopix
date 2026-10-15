@@ -44,8 +44,12 @@ export function fileLine(file, hasContent, now = Date.now()) {
   return f.linked ? `${done} Save writes to the same file.` : done;
 }
 
-// Whether the Save buttons wear the "not in a file" dot.
+// Whether something drawn is not in a file (New and Open ask first then).
 export const unsavedToFile = (file, hasContent) => !!hasContent && (!file || !file.at || !!file.dirty);
+// The dot on the Save buttons: changes since this drawing was last saved to
+// (or opened from) a file. Never before the first file: then it would only
+// nag (Owner: "helpful only if it's been created first. otherwise it's premature").
+export const saveDot = (file, hasContent) => !!hasContent && !!file && !!file.at && !!file.dirty;
 
 // What New and Open do: go ahead when there is nothing to lose (nothing
 // drawn, or every change already in a file), else ask.

@@ -23,7 +23,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Moving house** (2026-10-15, live): https://isopix.app is the home (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers whose page carries a browser's drawing, settings and file record over in the `#move=` fragment and goes (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
 
-**Drawing or moving** (2026-10-14, live at isopix.app in 1.2.13): the Move hand at the foot of the zoom rail (and `H`) makes one finger pan; a tool tap, the hand or Esc ends it. A second finger takes back a stroke under 500 ms old or under 24 px long; the finger left after a pinch pans (`web/engine/gesture.js`, `test/gesture.test.mjs`, `just look move pinchpan`).
+**Drawing or moving** (2026-10-14, live at isopix.app in 1.2.13): the Move hand at the top of the zoom rail (and `H`) makes one finger pan; a tool tap, the hand or Esc ends it. A second finger takes back a stroke under 500 ms old or under 24 px long; the finger left after a pinch pans (`web/engine/gesture.js`, `test/gesture.test.mjs`, `just look move pinchpan`).
 
 **Keep fine detail made visible** (named Protect until 2026-10-12): the Keep / Behind / Replace chip by ⌖ (the same tipped fill can as the Fill tool, the word tells the mode), hatched skipped cells in the hover preview and after a stroke, and a once-a-session "skipped N cells" notice (`web/engine/protect.js`, `test/protect.test.mjs`, `just look protect hoverskip`). The owner's "larger tile isn't overpainting" report was this mode: reproduced in headless Chrome (a level-2 tile over level-5 detail: Keep and Paint behind keep the detail, Replace overpaints, with or without follow-zoom, symmetry or drag brushes).
 
@@ -58,7 +58,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 Once the branch is live:
 
-1. Tap the hand at the foot of the zoom rail and drag with one finger: the view moves, nothing is drawn. Tap the Pencil to draw again.
+1. Tap the hand at the top of the zoom rail and drag with one finger: the view moves, nothing is drawn. Tap the Pencil to draw again.
 2. Rest one finger, then pinch: no dot is left. Lift one finger mid-pinch and keep moving the other: it keeps panning.
 3. On an iPhone or iPad: Drawing → Save file opens the share sheet; Save to Files. On a computer in Chrome: Save asks where once, then Save (or Ctrl+S) writes the same file.
 
@@ -98,6 +98,6 @@ Before that:
 
 **Moving house to isopix.app** (2026-10-15): **done and live.** Release 1.2.13 (`cbf65a5`) is at https://isopix.app (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers (each under its old Worker name), pushed from the owner's Mac. flarepress's `sites` check: 200 at `/` on all three, 301 to isopix.app at `/moved` on the old two. Checked live in headless Chrome from a cloud session: a drawing (2 cells) and a setting seeded at isopix.pdxfixit.com arrived at isopix.app, `#move=` cleared. Not tried: a real phone, an installed home-screen copy, or the old Isogrid address end to end (its `sites` row only). A Mac whose resolver has not yet seen a new domain gets `000` from `deploy-verify` while the site answers elsewhere (seen at the first publish). What it does: [deploy-cloudflare.md](deploy-cloudflare.md#old-addresses).
 
-Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); cards 8 to 10 in [questions.md](questions.md) wait on the owner.
+Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); the owner chose the next three (gallery, pen mode, two-finger-tap undo; [TODO.md](../TODO.md)).
 
 On `main`: nothing half done. Release 1.2.13 is live at https://isopix.app (deployed 2026-10-15 from `cbf65a5`).

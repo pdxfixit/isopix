@@ -18,7 +18,7 @@ import { initUpdate, buildStamp, aboutVersion } from './update.js';
 import { keyFor } from './keys.js';
 import { toolAfterColorPick } from './palette.js';
 import { helpHTML } from './help.js';
-import { cleanName, fileBase, savedAgo, fileLine, unsavedToFile, newChoices, chipText, SECTION_IDS, rememberedOpen, startsOpen, rememberOpen } from './sheets.js';
+import { cleanName, fileBase, savedAgo, fileLine, unsavedToFile, saveDot, newChoices, chipText, SECTION_IDS, rememberedOpen, startsOpen, rememberOpen } from './sheets.js';
 import { paperOf, paperName, inkName, matchInk } from './engine/paper.js';
 import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from './engine/protect.js';
 import { dropOnSecondFinger, oneFinger } from './engine/gesture.js';
@@ -1133,10 +1133,10 @@ const hasContent = () => app.drawing.cells.size > 0 || app.drawing.edges.size > 
 // whether the drawing is in a file; the Save buttons wear a dot when not.
 const PROJECT_TYPE = { type: 'application/json', accept: { description: 'Isopix drawing', ext: ['.json'] } };
 function updateFileUI() {
-  const unsaved = unsavedToFile(app.file, hasContent());
+  const dot = saveDot(app.file, hasContent());
   for (const b of ['#top-save', '#file-save']) {
-    $(b).classList.toggle('unsaved', unsaved);
-    $(b).setAttribute('aria-label', `Save the project file${unsaved ? ' (changes not in a file yet)' : ''}`);
+    $(b).classList.toggle('unsaved', dot);
+    $(b).setAttribute('aria-label', `Save the project file${dot ? ' (changes since the last save)' : ''}`);
   }
   $('#file-saveas').hidden = !app.file.handle;
   if ($('#drawing').open) updateSavedLine();
