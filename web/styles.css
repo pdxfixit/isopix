@@ -103,7 +103,7 @@ body.moving .tools .btn[aria-pressed="true"] { background: transparent; border-c
 /* ---- Bottom: palette and tools ---- */
 .bottom {
   position: fixed; z-index: 3; left: 0; right: 0; bottom: 0;
-  padding: 6px calc(6px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));
+  padding: 6px calc(6px + env(safe-area-inset-right)) calc(11px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));
   display: flex; flex-direction: column; gap: 6px; pointer-events: none;
 }
 .bottom > * { pointer-events: auto; }
@@ -249,12 +249,15 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
 .set-body { padding: 0 2px 12px; }
 .set-about { border-top: 1px solid var(--border); padding-top: 4px; }
 .set-about h3 { margin: 12px 0 8px; }
-/* The build stamp: release and commit, tiny, in the strip under the tool bar. Never takes a tap. */
+/* The build stamp: release and commit, small, in the strip under the tool bar; a link to the repo.
+   Too small for a finger by design, so About's version line is the 44 px link. */
 .build-stamp {
-  position: fixed; z-index: 4; right: calc(8px + env(safe-area-inset-right)); bottom: env(safe-area-inset-bottom);
-  font: 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); opacity: 0.7;
-  pointer-events: none; user-select: none; -webkit-user-select: none;
+  position: fixed; z-index: 4; right: calc(10px + env(safe-area-inset-right)); bottom: calc(1px + env(safe-area-inset-bottom));
+  font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); opacity: 0.8;
+  text-decoration: none; user-select: none; -webkit-user-select: none;
 }
+.build-stamp:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
+.version a { color: inherit; display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; text-underline-offset: 3px; }
 .version { text-align: center; color: var(--muted); font-size: 14px; margin: 14px 0 4px; }
 
 /* ---- Drawing sheet: the name, big file buttons ---- */
