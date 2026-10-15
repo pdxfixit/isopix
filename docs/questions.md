@@ -68,3 +68,43 @@ the biggest way a new user loses work; then pen mode for tablets, and
 two-finger-tap undo. Pick any, in any order.
 
 **The owner:**
+
+## 11. A loading screen
+
+**Now:** the owner asked for "a loading screen, before the UI is ready". Timed
+in headless Chrome on a throttled phone: a first visit takes 4.0 s on 3G and
+2.0 s on slow 4G, and for that long the buttons show but do nothing, with no
+grid, palette or size picker; a return visit is ready in 0.2 s. Preloading the
+modules saves about 15%, not enough to skip the screen. Mocks:
+https://claude.ai/artifact/UP7bVMZ4mz7zhAd5iXhEjF. Any of them is written into
+`index.html` (so it shows before any script), appears only after 0.3 s (a
+return visit never sees it), stays at least 0.5 s, says "Still loading" with
+Reload after 10 s, and fades out when the app is ready.
+
+1. **L1, the icon builds** (recommended): the home-screen icon's blue cube
+   builds face by face, with "Isopix". The welcome card then hands over the same
+   cube to build, so load and hello read as one move.
+2. **L2, the paper draws in**: the grid spreads out from the middle.
+3. **L3, icon and bar**: the icon and a moving bar; the bar cannot show real
+   progress.
+
+**The owner:**
+
+## 12. Silly names for new drawings
+
+**Now:** the owner asked that "default drawing names should come from a silly
+name generator". A new drawing is "Untitled drawing". The plan: New and the very
+first drawing roll a silly name, a 🎲 beside the name in the Drawing sheet rolls
+another, typing your own still works, and old drawings keep theirs. About 40
+kid-safe words a side; never the same name twice in a row. Mocks and live rolls
+at the link in card 11. Formats:
+
+1. **Two words, same letter** (recommended): "Bouncy Badger", "Wobbly Waffle".
+   The matching letter is what makes it sound silly, and two words fit under
+   the Drawing button.
+2. **Two words, any letters**: "Jolly Goblin".
+3. **Three words**: "Zippy Quirky Dumpling".
+
+Also: my word lists to start, or would the owner and the kids write some?
+
+**The owner:**
