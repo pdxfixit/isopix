@@ -2,7 +2,7 @@
 // what ✕ does, and that Reload saves first (web/update.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { updateOffer, liveVersionOf, buildStamp, aboutVersion, versionURL, issueURL, REPO, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
+import { updateOffer, liveVersionOf, buildStamp, aboutVersion, versionURL, reportURL, REPO, SUPPORT, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
 
 const offer = (o) => updateOffer({ loaded: 'aaa1111', live: 'bbb2222', busy: false, dismissed: null, ...o });
 
@@ -164,19 +164,24 @@ test('About names the release and the commit in parentheses, never the release t
   assert.equal(aboutVersion('1.0.4', null), 'Version 1.0.4 (dev)');
 });
 
-test('the version links to its commit, and a problem report opens a filled-in GitHub issue', () => {
+test('the version links to its commit, and a problem report opens a filled-in email to support', () => {
   const json = { version: 'v1.2.24', commit: 'e7bdc86f00' };
   assert.equal(REPO, 'https://github.com/pdxfixit/isopix');
+  assert.equal(SUPPORT, 'support@isopix.app');
   assert.equal(versionURL(json), `${REPO}/commit/e7bdc86`);
   assert.equal(versionURL(null), REPO, 'a dev copy links to the repo');
   assert.equal(versionURL({ version: 'v1', commit: '<b>' }), REPO);
-  const url = new URL(issueURL({ app: '1.2.24', json, ua: 'Mozilla/5.0 (iPhone)', screen: '390×844', installed: true }));
-  assert.equal(url.origin + url.pathname, `${REPO}/issues/new`);
-  const body = url.searchParams.get('body');
-  assert.match(body, /\*\*What happened\?\*\*/);
-  assert.match(body, /Isopix \[1\.2\.24 · e7bdc86\]\(https:\/\/github\.com\/pdxfixit\/isopix\/commit\/e7bdc86\)/);
+  const url = reportURL({ app: '1.2.24', json, ua: 'Mozilla/5.0 (iPhone)', screen: '390×844', installed: true });
+  assert.ok(url.startsWith('mailto:support@isopix.app?subject='));
+  assert.doesNotMatch(url, /\+/, 'spaces are %20: a mail app shows + literally');
+  const params = new URLSearchParams(url.slice(url.indexOf('?') + 1));
+  assert.equal(params.get('subject'), 'Isopix 1.2.24: ');
+  const body = params.get('body');
+  assert.match(body, /^What happened\?/);
+  assert.match(body, /Isopix 1\.2\.24 · e7bdc86 \(https:\/\/github\.com\/pdxfixit\/isopix\/commit\/e7bdc86\)/);
   assert.match(body, /Browser: Mozilla\/5\.0 \(iPhone\)/);
   assert.match(body, /Screen: 390×844/);
   assert.match(body, /Installed: yes/);
-  assert.match(new URL(issueURL({ app: '1.2.24', json: null })).searchParams.get('body'), /Isopix 1\.2\.24 · dev/, 'a dev copy: no link');
+  const dev = new URLSearchParams(reportURL({ app: '1.2.24', json: null }).split('?')[1]).get('body');
+  assert.match(dev, /Isopix 1\.2\.24 · dev\n/, 'a dev copy: no link');
 });
