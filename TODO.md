@@ -16,4 +16,4 @@ Offered, not yet approved (ask the owner first):
 ## The owner does
 
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
-- Answer card 11 in [docs/questions.md](docs/questions.md) (the analytics beacon).
+- Ship usage counts: the flarepress changes, the `isopix` D1 database and its tables, then one deploy ([docs/state.md](docs/state.md) "In flight", Usage counts). Not before: the app would post to a page that does not exist.

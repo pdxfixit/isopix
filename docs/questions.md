@@ -25,13 +25,3 @@ ambiguity: one clear question beats a wrong build.
 2. Deletes the card (keep the numbers going up; do not reuse one).
 3. Adds any work he approved to [TODO.md](../TODO.md) "Agents do".
 4. Commits all three together.
-
-## 11. Cloudflare's analytics beacon
-
-**Now:** in a browser, isopix.app's pages arrive with Cloudflare Web Analytics' script (`static.cloudflareinsights.com/beacon.min.js`) injected by Cloudflare, and the app's Content Security Policy (`script-src 'self'`) blocks it. So it collects nothing and logs a console error on every load. Seen 2026-10-15 in headless Chrome. Options:
-
-1. **Turn off the automatic injection** for isopix.app in the Cloudflare dashboard (recommended): Isopix collects nothing about its users today, and a kids' app is better off that way.
-2. **Allow it in the CSP** (`web/_headers`): page-view counts in the dashboard, at the cost of a third-party script on every load.
-
-**The owner:**
-

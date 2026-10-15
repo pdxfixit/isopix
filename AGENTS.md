@@ -35,6 +35,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 | `web/engine/` | Pure logic, no DOM: lattice math, the cell model and undo log, brushes, fill, symmetry, density change and stamps, SVG, project files, view and level-follow. Each file opens with a comment saying what it owns. |
 | `web/app.js` | App state, controls, pointer/wheel/keyboard input. `window.isopix` is the state, for debugging and the tools. |
 | `web/render.js` | Canvas 2D drawing: cells, edges, gutters, overlays. |
+| `worker/` | The isopix.app Worker: `POST /api/visit` (usage counts, [docs/telemetry.md](docs/telemetry.md)) into D1 (`schema.sql`); every other path goes to the static files. |
 | `web/sw.js`, `web/version.js` | Service worker (network first) and its version stamp. |
 | `web/_headers` | Response headers for Cloudflare and `tools/serve.py` (CSP, no-cache for `sw.js`). |
 | `test/` | `node --test` suites for the engine and app tables, plus `test/docs.test.mjs`: every recipe, look view, link and repo path the docs name must exist. |
