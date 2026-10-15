@@ -5,9 +5,11 @@
 # would keep installed apps on the old release. version.json is the deploy's
 # label and is read with no-store. The manifest needs its proper content type
 # for installs. The CSP allows only what the page loads: its own files, inline
-# style attributes the swatches set, and blob:/data: images for trace mode.
+# style attributes the swatches set, and blob:/data: images for trace mode,
+# plus Cloudflare Web Analytics' beacon, which Cloudflare adds to the page
+# (the owner, 2026-10-15: "i'm ok with cloudflare stats").
 /*
-  Content-Security-Policy: default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
 

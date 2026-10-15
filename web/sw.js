@@ -11,7 +11,7 @@ const CACHE = `isopix-${self.ISOPIX_VERSION}`;
 const SHELL = [
   './', './index.html', './styles.css', './version.js', './manifest.webmanifest',
   './app.js', './render.js', './layer.js', './update.js', './storage.js', './glyphs.js',
-  './keys.js', './help.js', './palette.js', './sheets.js', './move.js',
+  './keys.js', './help.js', './palette.js', './sheets.js', './move.js', './telemetry.js',
   './engine/lattice.js', './engine/model.js', './engine/brushes.js', './engine/symmetry.js',
   './engine/fill.js', './engine/density.js', './engine/svg.js', './engine/project.js',
   './engine/view.js', './engine/color.js', './engine/paper.js', './engine/protect.js',
