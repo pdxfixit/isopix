@@ -78,20 +78,8 @@ case "$sub" in
     ok=0; for _ in 1 2 3; do just look --url "$URL/" >/dev/null 2>&1 && { ok=1; break; }; sleep 20; done
     [ "$ok" = 1 ] && echo "✅ just look: no errors on the live site" \
       || { echo "🛑 just look found problems on the live site (run: just look --url $URL/)" >&2; exit 1; } ;;
-  harvest)
-    # Every deploy starts by copying the usage counts and Cloudflare's stats to
-    # this Mac (flarepress tools/harvest.py; docs/telemetry.md). It only reads
-    # from Cloudflare, and never stops a deploy: without the token (a cloud
-    # session) it says so and the deploy goes on.
-    if [ "${GITHUB_ACTIONS:-}" = true ]; then
-      echo "⏭️ harvest skipped on GitHub (it fills the owner's archive on his Mac)"
-    elif [ -f "$FLAREPRESS/tools/harvest.py" ]; then
-      python3 "$FLAREPRESS/tools/harvest.py" "$SITE" --quiet "$@" || echo "⚠️ harvest failed (above); the deploy goes on: just harvest to retry"
-    else
-      echo "⚠️ no flarepress tools/harvest.py: usage counts not harvested"
-    fi ;;
   push) "$FLAREPRESS/tools/wrangler.sh" "$SITE" deploy "$@" ;;
   plan) "$FLAREPRESS/tools/wrangler.sh" "$SITE" deploy --dry-run "$@" ;;
   gate|stamp|live|rollback) site "$sub" "$@" ;;
-  *) echo "usage: deploy.sh check|harvest|gate|stamp|push|plan|verify [--want V] [--web DIR]|live|rollback [--to COMMIT] [--yes]" >&2; exit 2 ;;
+  *) echo "usage: deploy.sh check|gate|stamp|push|plan|verify [--want V] [--web DIR]|live|rollback [--to COMMIT] [--yes]" >&2; exit 2 ;;
 esac
