@@ -63,6 +63,7 @@ export const SECTIONS = [
       { name: 'New', from: '#top-new', says: 'On wider screens: starts a new drawing. It asks first if this one has anything in it.' },
       { name: 'Open', from: '#top-open', says: 'On wider screens: opens a project file.' },
       { name: 'Save', from: '#top-save', says: 'On wider screens: saves the project file, like Save file in the Drawing sheet. A dot means changes since the last save to a file.' },
+      { name: 'Help', from: '#help-top', says: 'This sheet: every button, gesture and key. It sits next to Settings when there is room, and always in Settings, next to ✕.' },
       { name: 'Settings', from: '#settings-open', says: 'Drawing, Grid, Selection, Learning and About. Each part folds; its chip shows what is set.' },
       { name: 'Welcome', from: '#welcome-again', text: '👋', says: 'Settings → About → Show the welcome again opens the card a first visit shows. Its cube is practice: tap the six triangles and each shades itself. It is not part of your drawing.' },
       { name: 'Undo', from: '#undo', says: 'Takes back the last change. There is no limit.' },

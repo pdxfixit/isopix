@@ -75,6 +75,14 @@ body.moving .tools .btn[aria-pressed="true"] { background: transparent; border-c
 .topleft > .btn { flex: none; }
 .topleft > #drawing-open { flex: 0 1 auto; }
 .topright { top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); }
+/* Help sits by Settings where the top bar has room; elsewhere it is only in
+   Settings' header, next to ✕ (owner: "unless screen real estate is at a
+   premium"). The top-left cluster leaves room for the wider right one. */
+.roomy-only { display: none; }
+@media (min-width: 480px) and (max-width: 699px), (min-width: 820px) {
+  .roomy-only { display: inline-flex; }
+  .topleft { max-width: calc(100vw - 16px - 170px - env(safe-area-inset-left) - env(safe-area-inset-right)); }
+}
 .cluster .btn { box-shadow: var(--shadow); }
 
 /* ---- Grid-level slider: vertical on the right edge (phone) ---- */
@@ -218,6 +226,7 @@ dialog#settings, dialog#help, dialog#drawing {
 dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { background: rgba(0, 0, 0, 0.35); }
 .menu { padding: 12px 16px 20px; user-select: text; -webkit-user-select: text; }
 .menu header { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--bg); }
+.menu header .head-btns { display: flex; gap: 6px; }
 .menu h2 { margin: 0; font-size: 22px; }
 .menu h3 { margin: 18px 0 6px; font-size: 17px; }
 .menu fieldset { border: 1px solid var(--border); border-radius: 12px; margin: 8px 0; padding: 6px 10px 10px; }
