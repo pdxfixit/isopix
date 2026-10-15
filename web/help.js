@@ -80,7 +80,7 @@ export const SECTIONS = [
       { name: 'Roll a name', from: '#name-roll', text: '🎲', says: 'Rolls another silly name for this drawing: two words with the same first letter.' },
       { name: 'New', from: '#file-new', says: 'Starts a new drawing. If this one has anything in it, you choose: Save file first, New anyway, or Cancel.' },
       { name: 'Open', from: '#file-open', says: 'Opens a drawing Isopix saved: its PNG, an .isopix file, or an older .isopix.json. It replaces this drawing, so it asks first if this one has changes not in a file.' },
-      { name: 'Save file', from: '#file-save', says: 'Saves the whole drawing with its undo history, stamps, paper and trace picture, as a PNG picture that opens in any photo app and reopens here, ready to keep drawing (with that off in Settings → Drawing, the button reads Save Isopix drawing and makes an .isopix file instead). On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
+      { name: 'Save file', from: '#file-save', says: 'Saves the whole drawing with its undo history, stamps, paper and trace picture, as a PNG picture that opens in any photo app and reopens here, ready to keep drawing (except on iPhone and iPad, Settings → Drawing can turn that off: the button then reads Save Isopix drawing and makes an .isopix file). On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
       { name: 'Save as new file', from: '#file-saveas', text: '⇩', says: 'Shows after Save has a file to write to: saves a copy as a new file instead.' },
       { name: 'Save picture', from: '#file-png', says: 'Saves a PNG picture of the drawing.' },
       { name: 'Save vector (SVG)', from: '#file-svg', text: 'SVG', says: 'Saves an SVG: a vector file that stays sharp at any size.' },
@@ -157,7 +157,9 @@ export function helpHTML(iconOf = () => '') {
     if (it.glyph) return GLYPHS[it.glyph];
     const borrowed = it.from ? iconOf(it.from) : '';
     if (borrowed) return borrowed;
-    return `<span class="help-text-icon">${esc(it.text || '')}</span>`;
+    // Long keys (Ctrl+Shift+S) wrap after each + to fit the 44 px box.
+    const text = esc(it.text || '');
+    return `<span class="help-text-icon">${it.key ? text.replace(/\+(?=.)/g, '+<wbr>') : text}</span>`;
   };
   const sections = [...SECTIONS, { title: 'Keys', intro: 'For a keyboard.', items: keyItems() }];
   return sections.map((s, i) => `<section aria-labelledby="help-h${i}"><h3 id="help-h${i}">${esc(s.title)}</h3>${s.intro ? `<p class="note">${esc(s.intro)}</p>` : ''}<ul class="help-list">${

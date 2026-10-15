@@ -67,7 +67,13 @@ export function saveMethod({ picker = false, shareFiles = false, ios = false } =
   return 'download';
 }
 
-const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+export const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// Whether Save may make an .isopix file here. Not on iPhone or iPad: iOS does
+// not know the type, so its file picker can grey the file out and the share
+// sheet can refuse it; there Save always makes the PNG with the drawing inside
+// (Owner: "devices where we can't save that stuff, we just shouldn't offer it").
+export const offersIsopixFile = ({ ios = false } = {}) => !ios;
 function canShareFiles(file) {
   try { return !!navigator.canShare && navigator.canShare({ files: [file] }); } catch { return false; }
 }
@@ -149,8 +155,15 @@ export async function openFile({ accept, description }) {
       if (aborted(err)) return null;
     }
   }
-  const file = await pickFile([...Object.values(accept).flat(), ...Object.keys(accept)].join(','));
+  const file = await pickFile(pickerAccept(accept, { ios: isIOS() }));
   return file ? { file } : null;
+}
+
+// The file input's filter. On iPhone and iPad none: iOS greys out a type it
+// does not know (.isopix), even one Isopix made on a computer; the app checks
+// what it was given instead.
+export function pickerAccept(accept, { ios = false } = {}) {
+  return ios ? '' : [...Object.values(accept).flat(), ...Object.keys(accept)].join(',');
 }
 
 // zlib (de)compression through the browser's streams, for the drawing inside a PNG.

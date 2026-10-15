@@ -192,7 +192,7 @@
           <div class="row"><button type="button" id="paper-flip" class="btn wide" aria-describedby="paper-note">Paper: light</button></div>
           <p class="note" id="paper-note">Each drawing keeps its own paper. The inks follow it; strokes keep their colors.</p>
           <label class="row"><input type="checkbox" id="opt-shading"> Auto-shade cube faces (top light, left mid, right dark)</label>
-          <label class="row"><input type="checkbox" id="opt-save-png"> Save as a picture, with the drawing inside (off: an .isopix file)</label>
+          <label class="row" id="opt-save-png-row"><input type="checkbox" id="opt-save-png"> Save as a picture, with the drawing inside (off: an .isopix file)</label>
           <fieldset>
             <legend>Symmetry</legend>
             <label><input type="radio" name="symmetry" value="off"> Off</label>
@@ -243,7 +243,7 @@
         <button type="button" id="help-open" class="btn wide">Help: every button, gesture and key (?)</button>
         <button type="button" id="welcome-again" class="btn wide">Show the welcome again</button>
         <p class="note">When a newer Isopix is live, a bar says "🆕 An update for Isopix is ready." Reload saves your drawing first; ✕ asks again later.</p>
-        <p class="version"><a href="https://github.com/pdxfixit/isopix" target="_blank" rel="noopener"><span id="version-label"></span>&nbsp;· GitHub</a></p>
+        <p class="version"><a id="version-label" target="_blank" rel="noopener" title="The code this copy was built from, on GitHub"></a></p>
       </section>
     </form>
   </dialog>
@@ -292,6 +292,7 @@
         </button>
       </header>
       <div id="help-body"></div>
+      <p class="help-report"><a id="report-link" target="_blank" rel="noopener">Something not working, or an idea? Tell us on GitHub</a><br><span class="note">It opens a new public issue with your Isopix version, browser and screen size filled in; you write the rest. You need a GitHub account.</span></p>
     </form>
   </dialog>
   <dialog id="welcome" aria-labelledby="welcome-title">

@@ -2,7 +2,7 @@
 // what ✕ does, and that Reload saves first (web/update.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { updateOffer, liveVersionOf, buildStamp, aboutVersion, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
+import { updateOffer, liveVersionOf, buildStamp, aboutVersion, versionURL, issueURL, REPO, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
 
 const offer = (o) => updateOffer({ loaded: 'aaa1111', live: 'bbb2222', busy: false, dismissed: null, ...o });
 
@@ -162,4 +162,21 @@ test('About names the release and the commit in parentheses, never the release t
   assert.equal(aboutVersion('1.0.4', { version: 'v1.0.4', commit: 'a95077f' }), 'Version 1.0.4 (a95077f)');
   assert.equal(aboutVersion('1.0.4', { version: 'v1.0.4' }), 'Version 1.0.4');
   assert.equal(aboutVersion('1.0.4', null), 'Version 1.0.4 (dev)');
+});
+
+test('the version links to its commit, and a problem report opens a filled-in GitHub issue', () => {
+  const json = { version: 'v1.2.24', commit: 'e7bdc86f00' };
+  assert.equal(REPO, 'https://github.com/pdxfixit/isopix');
+  assert.equal(versionURL(json), `${REPO}/commit/e7bdc86`);
+  assert.equal(versionURL(null), REPO, 'a dev copy links to the repo');
+  assert.equal(versionURL({ version: 'v1', commit: '<b>' }), REPO);
+  const url = new URL(issueURL({ app: '1.2.24', json, ua: 'Mozilla/5.0 (iPhone)', screen: '390×844', installed: true }));
+  assert.equal(url.origin + url.pathname, `${REPO}/issues/new`);
+  const body = url.searchParams.get('body');
+  assert.match(body, /\*\*What happened\?\*\*/);
+  assert.match(body, /Isopix \[1\.2\.24 · e7bdc86\]\(https:\/\/github\.com\/pdxfixit\/isopix\/commit\/e7bdc86\)/);
+  assert.match(body, /Browser: Mozilla\/5\.0 \(iPhone\)/);
+  assert.match(body, /Screen: 390×844/);
+  assert.match(body, /Installed: yes/);
+  assert.match(new URL(issueURL({ app: '1.2.24', json: null })).searchParams.get('body'), /Isopix 1\.2\.24 · dev/, 'a dev copy: no link');
 });
