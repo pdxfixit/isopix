@@ -39,10 +39,8 @@ drawing behind. Instead, each old address carries it over (`web/move.js`):
 **GitHub deploys, with this repo's own Cloudflare token**
 (`.github/workflows/deploy.yml`, 2026-10-15). It runs the same
 `just --yes deploy` as the owner's Mac. No agent and no cloud session holds a
-token. For now the workflow starts by hand (Actions → deploy → Run workflow):
-`main` holds the usage counts, which must not go live before their Worker and
-D1 database are bound ([state.md](state.md)); then its push trigger goes on, for
-commits that change `web/`, `worker/` or `site/`.
+token. It deploys every push to `main` that changes `web/`, `worker/` or
+`site/`, and Actions → deploy → Run workflow runs it by hand.
 
 The deploy code is **flarepress**, a public repo
 (`github.com/pdxfixit/flarepress`; the workflow checks out its rolling `v1` tag, the Mac uses
@@ -89,9 +87,8 @@ wrangler's own login (he runs `npx wrangler login` when it expires).
 
 ### When to deploy
 
-Every commit to `main` that changes anything under `web/` (and, once the
-Worker is bound, `worker/` or `site/`) is deployed: today by the owner running
-the workflow, then by its push trigger. A commit that touches none of them
+Every commit to `main` that changes anything under `web/`, `worker/` or
+`site/` is deployed by GitHub on the push. A commit that touches none of them
 (docs, tests, tools, workflows) is not deployed: the live files would be
 byte-for-byte the same, and a deploy would only change `version.json`, which
 pops the update notice on every open copy for nothing. The next real release
