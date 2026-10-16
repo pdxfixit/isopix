@@ -1,8 +1,7 @@
--- Isopix's D1 database, `isopix` (binding DB in site/wrangler.toml): no tables
--- are used any more. The per-visit beacon that wrote the `visits` table was
+-- Isopix's D1 database, `isopix` (no longer bound to the Worker: the binding
+-- left site/wrangler.toml on 2026-10-16): no tables are used any more. The per-visit beacon that wrote the `visits` table was
 -- retired on 2026-10-16; usage now goes to R2 as events (worker/index.js,
--- docs/telemetry.md). The database stays only until the telemetry runner has
--- taken its last copy of `visits` and the owner drops it:
+-- docs/telemetry.md). The database stays only until the owner drops the table:
 --   DROP TABLE visits;   -- takes its two indexes with it
 -- (an old table's empty `region` column goes with it). Nothing here creates
 -- anything, so applying this file changes nothing.

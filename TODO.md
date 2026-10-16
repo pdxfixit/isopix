@@ -23,4 +23,5 @@ Offered, not yet approved (ask the owner first):
 ## The owner does
 
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
-- After the visit-beacon retirement ships (deployed by GitHub): optionally `DROP TABLE visits` in D1 `isopix` (the empty `region` column goes with it). Then, once the telemetry runner has dropped its `[jobs.isopix.ids] visits` entry, ask an agent to remove `table=visits` from [site/harvest.conf](site/harvest.conf) and the `[[d1_databases]]` binding from [site/wrangler.toml](site/wrangler.toml) (and the `D1_DATABASE_ID` secret and workflow lines).
+- Optional: `DROP TABLE visits` in D1 `isopix` (the empty `region` column goes with it); an agent does not run it. Then delete the repo secret `D1_DATABASE_ID`: `gh secret delete D1_DATABASE_ID --repo pdxfixit/isopix`. In pdxfixit/telemetry, the `[jobs.isopix.ids] visits` entry stays until 2027-10-16, then goes (it blanks the kept copies' device codes); until then its `isopix` job's `TELEMETRY_ISOPIX_D1_ID` secret is unused.
+- Decide how the privacy policy and the events agree on the country: the policy (pdxfixit/privacy `src/isopix/policy.md`) says each record carries "the country the visit came from", but events carry none (docs/state.md).

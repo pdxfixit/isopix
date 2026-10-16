@@ -5,9 +5,9 @@ next. The rules are in [decisions.md](decisions.md) (Telemetry); this page says
 how it works and what each field means.
 
 The per-visit beacon (`POST /api/visit` into the D1 table `visits`) was retired
-on 2026-10-16, once the events below replaced it. Its rows in D1 and in the
-telemetry runner's archive stay until the owner drops them; nothing writes new
-ones.
+on 2026-10-16, once the events below replaced it. Its rows in the D1 table and in the
+telemetry runner's archive stay (the runner blanks their device codes after a
+year); nothing writes new ones.
 
 ## The path
 
@@ -22,8 +22,7 @@ ones.
    harvester: its `isopix_events` job reads and empties the bucket into an
    archive kept for good, except the device code, which the runner removes a
    year on. Cloudflare's daily stats come from `site/harvest.conf` (`analytics=1`;
-   its `table=visits` line is for the retired beacon and goes once the runner
-   has dropped its `visits` entry). Deploys do not harvest. The owner reads the
+   the retired beacon's `table=visits` line is gone). Deploys do not harvest. The owner reads the
    archive on his Mac with the runner's `telemetry.py pull`.
 4. **Cloudflare Web Analytics** counts page views on its own (no cookies). The
    CSP in `web/_headers` allows its beacon.
