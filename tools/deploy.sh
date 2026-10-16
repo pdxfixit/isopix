@@ -29,7 +29,7 @@ ci_run() {  # "id status conclusion" of test.yml's newest run for $1, or nothing
     gh run list --workflow test.yml --commit "$1" --limit 1 --json databaseId,status,conclusion \
       -q '.[0] | "\(.databaseId) \(.status) \(.conclusion)"' 2>/dev/null || true
   else
-    curl -fsS -m 20 "https://api.github.com/repos/pdxfixit/isopix/actions/workflows/test.yml/runs?head_sha=$1&per_page=1" 2>/dev/null \
+    curl -fsS -m 20 ${GITHUB_TOKEN:+-H "Authorization: Bearer $GITHUB_TOKEN"} "https://api.github.com/repos/pdxfixit/isopix/actions/workflows/test.yml/runs?head_sha=$1&per_page=1" 2>/dev/null \
       | python3 -c 'import json,sys; r=json.load(sys.stdin)["workflow_runs"]; print(r and "%s %s %s" % (r[0]["id"], r[0]["status"], r[0]["conclusion"]) or "")' 2>/dev/null || true
   fi
 }
@@ -43,14 +43,21 @@ ci_green() {
   [ -n "$st" ] || { echo "🛑 no CI run for ${sha:0:7} on GitHub (pushed? gh run list)" >&2; return 1; }
   id=${st%% *}
   case "$st" in *" completed "*) ;; *) echo "⏳ CI is running for ${sha:0:7} (run $id); waiting for it" ;; esac
+  # A read that fails (rate limit, network) keeps the last status it had: an
+  # empty answer is not "still running" (it once hid a green run for 20 minutes).
+  local next misses=0
   for _ in $(seq 1 120); do   # up to 20 minutes, CI's own limit
     case "$st" in *" completed "*) break ;; esac
-    sleep 10; st=$(ci_run "$sha")
+    sleep 10; next=$(ci_run "$sha")
+    if [ -n "$next" ]; then st=$next; misses=0; else misses=$((misses + 1)); fi
+    [ "$misses" = 6 ] && echo "⚠️ GitHub has not answered for a minute (rate limit?); still waiting" >&2
   done
   case "$st" in
     *" completed success") echo "✅ CI green for ${sha:0:7} (tests, export-check, move-check, just look)" ;;
     *" completed "*) echo "🛑 CI failed for ${sha:0:7}: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; return 1 ;;
-    *) echo "🛑 CI still not done for ${sha:0:7} after 20 minutes: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; return 1 ;;
+    *) if [ "$misses" -gt 0 ]; then echo "🛑 could not read CI for ${sha:0:7} for $((misses / 6)) of the last 20 minutes (GitHub rate limit?); it may be green: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2
+       else echo "🛑 CI still not done for ${sha:0:7} after 20 minutes: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; fi
+       return 1 ;;
   esac
 }
 
