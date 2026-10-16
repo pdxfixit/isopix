@@ -95,7 +95,7 @@ first when something drawn is not in a file. Open
 checks the file's shape and refuses one that breaks the grid's rules. The
 drawing never leaves the device.
 
-**Usage counts** (on by default; Settings → Share usage data, at the bottom): which
+**Usage counts** (on by default; Settings → Share play data, at the bottom): which
 buttons, tools, keys and settings a visit used, how long it lasted and the
 kind of device, sent to the site's own Worker with one random device code that
 never changes. Never the drawing, names, anything typed or the IP address.

@@ -9,7 +9,7 @@ how it works and what each field means.
 1. **The app** (`web/telemetry.js`) counts in memory during a visit (one page
    load). When the page is hidden or closed, it sends the whole visit so far to
    `POST /api/visit` with a beacon. It sends only at https://isopix.app, only
-   while Settings → **Share usage data** is on (the default), and never
+   while Settings → **Share play data** is on (the default), and never
    from automated browsers (`navigator.webdriver`).
 2. **The Worker** (`worker/index.js`, the `isopix-app` Worker) checks it with
    the app's own `cleanVisit`, adds the country Cloudflare read from the

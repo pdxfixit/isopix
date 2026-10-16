@@ -7,7 +7,7 @@
 // flarepress (events-client.js), which adds app, platform, form, version,
 // player, session, seq, at, tz and screen, queues it in memory and
 // localStorage, and sends batches to POST /api/events (worker/index.js, R2).
-// With Settings → "Share usage data" off, nothing is recorded and
+// With Settings → "Share play data" off, nothing is recorded and
 // the queue is emptied.
 //
 // It sends only at https://isopix.app and never from automated browsers

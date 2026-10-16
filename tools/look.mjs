@@ -51,11 +51,11 @@ const VIEWS = {
     const want = { 'tool:eraser': 1, 'tool:pencil': 1, 'key:gutters': 2, 'set:gray-on': 1, 'set:gray-off': 1 };
     for (const [k, n] of Object.entries(want)) if (c[k] !== n) throw new Error(k + ' counted ' + c[k] + ', not ' + n + ': ' + JSON.stringify(c));
     for (const k of ['key:tool-eraser', 'key:tool-line', 'key:tool-fill']) if (c[k]) throw new Error('typing a name counted ' + k);
-    if (!document.querySelector('#opt-usage').checked) throw new Error('Share usage data should start on');
+    if (!document.querySelector('#opt-usage').checked) throw new Error('Share play data should start on');
     document.querySelector('#privacy-link').scrollIntoView();` },
   // Usage events (web/events.js): a tool tap is a control.use with its toolbar and the
   // layout showing at this width, the brush popover a dialog, Settings a screen, a
-  // setting its from and to; turning Share usage data off empties the queue.
+  // setting its from and to; turning Share play data off empties the queue.
   events: { js: `const ev = window.isopix.events; ev.clear();
     const recs = () => ev.queued().records.map((l) => JSON.parse(l));
     ${q('[data-tool="eraser"]')} ${q('#options')} document.querySelector('#popover [data-pick="hexagon"]').click();

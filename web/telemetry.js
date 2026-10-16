@@ -2,7 +2,7 @@
 // buttons, tools, keys and settings get used in a visit, how long it lasts and
 // what kind of device it is, sent once the page is hidden to the site's own
 // Worker (POST /api/visit, worker/index.js), which adds the country and
-// keeps it in D1 for 90 days. Settings → "Share usage data"
+// keeps it in D1 for 90 days. Settings → "Share play data"
 // turns it off; it is on by default.
 //
 // Never sent: the drawing, any name, anything typed, the IP address (the
