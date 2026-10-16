@@ -78,8 +78,9 @@ items move to [TODO.md](../TODO.md) "Agents do". Sizes: **S** under an hour,
 - **Screen readers:** one run with VoiceOver and TalkBack end to end.
 - **Old browsers:** a plain message when `<dialog>` or ES modules are missing,
   instead of a blank page. S.
-- **A privacy line** in About: no accounts, no tracking, drawings never leave
-  the device. S.
+- **A privacy policy link** in About, to https://privacy.pdxfixit.com/isopix/
+  (the shared policy for every app): no accounts, no ads, drawings never leave
+  the device, and usage counts as the note under the switch says. S.
 - **Errors:** a friendly "Something went wrong" with a Copy details button and
   no telemetry. S.
 - **Words in one table**, ready for other languages later. M.
