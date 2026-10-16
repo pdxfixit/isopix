@@ -217,7 +217,8 @@ body.moving .tools .btn[aria-pressed="true"] { background: transparent; border-c
 .toast.show { opacity: 1; }
 /* Sits where the selection bar does (hidden during a replay), so it clears the palette and tools. */
 .replay-bar { position: fixed; z-index: 6; left: 0; right: 0; margin: 0 auto; width: max-content; bottom: calc(132px + env(safe-area-inset-bottom));
-  display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 6px 6px 14px; box-shadow: var(--shadow); }
+  display: flex; gap: 10px; align-items: center; background: var(--ink); color: var(--bg); font-weight: 700; border-radius: 14px; padding: 6px 6px 6px 14px; box-shadow: var(--shadow); }
+.replay-bar .btn { background: var(--accent); color: var(--accent-ink); border: 0; }
 
 /* ---- Menu ---- */
 dialog#settings, dialog#help, dialog#drawing {
