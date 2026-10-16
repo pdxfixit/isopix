@@ -21,7 +21,7 @@ const inBounds = (c) => { const w = L.centroid(c); return w.x > -0.5 && w.x < BO
 const sorted = (m) => [...m].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 // Hidden children count only while live: their cell still holds the value
 // they were hidden under (or is still empty). Stale ones are never shown, and
-// project.js leaves them out of a file.
+// the drawing can be equal with or without them.
 const live = (d) => [...d.hidden].filter(([k, h]) => (h.empty ? !d.cells.has(k) : d.cells.get(k)?.id === h.id));
 const snap = (d) => JSON.stringify({ cells: sorted(d.cells), edges: sorted(d.edges), hidden: sorted(live(d)), hiddenEdges: sorted(d.hiddenEdges), paper: d.paper });
 
@@ -104,11 +104,10 @@ for (let seed = 1; seed <= SEEDS; seed++) {
     assert.equal(opened.checkInvariant(), null);
     undoRedo(d, states, 'the drawing');
   });
-  // A file leaves out hidden children their cell no longer holds (project.js
-  // save), so undoing the paint that covered them after a reopen (or a reload:
-  // the autosave is a file too) cannot bring them back for Finer. Open question
-  // for the owner, 2026-10-16; saving every hidden entry fixes it (+1.7% size).
-  test(`seed ${seed}: undo and redo after save then open match the drawing`, { todo: 'hidden children a paint covered are not saved' }, () => {
+  // A file keeps hidden children their cell no longer holds (project.js save),
+  // so undoing the Finer or paint that replaced it after a reopen (or a reload:
+  // the autosave is a file too) makes them live again (owner, 2026-10-16: "(a)").
+  test(`seed ${seed}: undo and redo after save then open match the drawing`, () => {
     const { opened, states } = run(seed);
     undoRedo(opened, states, 'the opened file');
   });

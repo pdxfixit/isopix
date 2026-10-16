@@ -7,6 +7,7 @@ import { Drawing } from '../web/engine/model.js';
 import * as D from '../web/engine/density.js';
 import * as B from '../web/engine/brushes.js';
 import { hexToOklab } from '../web/engine/color.js';
+import * as P from '../web/engine/project.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-12;
 const snapshot = (d) => JSON.stringify([...d.cells].map(([k, v]) => [k, v.c, v.f || null]).sort());
@@ -53,6 +54,23 @@ test('hidden children are dropped once the cell is painted on', () => {
   d.paint(cell, { c: '#123456' });
   D.changeDensity(d, r, 2);
   assert.ok(kids.every((k) => d.get(k).c === '#123456'));
+});
+
+test('after a reload, Undo of a Finer then Finer again still brings the fine detail back', () => {
+  // Card 13 (owner, 2026-10-16: "(a)"): Finer leaves the coarse cell's hidden
+  // children stale, and Undo makes them live again, so a file must keep them.
+  const d = new Drawing();
+  const cell = L.mk(1, 0, 0, 1);
+  const r = D.makeRegion(1, [cell]);
+  d.begin(); L.children(cell).forEach((k, i) => d.paint(k, { c: ['#ff0000', '#00ff00', '#0000ff', '#ff0000'][i] })); d.commit();
+  const fine = snapshot(d);
+  d.begin(); D.changeDensity(d, r, 1); d.commit(); // Coarser: one red cell, the detail hidden under it
+  d.begin(); D.changeDensity(d, r, 2); d.commit(); // Finer: the detail is back
+  const reloaded = P.load(JSON.parse(JSON.stringify(P.save(d))));
+  reloaded.undo(); // the Finer: one red cell again
+  assert.equal(reloaded.cells.size, 1);
+  reloaded.begin(); D.changeDensity(reloaded, r, 2); reloaded.commit();
+  assert.equal(snapshot(reloaded), fine);
 });
 
 test('crisp: majority wins; a tie goes to the most recently painted child', () => {
