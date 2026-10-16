@@ -28,7 +28,8 @@ import { initTour } from './tour.js';
 import { deviceOf, doneLessons } from './lessons.js';
 import { sillyName } from './sillynames.js';
 import * as PNGP from './engine/pngproject.js';
-import { initUsage, countName } from './telemetry.js';
+import { initUsage, countName, cellsBucket } from './telemetry.js';
+import { initEvents } from './events.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -103,7 +104,16 @@ window.isopix = app; // for debugging and the look tool
 // ---------- small helpers ----------
 // Picks no click names (a brush, a line style, a selection shape) are counted here.
 const PICKS = { brush: 'brush', lineStyle: 'line', marquee: 'marquee' };
-const set = (k, v) => { if (PICKS[k] && app.settings[k] !== v) app.usage?.count(countName(PICKS[k], v)); app.settings[k] = v; store.saveSettings(app.settings); };
+// Every setting passes here, so setting.change (events.js) has the old value
+// too. A lesson's own picks are not the person's: its settings come back after.
+const set = (k, v) => {
+  const from = app.settings[k];
+  if (PICKS[k] && from !== v) app.usage?.count(countName(PICKS[k], v));
+  app.settings[k] = v;
+  store.saveSettings(app.settings);
+  if (k === 'usage' && !v) app.events?.clear(); // off: nothing recorded, the queue emptied
+  else if (!app.practice) app.events?.setting(k, from, v);
+};
 let toastTimer;
 function toast(msg) {
   const t = $('#toast');
@@ -204,6 +214,7 @@ function buildNotches() {
   for (let i = 0; i < 8; i++) {
     const b = document.createElement('button');
     b.className = 'notch';
+    b.id = `notch-${i}`; // so a notch counts as a control (events.js)
     b.setAttribute('role', 'radio');
     b.dataset.n = i;
     b.innerHTML = notchGlyph(i);
@@ -236,10 +247,16 @@ function buildNotches() {
 }
 // On phones the slider is a slim rail that opens while touched (styles.css).
 let railTimer;
+let railAt = 0; // when the rail opened, while it is open as a rail (dialog.open, events.js)
 export function openRail(ms = 0) {
   clearTimeout(railTimer);
   nudgeRail();
-  $('#levels').classList.add('open');
+  const levels = $('#levels');
+  if (!levels.classList.contains('open') && getComputedStyle($('#notches')).flexDirection === 'column') {
+    railAt = Date.now();
+    app.events?.track('dialog.open', { dialog: 'levels' });
+  }
+  levels.classList.add('open');
   if (ms) closeRail(ms);
 }
 // The open column of notches keeps the chosen one under the finger, shifted
@@ -259,7 +276,11 @@ function nudgeRail() {
 function closeRail(ms) {
   clearTimeout(railTimer);
   const keyboardIn = () => { const a = document.activeElement; return !!a && $('#notches').contains(a) && a.matches(':focus-visible'); };
-  railTimer = setTimeout(() => { if (!keyboardIn()) $('#levels').classList.remove('open'); }, ms);
+  railTimer = setTimeout(() => {
+    if (keyboardIn()) return;
+    $('#levels').classList.remove('open');
+    if (railAt) { app.events?.track('dialog.close', { dialog: 'levels', answer: 'closed', ms: Date.now() - railAt }); railAt = 0; }
+  }, ms);
 }
 function chooseNotch(n) {
   if (app.settings.locked) set('lockedLevel', n); else set('notch', n);
@@ -419,9 +440,10 @@ function openPopover() {
     const b = document.createElement('button');
     b.className = 'btn';
     b.setAttribute('aria-pressed', String(it.on));
+    b.dataset.pick = it.k; // its name as a control (events.js)
     b.innerHTML = `${it.g}<span>${it.t}</span>`;
     if (it.off) { b.disabled = true; b.title = 'Select something, then Save as stamp'; }
-    b.addEventListener('click', () => { it.pick(); closePopover(); updateOptionsButton(); });
+    b.addEventListener('click', () => { it.pick(); closePopover('picked'); updateOptionsButton(); });
     pop.append(b);
   }
   if (s.tool !== 'line' && s.tool !== 'select' && app.stamps.length > 1 && s.brush === 'stamp') {
@@ -430,16 +452,20 @@ function openPopover() {
       const b = document.createElement('button');
       b.className = 'btn';
       b.setAttribute('aria-pressed', String(i === app.stampIndex));
+      b.dataset.pick = 'stamp-pick';
       b.innerHTML = `${GLYPHS.stamp}<span>${st.name}</span>`;
-      b.addEventListener('click', () => { app.stampIndex = i; closePopover(); });
+      b.addEventListener('click', () => { app.stampIndex = i; closePopover('picked'); });
       pop.append(b);
     });
   }
+  if (pop.hidden) { popoverOpen = { dialog: s.tool === 'line' ? 'line' : s.tool === 'select' ? 'marquee' : 'brush', at: Date.now() }; app.events?.track('dialog.open', { dialog: popoverOpen.dialog }); }
   pop.hidden = false;
   $('#options').setAttribute('aria-expanded', 'true');
   pop.querySelector('button')?.focus();
 }
-function closePopover() {
+let popoverOpen = null; // {dialog, at} while the popover shows
+function closePopover(answer = 'dismissed') {
+  if (popoverOpen) { app.events?.track('dialog.close', { dialog: popoverOpen.dialog, answer, ms: Date.now() - popoverOpen.at }); popoverOpen = null; }
   $('#popover').hidden = true;
   $('#options').setAttribute('aria-expanded', 'false');
 }
@@ -1127,6 +1153,26 @@ function openSheet(sel) {
 for (const d of document.querySelectorAll('dialog')) {
   d.addEventListener('close', () => { if (opener && document.contains(opener) && !document.querySelector('dialog[open]')) opener.focus({ preventScroll: true }); });
 }
+// The sheets openSheet shows are screens (screen.view, events.js); any other
+// <dialog> (the welcome card) is a dialog. Watching `open` catches every way
+// one opens or closes (openSheet, showModal, Esc, close()).
+const SCREENS = new Set(['settings', 'drawing', 'help']);
+function watchDialogs() {
+  const openedAt = new Map();
+  for (const d of document.querySelectorAll('dialog')) {
+    new MutationObserver(() => {
+      if (d.open && !openedAt.has(d.id)) {
+        openedAt.set(d.id, Date.now());
+        if (SCREENS.has(d.id)) app.events?.view(d.id); else app.events?.track('dialog.open', { dialog: d.id });
+      } else if (!d.open && openedAt.has(d.id)) {
+        const ms = Date.now() - openedAt.get(d.id);
+        openedAt.delete(d.id);
+        if (!SCREENS.has(d.id)) app.events?.track('dialog.close', { dialog: d.id, answer: d.returnValue || 'closed', ms });
+        if (!document.querySelector('dialog[open]')) app.events?.view('draw');
+      }
+    }).observe(d, { attributes: true, attributeFilter: ['open'] });
+  }
+}
 
 // Settings: folding sections with a chip naming the current value; which are
 // open is this device's (localStorage, like the other settings).
@@ -1241,7 +1287,9 @@ function fileSaved(r, via) {
 }
 // What a save says: where it went, or that nothing was saved.
 function sayResult(r, what) {
-  app.usage?.count(countName('saved', `${what}-${r.cancelled ? 'cancelled' : r.failed ? 'failed' : r.how || (r.handle ? 'file' : 'download')}`));
+  const how = r.cancelled ? 'cancelled' : r.failed ? 'failed' : r.how || (r.handle ? 'file' : 'download');
+  app.usage?.count(countName('saved', `${what}-${how}`));
+  app.events?.track('isopix.save', { what: what.replace(/ /g, '-'), how });
   if (r.cancelled) toast('Not saved');
   else if (r.failed) toast(`Could not save the ${what}: ${r.failed}`);
   else if (r.handle) toast(`Saved to ${r.name}`);
@@ -1259,6 +1307,7 @@ async function saveFile({ asNew = false } = {}) {
   sayResult(r, 'drawing');
   if (r.cancelled || r.failed) return false;
   fileSaved(r, 'save');
+  if (!app.practice && drawingRun) app.events?.track('content.finish', { kind: 'drawing', ms: Date.now() - drawingRun.at });
   emit('saved', { what: 'drawing' });
   return true;
 }
@@ -1292,13 +1341,29 @@ async function saveVector() {
   sayResult(await store.saveBlob({ name: `${fileBase(app.drawingName)}.svg`, type: 'image/svg+xml', accept: { description: 'SVG vector picture', ext: ['.svg'] }, make: () => svgBlob() }), 'sharp picture');
 }
 function startNew() {
+  leaveDrawing('replaced');
   app.drawing = newDrawing(); app.selection = null; app.lastDensity = null; app.trace = null;
   setName(sillyName(Math.random, app.drawingName));
   app.file = { name: null, at: null, via: null, dirty: false, handle: null };
   rememberFile();
   buildPalette(); syncMenu(); afterChange({ changed: false }); updateFileUI();
   if ($('#drawing').open) $('#drawing').close();
+  startDrawing(false);
   toast('New drawing');
+}
+// content.start, finish and abandon for a drawing (events.js): it starts at
+// New, Open or the page load, finishes at each Save, and is abandoned when
+// something replaces it, or the page closes, with work not in a file.
+let drawingRun = null; // {at}
+function startDrawing(resumed) {
+  if (app.practice) return;
+  drawingRun = { at: Date.now() };
+  app.events?.track('content.start', { kind: 'drawing', resumed });
+}
+function leaveDrawing(why) {
+  if (app.practice || !drawingRun) return;
+  if (unsavedToFile(app.file, hasContent())) app.events?.track('content.abandon', { kind: 'drawing', ms: Date.now() - drawingRun.at, why });
+  drawingRun = null;
 }
 // New and Open replace this drawing, so they ask first when there is
 // something not yet in a file (sheets.js newChoices). `pending` is which.
@@ -1464,8 +1529,11 @@ async function openProject() {
   const f = r.file;
   if (f.size > 50 * 1024 * 1024) return toast('That file is too big for a project');
   try {
-    loadProjectObject(await projectFromFile(f));
+    const obj = await projectFromFile(f);
+    leaveDrawing('replaced');
+    loadProjectObject(obj);
     fileSaved({ name: f.name, handle: r.handle }, 'open');
+    startDrawing(true);
     if ($('#settings').open) $('#settings').close(); if ($('#drawing').open) $('#drawing').close();
     toast(`Opened ${f.name}`);
   } catch (err) { toast(`Could not open it: ${err.message}`); }
@@ -1510,9 +1578,11 @@ function openMoved() {
   const m = app.pendingMove;
   if (!m) return;
   try {
+    leaveDrawing('replaced');
     loadProjectObject(m);
     app.file = { name: null, at: null, via: null, dirty: false, handle: null };
     rememberFile(); updateFileUI();
+    startDrawing(true);
     toast('Opened the drawing from the old address');
   } catch (err) { toast(`It would not open: ${err.message}`); }
   app.pendingMove = null;
@@ -1583,6 +1653,7 @@ function beginPractice() {
 function endPractice(keep) {
   const was = app.practice;
   if (!was) return;
+  leaveLesson('stopped');
   const practiceName = app.drawingName;
   if (!keep) {
     loadProjectObject(was.obj);
@@ -1630,7 +1701,24 @@ function lessonSetup(su) {
 function startLesson(id) {
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
   app.usage?.count(countName('lesson', id));
+  leaveLesson('switched');
   app.tour.start(id);
+  if (!app.tour.active()) return;
+  lessonRun = { id, at: Date.now(), done: false };
+  app.events?.track('content.start', { kind: 'lesson', item: id, resumed: false });
+}
+// A lesson finishes at its last step (markDone); Stop lesson, another lesson
+// or closing the page before then abandons it.
+let lessonRun = null; // {id, at, done}
+function lessonDone(id) {
+  if (lessonRun && lessonRun.id === id && !lessonRun.done) {
+    lessonRun.done = true;
+    app.events?.track('content.finish', { kind: 'lesson', item: id, ms: Date.now() - lessonRun.at });
+  }
+}
+function leaveLesson(why) {
+  if (lessonRun && !lessonRun.done) app.events?.track('content.abandon', { kind: 'lesson', item: lessonRun.id, ms: Date.now() - lessonRun.at, why });
+  if (why !== 'left') lessonRun = null;
 }
 
 // ---------- autosave ----------
@@ -1796,10 +1884,17 @@ function wire() {
 }
 
 async function boot() {
-  app.usage = initUsage({ enabled: () => app.settings.usage, snapshot: () => ({ cells: app.drawing.cells.size }), keyAction: (e) => keyFor(e)?.action ?? null });
+  app.events = initEvents({ enabled: () => app.settings.usage });
+  app.events.cells(() => cellsBucket(app.drawing.cells.size));
+  app.events.onLeave(() => { leaveDrawing('left'); leaveLesson('left'); });
+  app.usage = initUsage({
+    enabled: () => app.settings.usage, snapshot: () => ({ cells: app.drawing.cells.size }), keyAction: (e) => keyFor(e)?.action ?? null,
+    onControl: app.events.control, onShortcut: app.events.shortcut, onStroke: app.events.stroke,
+  });
+  watchDialogs();
   // A drawing carried here from an old address (move.js).
   const arriving = await readMoveHash();
-  if (arriving) app.usage.count('move:arrived');
+  if (arriving) { app.usage.count('move:arrived'); app.events.track('isopix.move_arrived'); }
   if (arriving) takeMovedSettings(arriving);
   readTheme();
   buildNotches();
@@ -1821,11 +1916,12 @@ async function boot() {
   if (arriving) await takeMovedDrawing(arriving);
   afterChange({ changed: false });
   updateFileUI();
+  startDrawing(hasContent());
   app.tour = initTour({
     device: () => deviceOf({ pointerType: app.lastPointer, coarse: matchMedia('(pointer: coarse)').matches }),
     begin: beginPractice, end: endPractice, needsAsk: practiceNeedsAsk, saveMineFirst, setup: lessonSetup,
     practiceHasContent: hasContent,
-    markDone: (id) => { const done = readDone(); done.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...done])); } catch { /* storage blocked */ } },
+    markDone: (id) => { lessonDone(id); const done = readDone(); done.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...done])); } catch { /* storage blocked */ } },
   });
   // The welcome card, once, on a first visit. Anyone who already has a drawing
   // here (or is bringing one) is not new, so it never opens for them later.
@@ -1834,6 +1930,7 @@ async function boot() {
     onClose: (how) => { if (!app.settings.welcomed) set('welcomed', true); if (how === 'tour') startLesson('basics'); },
   });
   // The controls work now: the loading screen finishes its turn and fades, then the welcome.
+  app.events.opened();
   const loaded = self.ISOPIX_LOADING ? self.ISOPIX_LOADING.done() : Promise.resolve();
   if (welcomeDue({ welcomed: app.settings.welcomed, hasContent: hasContent(), arriving: !!arriving })) loaded.then(() => app.welcome.open());
   else if (!app.settings.welcomed) set('welcomed', true);

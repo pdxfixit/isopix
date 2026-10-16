@@ -123,7 +123,9 @@ const write = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); 
 // `keyAction(e)` names a key press (keys.js), or null. Returns {count}, for
 // what no click shows (a brush picked, a save that worked, a drawing carried
 // over). Sent as text/plain: a beacon with that type never needs a preflight.
-export function initUsage({ enabled, snapshot = () => ({}), keyAction = () => null, host = HOST, now = Date.now } = {}) {
+// `onControl(el, event)`, `onShortcut(action)` and `onStroke(event)` pass the
+// same clicks, keys and strokes on to the usage events (events.js).
+export function initUsage({ enabled, snapshot = () => ({}), keyAction = () => null, host = HOST, now = Date.now, onControl = () => {}, onShortcut = () => {}, onStroke = () => {} } = {}) {
   const counts = {};
   const errors = [];
   let longtasks = 0, lastSent = '', lastWheel = 0;
@@ -133,7 +135,9 @@ export function initUsage({ enabled, snapshot = () => ({}), keyAction = () => nu
 
   document.addEventListener('click', (e) => {
     const el = e.target.closest?.('button, [role="slider"], a[id]');
-    if (el) count(clickName(el));
+    if (!el) return;
+    count(clickName(el));
+    onControl(el, e);
   }, { capture: true, passive: true });
   document.addEventListener('change', (e) => {
     const el = e.target;
@@ -146,10 +150,10 @@ export function initUsage({ enabled, snapshot = () => ({}), keyAction = () => nu
   document.addEventListener('keydown', (e) => {
     if (e.repeat || e.target.closest?.('input, select, textarea, [contenteditable]')) return;
     const a = keyAction(e);
-    if (a) count(countName('key', a.replace(/[:+]/g, '-')));
+    if (a) { count(countName('key', a.replace(/[:+]/g, '-'))); onShortcut(a); }
   }, { capture: true, passive: true });
   const stage = document.querySelector('#stage');
-  stage?.addEventListener('pointerdown', (e) => count(countName(e.isPrimary ? 'stroke' : 'touch', e.isPrimary ? e.pointerType || 'mouse' : 'second')), { passive: true });
+  stage?.addEventListener('pointerdown', (e) => { count(countName(e.isPrimary ? 'stroke' : 'touch', e.isPrimary ? e.pointerType || 'mouse' : 'second')); onStroke(e); }, { passive: true });
   stage?.addEventListener('wheel', () => { const t = now(); if (t - lastWheel > 500) { lastWheel = t; count('view:wheel'); } }, { passive: true });
   addEventListener('error', (e) => { if (errors.length < MAX_ERRORS) errors.push(errorAt(e.error?.name, e.filename, e.lineno)); });
   addEventListener('unhandledrejection', (e) => { if (errors.length < MAX_ERRORS) errors.push(errorAt(`Unhandled${e.reason?.name || ''}`, '', 0)); });
