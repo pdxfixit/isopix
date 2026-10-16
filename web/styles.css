@@ -215,7 +215,8 @@ body.moving .tools .btn[aria-pressed="true"] { background: transparent; border-c
   font-size: 15px; opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
 .toast.show { opacity: 1; }
-.replay-bar { position: fixed; z-index: 6; left: 50%; top: calc(64px + env(safe-area-inset-top)); transform: translateX(-50%);
+/* Sits where the selection bar does (hidden during a replay), so it clears the palette and tools. */
+.replay-bar { position: fixed; z-index: 6; left: 0; right: 0; margin: 0 auto; width: max-content; bottom: calc(132px + env(safe-area-inset-bottom));
   display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 6px 6px 14px; box-shadow: var(--shadow); }
 
 /* ---- Menu ---- */
@@ -389,7 +390,7 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
   .palette { margin: 0; flex: 0 1 auto; }
   .tools { margin: 0; width: auto; flex: 0 0 auto; }
   .tools .btn { flex: 0 0 52px; }
-  .selbar, .popover { bottom: calc(80px + env(safe-area-inset-bottom)); margin: 0 auto; max-width: calc(100vw - 16px); }
+  .selbar, .popover, .replay-bar { bottom: calc(80px + env(safe-area-inset-bottom)); margin: 0 auto; max-width: calc(100vw - 16px); }
   #sel-more { display: none; }
   .sel-extra, .selbar.more .sel-extra { display: flex; flex-basis: auto; }
   .selbar.more { flex-wrap: nowrap; }
@@ -404,7 +405,7 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
   .palette { margin: 0; flex: 0 1 auto; min-width: 0; }
   .tools { margin: 0; width: auto; flex: 0 0 auto; }
   .tools .btn { flex: 0 0 48px; }
-  .selbar, .popover { bottom: calc(76px + env(safe-area-inset-bottom)); max-width: calc(100vw - 132px); }
+  .selbar, .popover, .replay-bar { bottom: calc(76px + env(safe-area-inset-bottom)); max-width: calc(100vw - 132px); }
   .popover { width: max-content; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
 }
 @media (max-height: 559px) {
