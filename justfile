@@ -11,7 +11,7 @@ default:
 serve port="8790":
     python3 tools/serve.py {{port}}
 
-# 🧰 Once per clone: the pre-commit hook (runs just test) and the PDXfixIT author
+# 🧰 Once per clone: the git hooks (pre-commit runs just test; pre-push checks the version stamp) and the PDXfixIT author
 setup:
     git config core.hooksPath .githooks
     git config user.name PDXfixIT
