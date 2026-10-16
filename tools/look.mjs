@@ -39,7 +39,7 @@ const VIEWS = {
   'settings-open-all': { js: `${q('#settings-open')} for (const h of document.querySelectorAll('#settings .set-head')) if (h.getAttribute('aria-expanded') !== 'true') h.click();` },
   'drawing-sheet': { js: q('#drawing-open') },
   // Usage counts (web/telemetry.js): a tool tap, a brush pick, a key and a setting are counted;
-  // letters typed in the name field are not; the About switch and its note show.
+  // letters typed in the name field are not; the switch and the Privacy policy link show.
   usage: { js: `const u = window.isopix.usage;
     ${q('[data-tool="eraser"]')} ${q('[data-tool="pencil"]')}
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true })); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
@@ -51,12 +51,11 @@ const VIEWS = {
     const want = { 'tool:eraser': 1, 'tool:pencil': 1, 'key:gutters': 2, 'set:gray-on': 1, 'set:gray-off': 1 };
     for (const [k, n] of Object.entries(want)) if (c[k] !== n) throw new Error(k + ' counted ' + c[k] + ', not ' + n + ': ' + JSON.stringify(c));
     for (const k of ['key:tool-eraser', 'key:tool-line', 'key:tool-fill']) if (c[k]) throw new Error('typing a name counted ' + k);
-    if (!document.querySelector('#opt-usage').checked) throw new Error('Send usage counts should start on');
-    document.querySelector('#usage-more').open = true;
-    document.querySelector('#usage-note').scrollIntoView();` },
+    if (!document.querySelector('#opt-usage').checked) throw new Error('Share usage data should start on');
+    document.querySelector('#privacy-link').scrollIntoView();` },
   // Usage events (web/events.js): a tool tap is a control.use with its toolbar and the
   // layout showing at this width, the brush popover a dialog, Settings a screen, a
-  // setting its from and to; turning Send usage counts off empties the queue.
+  // setting its from and to; turning Share usage data off empties the queue.
   events: { js: `const ev = window.isopix.events; ev.clear();
     const recs = () => ev.queued().records.map((l) => JSON.parse(l));
     ${q('[data-tool="eraser"]')} ${q('#options')} document.querySelector('#popover [data-pick="hexagon"]').click();
@@ -142,7 +141,7 @@ const PROTECT = `
   a.settings.lockedLevel = 2; a.level = 2; a.settings.brush = 'hexagon';
   f('pointerdown', x + 10, y + 3); f('pointerup', x + 10, y + 3, 0);
   if (document.querySelector('#protect-note').hidden) throw new Error('the skip notice did not show');`;
-// The welcome card: from Settings → About; Show me around starts Basics in a practice drawing.
+// The welcome card: from the bottom of Settings; Show me around starts Basics in a practice drawing.
 const TOUR = `if (!document.querySelector('#welcome-tour')) throw new Error('the card has no Show me around');`;
 VIEWS.welcome = { js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${nap}
   if (!document.querySelector('#welcome').open) throw new Error('Show the welcome again did not open it');

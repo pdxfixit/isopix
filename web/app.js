@@ -45,7 +45,7 @@ const DEFAULTS = {
   custom: '',
   welcomed: false, // the welcome card was closed on this device
   savePng: true, // Save writes a PNG with the drawing inside; off: a .isopix.json file
-  usage: true, // Send usage counts (telemetry.js; Settings → About)
+  usage: true, // Share usage data (telemetry.js, events.js; Settings)
 };
 const BRUSH_LABEL = { triangle: 'Triangle', rhombus: 'Rhombus', hexagon: 'Hexagon', trapezoid: 'Trapezoid', bigtri: 'Big triangle', face: 'Drag a face', cube: 'Drag a cube', stamp: 'Stamp' };
 const DRAG_BRUSHES = new Set(['face', 'cube', 'stamp']);

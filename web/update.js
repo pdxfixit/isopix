@@ -46,7 +46,7 @@ export function buildStamp(app, json) {
   return sha ? `${releaseOf(app)} · ${sha}` : releaseOf(app);
 }
 
-// Settings → About says the same in words: "Version 1.0.2 (55a1363)". Pure.
+// The bottom of Settings says the same in words: "Version 1.0.2 (55a1363)". Pure.
 export function aboutVersion(app, json) {
   const sha = shaOf(json);
   return sha ? `Version ${releaseOf(app)} (${sha})` : `Version ${releaseOf(app)}`;
@@ -63,7 +63,7 @@ export const REPO = 'https://github.com/pdxfixit/isopix';
 const SUPPORT_ENC = 'cHBhLnhpcG9zaUB0cm9wcHVz';
 export const SUPPORT = atob(SUPPORT_ENC).split('').reverse().join('');
 const hasSha = (json) => { const s = shaOf(json); return s && s !== 'dev' ? s : null; };
-// Settings → About's version links to the commit this copy was built from
+// The version at the bottom of Settings links to the commit this copy was built from
 // (a dev copy, or a stamp without one, to the repo). Pure.
 export const versionURL = (json) => (hasSha(json) ? `${REPO}/commit/${hasSha(json)}` : REPO);
 // An email to support, filled in with what helps fix a problem: the version
