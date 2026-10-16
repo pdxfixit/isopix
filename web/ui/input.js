@@ -6,7 +6,7 @@ import * as B from '../engine/brushes.js';
 import * as S from '../engine/symmetry.js';
 import { keyFor } from '../keys.js';
 import { protectSplit } from '../engine/protect.js';
-import { dropOnSecondFinger, oneFinger } from '../engine/gesture.js';
+import { dropOnSecondFinger, oneFinger, multiTap } from '../engine/gesture.js';
 import { $, DRAG_BRUSHES, app, canvas, emit, requestRender, set, stopReplay, symCenter, toast } from '../app.js';
 import { chooseNotch, computeLevel, fitView, toggleLock } from './controls.js';
 import { applyCells, applyEdges, brushAt, closePopover, commit, doFill, eraseEdgesNear, marqueeRegion, openPopover, preview, previewEnd, previewStart, previewTo, redo, reportSkips, setMoveMode, setTool, stampItemsAt, undo, updateCursor, updateSelbar } from './tools.js';
@@ -63,6 +63,35 @@ function inSelection(wx, wy) {
   return !!sel && sel.region.keys.has(L.cellKey(L.hitTest(sel.region.l, wx, wy)));
 }
 
+// Two- and three-finger taps (engine/gesture.js multiTap): one touch sequence,
+// from the first finger down to the last one up. A tap puts the view back as
+// it was (a tap's fingers can nudge a pinch) and then undoes or redoes.
+let taps = null; // {t0, land, fingers, travel, at: Map(id → [x, y]), view}
+function tapDown(e, x, y) {
+  if (e.pointerType !== 'touch') { taps = null; return; }
+  const now = performance.now();
+  if (!taps) taps = { t0: now, land: 0, fingers: 0, travel: 0, at: new Map(), view: { zoom: app.view.zoom, cx: app.view.cx, cy: app.view.cy } };
+  taps.at.set(e.pointerId, [x, y]);
+  taps.fingers = Math.max(taps.fingers, pointers.size);
+  taps.land = now - taps.t0;
+}
+function tapMove(e, x, y) {
+  const a = taps?.at.get(e.pointerId);
+  if (a) taps.travel = Math.max(taps.travel, Math.hypot(x - a[0], y - a[1]));
+}
+function tapUp() {
+  if (!taps || pointers.size) return false;
+  const t = taps;
+  taps = null;
+  const what = multiTap({ fingers: t.fingers, ms: performance.now() - t.t0, travelPx: t.travel, landMs: t.land });
+  if (!what) return false;
+  Object.assign(app.view, t.view);
+  computeLevel();
+  if (what === 'undo') undo(); else redo();
+  requestRender();
+  return true;
+}
+
 export function onDown(e) {
   if (app.replaying) { stopReplay(); return; }
   closePopover();
@@ -70,6 +99,7 @@ export function onDown(e) {
   const [x, y] = local(e);
   app.lastPointer = e.pointerType;
   pointers.set(e.pointerId, { x, y, type: e.pointerType });
+  tapDown(e, x, y);
   if (pointers.size === 2) { startTwoFinger(); return; }
   if (pointers.size > 2) return;
   const does = oneFinger({ moveMode: app.moveMode && !app.pickCenter, button: e.button, pointerType: e.pointerType, spaceHeld });
@@ -165,6 +195,7 @@ function lineApply(g, wx, wy) {
 export function onMove(e) {
   const [x, y] = local(e);
   if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x, y, type: e.pointerType });
+  tapMove(e, x, y);
   if (!gesture) { hover(e); return; }
   const [wx, wy] = app.view.toWorld(x, y);
   const g = gesture;
@@ -221,6 +252,7 @@ export function onMove(e) {
 
 export function onUp(e) {
   pointers.delete(e.pointerId);
+  if (e.type !== 'pointercancel' && tapUp()) { gesture = null; updateCursor(); return; }
   const g = gesture;
   if (!g) return;
   if (g.kind === 'pinch' || g.kind === 'density') {

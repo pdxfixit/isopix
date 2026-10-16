@@ -19,3 +19,15 @@ export function oneFinger({ moveMode = false, afterPinch = false, button = 0, po
   if (button > 0) return 'ignore';
   return moveMode ? 'pan' : 'tool';
 }
+
+// Two fingers tapped together undo; three redo (the convention of Procreate
+// and most drawing apps). A tap: every finger landed within LAND_MS of the
+// first, all lifted within TAP_MS of it, and none moved more than TAP_PX.
+// Numbers to tune on a real phone.
+export const TAP_MS = 300;
+export const TAP_PX = 12;
+export const LAND_MS = 150;
+export function multiTap({ fingers, ms, travelPx, landMs }) {
+  if (ms > TAP_MS || travelPx > TAP_PX || landMs > LAND_MS) return null;
+  return fingers === 2 ? 'undo' : fingers === 3 ? 'redo' : null;
+}

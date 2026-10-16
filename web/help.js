@@ -143,6 +143,8 @@ export const SECTIONS = [
     items: [
       { name: 'One finger, or the mouse', text: '☝', says: 'Draws with the tool in use. A pen draws too. With the Move hand lit, it moves the view instead.' },
       { name: 'Two fingers', text: '✌', says: 'Drag to move the view, pinch to zoom. If the first finger left a mark, it is taken back. Lift one finger and keep moving the other to keep panning.' },
+      { name: 'Two-finger tap', text: '✌', says: 'Tap with two fingers together to undo, like the Undo button.' },
+      { name: 'Three-finger tap', text: '3', says: 'Tap with three fingers together to redo.' },
       { name: 'Mouse wheel', text: '⇅', says: 'Pans. Ctrl + wheel, or a trackpad pinch, zooms.' },
       { name: 'Middle button, or Space + drag', text: '✋', says: 'Pans with the mouse.' },
       { name: 'Hover', text: '◌', says: 'With a mouse or pen, shows the cells a stroke would paint, and hatches the ones Keep would skip.' },
