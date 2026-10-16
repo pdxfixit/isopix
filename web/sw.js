@@ -11,7 +11,7 @@ const CACHE = `isopix-${self.ISOPIX_VERSION}`;
 const SHELL = [
   './', './index.html', './styles.css', './version.js', './manifest.webmanifest',
   './app.js', './render.js', './layer.js', './update.js', './storage.js', './glyphs.js',
-  './keys.js', './help.js', './palette.js', './sheets.js', './move.js', './events.js', './events-client.js', './welcome.js', './tour.js', './lessons.js', './sillynames.js', './loading.js', './autosave.js', './gallery.js', './stampbook.js', './stamps.js',
+  './keys.js', './help.js', './palette.js', './sheets.js', './move.js', './events.js', './events-client.js', './welcome.js', './tour.js', './lessons.js', './sillynames.js', './loading.js', './autosave.js', './gallery.js', './stampbook.js', './prompts.js', './stamps.js',
   './ui/controls.js', './ui/tools.js', './ui/input.js', './ui/screens.js', './ui/files.js', './ui/gallery.js', './ui/stamps.js',
   './engine/lattice.js', './engine/model.js', './engine/brushes.js', './engine/symmetry.js',
   './engine/fill.js', './engine/density.js', './engine/svg.js', './engine/project.js',

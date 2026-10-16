@@ -25,6 +25,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Several drawings** (2026-10-16): the Drawing sheet opens as Drawings, a grid of this browser's drawings with thumbnails, New first; the one open is outlined. New, Open a file, an arrival from an old address and a lesson's Keep it each add a drawing; nothing replaces one. Each card's ⋯: Rename, Make a copy, Save to a file, Delete (asks first). A long name shrinks to 12 px, then ends in an ellipsis. Storage is per drawing (`drawing:<id>`, `copies:<id>`, `file:<id>`, the list at `drawings`, `web/gallery.js`); the single drawing kept before moves in once, its old keys left as they were. Checked: `test/gallery.test.mjs`, `just look drawing-new gallery gallery-menu gallery-ops gallery-delete`, `just autosave-check` (the move), `just move-check`. Not tried: a real phone, Save to a file from the ⋯ menu (a file picker), a browser with years of drawings.
 
+**Drawing ideas** (2026-10-16): "💡 Need an idea?" on the Drawings sheet, only when asked; Draw this starts a new drawing named after it (`web/prompts.js`, `test/prompts.test.mjs`, `just look idea`).
+
 **Light direction** (2026-10-16): Settings → Drawing → Light from the left or right, kept per drawing; Relight on the selection bar re-shades side faces (`engine/color.js` shade and baseOf, `D.relightRegion`, `test/density.test.mjs`, `just look light`). Shaded cells keep their base color and side for an exact Relight.
 
 **Two- and three-finger taps** (2026-10-16): undo and redo (`engine/gesture.js` multiTap, `test/gesture.test.mjs`, `just look taps` with synthesized touches). Not tuned on a real phone: the 150 ms / 300 ms / 12 px limits are guesses.

@@ -337,7 +337,7 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
 .card-top { display: flex; height: 88px; background: var(--bg); }
 .card-open { position: relative; display: block; flex: 1; min-width: 0; height: 88px; padding: 0; border: 0; background: var(--bg); cursor: pointer; }
 .card-open img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.card-blank { display: flex; height: 100%; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; }
+.card-blank { display: flex; height: 100%; align-items: center; justify-content: center; padding: 22px 6px 0; box-sizing: border-box; color: var(--muted); font-size: 12px; }
 .card-badge { position: absolute; left: 6px; top: 6px; padding: 2px 7px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
 .card-foot { display: flex; align-items: center; min-height: 44px; padding: 0 10px; }
 /* A long name shrinks to 12 px (gallery.js fitName), then ends in an ellipsis. */
@@ -364,6 +364,9 @@ dialog.drawer::backdrop { background: rgba(0, 0, 0, 0.25); }
 .stamp-tile img { width: 100%; max-width: 110px; aspect-ratio: 4 / 3; object-fit: contain; border-radius: 8px; }
 .stamp-tile span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stamp-tile[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--pressed); }
+.idea { margin: -6px 0 14px; }
+.idea-box { margin-top: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); }
+.idea-text { margin: 0 0 8px; font-size: 16px; }
 dialog.small-dialog { border: 1px solid var(--border); border-radius: 20px; padding: 0; background: var(--bg); color: var(--ink); width: min(380px, calc(100vw - 24px)); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); }
 dialog.small-dialog::backdrop { background: rgba(0, 0, 0, 0.42); }
 .small-dialog .menu { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
