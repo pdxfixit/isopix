@@ -1,6 +1,5 @@
 # Isopix at https://isopix.app: static assets (web/) and the usage Worker
-# (worker/: POST /api/visit into D1 `isopix`, POST /api/events into R2
-# `isopix-telemetry`), one hostname.
+# (worker/: POST /api/events into R2 `isopix-telemetry`), one hostname.
 # Deployed by flarepress (github.com/pdxfixit/flarepress) through this repo's
 # tools/deploy.sh: by .github/workflows/deploy.yml, or the owner's
 # `just --yes deploy`. The old addresses are move Workers kept by the owner
@@ -20,6 +19,11 @@ routes = [
 directory = "../web"
 binding = "ASSETS"
 
+# Retired: nothing in worker/ reads or writes D1 any more (the visit beacon was
+# retired 2026-10-16). The binding stays only because flarepress's harvest.py
+# takes the database id from here while site/harvest.conf still names
+# `table=visits`. Remove both, and then the D1_DATABASE_ID secret, once the
+# telemetry runner has dropped its `visits` entry and the owner has dropped the table.
 [[d1_databases]]
 binding = "DB"
 database_name = "isopix"

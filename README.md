@@ -95,8 +95,8 @@ first when something drawn is not in a file. Open
 checks the file's shape and refuses one that breaks the grid's rules. The
 drawing never leaves the device.
 
-**Usage counts** (on by default; Settings → Share play data, at the bottom): which
-buttons, tools, keys and settings a visit used, how long it lasted and the
+**Usage events** (on by default; Settings → Share play data, at the bottom): which
+buttons, tools, keys and settings were used, how long a sitting lasted and the
 kind of device, sent to the site's own Worker with one random device code that
 never changes. Never the drawing, names, anything typed or the IP address.
 What is sent is told in one place, the shared
@@ -107,9 +107,9 @@ Detail: [docs/telemetry.md](docs/telemetry.md).
 
 | Path | What it holds |
 |---|---|
-| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `telemetry.js` (usage counts), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
+| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, controls, input), `render.js` (Canvas 2D), `storage.js`, `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
-| `worker/` | The isopix.app Worker: `index.js` (`POST /api/visit` into D1, `POST /api/events` into R2 through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (its D1 tables). |
+| `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2 through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
 | `test/` | `node --test` suites for the engine. |
 | `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |
 | `docs/` | `state.md`, `decisions.md`, `questions.md`, `design-brief.md`, `deploy-cloudflare.md`, `environment.md`, `justfile-style.md`. |

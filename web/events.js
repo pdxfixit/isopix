@@ -11,8 +11,8 @@
 // the queue is emptied.
 //
 // It sends only at https://isopix.app and never from automated browsers
-// (`navigator.webdriver`), like the visit beacon (telemetry.js), which stays
-// for now. Anywhere else the client queues but has no way to send.
+// (`navigator.webdriver`). Anywhere else the client queues but has no way to
+// send.
 //
 // Never recorded: coordinates, the drawing, any name or text typed, colors
 // chosen, an error's message. A detail is a number, a boolean or one of the
@@ -21,10 +21,14 @@
 // The pure parts are exported for tests. Nothing touches the page until
 // initEvents runs.
 
-import { deviceCode, DEVICE_KEY, FIRST_KEY, HOST, errorAt } from './telemetry.js';
 import { createEvents } from './events-client.js';
 
 export const APP = 'isopix';
+export const HOST = 'isopix.app';
+// Kept on the device since the first usage counts (2026-10-15), under their
+// old names: players keep these two values, so the names do not change.
+export const DEVICE_KEY = 'isopix-usage-device';
+export const FIRST_KEY = 'isopix-usage-first';
 export const SEND = true;           // false: queue only (R2 bucket `isopix-telemetry`, binding EVENTS, site/wrangler.toml)
 // Sends from here only: the live site, never a test browser or a preview.
 export const sendsFrom = ({ hostname, webdriver }) => SEND && hostname === HOST && !webdriver;
@@ -32,6 +36,34 @@ export const OLD_QUEUE_KEY = 'isopix-events'; // phase A's own queue (release 1.
 export const MAX_QUEUE = 1000;      // records kept on the device, oldest dropped first
 export const MAX_ERRORS = 20;       // per page load
 export const SETTLE_MS = 1000;      // a slider's run of number changes is one setting.change
+
+// The device's code: one plain random code, made on the device and never
+// changed (owner, 2026-10-16: "do away with the cleverness … keep it simple",
+// Arrow-Rama #150). The telemetry runner removes it from every kept copy a
+// year on (COPPA: a persistent identifier used only to improve the app, named
+// in the privacy note, kept no longer than needed).
+const DEVICE_RE = /^[0-9a-f]{12}$/;
+export function randomHex(n, rand = (a) => crypto.getRandomValues(a)) {
+  return [...rand(new Uint8Array(Math.ceil(n / 2)))].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, n);
+}
+// The stored code, for good; a new random one only when none is stored or it
+// is malformed. A code an older release stored with its date ({id, since}) is
+// kept as it is. `now` is unused and kept for callers.
+export function deviceCode(stored, now, rand) {
+  if (stored && typeof stored === 'object' && DEVICE_RE.test(stored.id)) return stored;
+  return { id: randomHex(12, rand) };
+}
+
+// Where an error happened, never its message (a message can carry a file's text).
+export function errorAt(name, file, line) {
+  const base = String(file || '').split(/[?#]/)[0].split('/').pop().replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 40);
+  const kind = String(name || 'Error').replace(/[^A-Za-z]/g, '').slice(0, 30) || 'Error';
+  return `${kind} ${base || '?'}:${Number.isSafeInteger(line) && line >= 0 ? line : 0}`;
+}
+
+// The drawing's size as a bucket, so a count of cells is never sent.
+export const CELLS = ['0', '1-99', '100-999', '1k-10k', '10k+'];
+export const cellsBucket = (n) => (n <= 0 ? '0' : n < 100 ? '1-99' : n < 1000 ? '100-999' : n < 10000 ? '1k-10k' : '10k+');
 
 // The events Isopix sends and the keys each may carry: Isopix's rows of the
 // shared list (pdxfixit/telemetry events.toml). Anything else is dropped.
@@ -128,8 +160,7 @@ export function uuidV4(c = globalThis.crypto) {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
-// The player: the existing device code (telemetry.js), through this one
-// function, so the id rework (#150) changes only here.
+// The player: the device code, through this one function.
 export function playerId(storage, now = Date.now()) {
   let stored = null;
   try { stored = JSON.parse(storage?.getItem(DEVICE_KEY) || 'null'); } catch { /* blocked */ }
@@ -195,12 +226,12 @@ function lookOfPage() {
   };
 }
 
-// Starts recording. `enabled()` is the setting. Returns the tracker, plus
-// control(el, input) for the click listener (telemetry.js) and opened() for
-// perf.load once the controls work.
-export function initEvents({ enabled, now = Date.now, storage = globalThis.localStorage } = {}) {
+// Starts recording. `enabled()` is the setting; `keyAction(e)` names a key
+// press (keys.js), or null. Returns the tracker, plus opened() for perf.load
+// once the controls work.
+export function initEvents({ enabled, keyAction = () => null, now = Date.now, storage = globalThis.localStorage } = {}) {
   const coarse = matchMedia('(pointer: coarse)').matches;
-  // The first page load on this device (telemetry.js keeps the same day for its `since`).
+  // The first page load on this device.
   const firstRun = (() => { try { if (storage.getItem(FIRST_KEY) != null) return false; storage.setItem(FIRST_KEY, JSON.stringify(now())); return true; } catch { return false; } })();
   try { storage.removeItem(OLD_QUEUE_KEY); } catch { /* blocked */ }
   let t = null; // the tracker, made below once this file's page listeners are in (the client's beacon goes after them)
@@ -210,8 +241,7 @@ export function initEvents({ enabled, now = Date.now, storage = globalThis.local
   const strokes = { n: 0, touch: 0, mouse: 0, pen: 0, second: 0 };
 
   document.addEventListener('pointerdown', (e) => { if (e.pointerType) lastPointer = e.pointerType; }, { capture: true, passive: true });
-  // A control used, from the one document click listener (telemetry.js).
-  // A click with no pointer (detail 0) came from a key or a screen reader.
+  // A control used. A click with no pointer (detail 0) came from a key or a screen reader.
   const control = (el, e) => {
     const group = groupOf(el);
     const input = e?.detail === 0 ? 'key' : (e?.pointerType || lastPointer);
@@ -224,6 +254,18 @@ export function initEvents({ enabled, now = Date.now, storage = globalThis.local
     if (!e.isPrimary) strokes.second++;
     else if (strokes[e.pointerType] !== undefined) strokes[e.pointerType]++;
   };
+  // Every control, shortcut and stroke comes through these three listeners.
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest?.('button, [role="slider"], a[id]');
+    if (el) control(el, e);
+  }, { capture: true, passive: true });
+  // Never while typing: the keys pressed in a name field would spell part of the name.
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat || e.target.closest?.('input, select, textarea, [contenteditable]')) return;
+    const a = keyAction(e);
+    if (a) shortcut(a);
+  }, { capture: true, passive: true });
+  document.querySelector('#stage')?.addEventListener('pointerdown', stroke, { passive: true });
 
   addEventListener('error', (e) => {
     if (errors >= MAX_ERRORS) return;

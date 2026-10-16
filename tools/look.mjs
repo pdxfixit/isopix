@@ -38,34 +38,28 @@ const VIEWS = {
   // Every Settings section open (heads that are shut get a click; the state is remembered).
   'settings-open-all': { js: `${q('#settings-open')} for (const h of document.querySelectorAll('#settings .set-head')) if (h.getAttribute('aria-expanded') !== 'true') h.click();` },
   'drawing-sheet': { js: q('#drawing-open') },
-  // Usage counts (web/telemetry.js): a tool tap, a brush pick, a key and a setting are counted;
-  // letters typed in the name field are not; the switch and the Privacy policy link show.
-  usage: { js: `const u = window.isopix.usage;
-    ${q('[data-tool="eraser"]')} ${q('[data-tool="pencil"]')}
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true })); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
-    ${q('#drawing-open')} const name = document.querySelector('#drawing-name'); name.focus();
-    for (const key of 'pelf') name.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
-    document.querySelector('#drawing').close();
-    ${q('#settings-open')} document.querySelector('#opt-gray').click(); document.querySelector('#opt-gray').click();
-    const c = u.payload().counts;
-    const want = { 'tool:eraser': 1, 'tool:pencil': 1, 'key:gutters': 2, 'set:gray-on': 1, 'set:gray-off': 1 };
-    for (const [k, n] of Object.entries(want)) if (c[k] !== n) throw new Error(k + ' counted ' + c[k] + ', not ' + n + ': ' + JSON.stringify(c));
-    for (const k of ['key:tool-eraser', 'key:tool-line', 'key:tool-fill']) if (c[k]) throw new Error('typing a name counted ' + k);
-    if (!document.querySelector('#opt-usage').checked) throw new Error('Share play data should start on');
-    document.querySelector('#privacy-link').scrollIntoView();` },
   // Usage events (web/events.js): a tool tap is a control.use with its toolbar and the
   // layout showing at this width, the brush popover a dialog, Settings a screen, a
-  // setting its from and to; turning Share play data off empties the queue.
+  // setting its from and to, a key shortcut a control in group keys but letters typed in the name
+  // field none; Share play data starts on and turning it off empties the queue.
   events: { js: `const ev = window.isopix.events; ev.clear();
     const recs = () => ev.queued().records.map((l) => JSON.parse(l));
     ${q('[data-tool="eraser"]')} ${q('#options')} document.querySelector('#popover [data-pick="hexagon"]').click();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
+    ${q('#drawing-open')} const name = document.querySelector('#drawing-name'); name.focus();
+    for (const key of 'pelf') name.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    document.querySelector('#drawing').close();
     ${q('#settings-open')} await new Promise((r) => setTimeout(r, 50)); document.querySelector('#opt-gray').click(); document.querySelector('#opt-gray').click();
     document.querySelector('#settings').close(); await new Promise((r) => setTimeout(r, 50));
     const got = recs().map((r) => r.event + ' ' + JSON.stringify(r.details));
     const row = getComputedStyle(document.querySelector('.bottom')).flexDirection === 'row' ? 'row' : 'stacked';
     const want = ['control.use {"control":"tool-eraser","group":"tools","layout":"' + row + '"', 'dialog.open {"dialog":"brush"}', 'dialog.close {"dialog":"brush","answer":"picked"',
       'screen.view {"from":"draw"}', 'setting.change {"key":"gray","from":false,"to":true}', 'screen.view {"from":"settings"}'];
+    want.push('control.use {"control":"gutters","group":"keys"');
     for (const w of want) if (!got.some((g) => g.startsWith(w))) throw new Error('no ' + w + ' in ' + JSON.stringify(got));
+    // Letters typed in the name field are not shortcuts (their counts would spell part of the name).
+    if (got.some((g) => g.startsWith('control.use') && /"group":"keys"/.test(g) && /"control":"(tool-eraser|tool-line|tool-fill)"/.test(g))) throw new Error('typing a name recorded a shortcut: ' + JSON.stringify(got));
+    if (!document.querySelector('#opt-usage').checked) throw new Error('Share play data should start on');
     if (got.some((g) => /"x"|"y"|clientX/.test(g))) throw new Error('a coordinate was recorded');
     if (recs().some((r, i, a) => r.seq !== a[0].seq + i || r.app !== 'isopix' || r.platform !== 'web' || !r.session || !r.player || !r.screen)) throw new Error('records out of order or missing columns');
     ${q('#settings-open')} document.querySelector('#opt-usage').click();
