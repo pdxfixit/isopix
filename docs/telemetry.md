@@ -65,6 +65,45 @@ the note stops saying any of it, or when the schema gains an IP, city, address,
 User-Agent or name column. This is the building agent's reading, not legal
 advice.
 
+## Usage events (the shared standard)
+
+Isopix also records **events**, one record per thing that happened, in the
+shape every app shares (the standard in pdxfixit/telemetry, Arrow-Rama
+backlog #151). `web/events.js` builds them with `track(event, details)` and
+queues them in memory and in localStorage (`isopix-events`, at most 1000,
+oldest dropped). **Nothing sends them yet:** the visit beacon above stays
+until the shared flarepress client and Worker (`POST /api/events`, to R2)
+take over. With the switch off nothing is recorded and the queue is emptied.
+
+| Column | Isopix |
+|---|---|
+| `app`, `platform` | `isopix`, `web` |
+| `form` | `phone`, `tablet` or `desktop`, from the screen size and whether the main pointer is a finger |
+| `version` | `version.js` |
+| `player` | the device code above (`playerId()`, one function, for the id rework #150) |
+| `session`, `seq` | random per page load; order within it from 0 |
+| `at`, `tz` | epoch ms; UTC offset in minutes |
+| `screen` | `draw`, or the open sheet: `settings`, `drawing`, `help` |
+| `details` | only the keys listed for the event (`EVENTS`); each a number, a boolean or one of the app's own words, never text someone typed |
+
+| Event | Where it is caught | Details |
+|---|---|---|
+| `app.open` | page load | viewport, density, font scale, dark, reduced motion, language, main input, installed, first run |
+| `app.foreground`, `app.background`, `app.close` | `visibilitychange`, `pagehide` | time away or shown |
+| `screen.view` | a sheet opens or the last one closes (watching each `<dialog>`'s `open`) | `from` |
+| `dialog.open`, `dialog.close` | the welcome card, the brush popover (`brush`, `line`, `marquee`), the grid rail on phones (`levels`) | `answer` (`picked`, `dismissed`, `closed`, the card's return value), `ms` |
+| `control.use` | the click listener in `telemetry.js`; keyboard shortcuts (`group: keys`) | `control` (id, `tool-…`, `pick-…`, `swatch`), `group` (`topleft`, `topright`, `levels`, `zoom`, `palette`, `tools`, `selbar`, `popover`, a sheet …), `layout` (`levels`: `rail` or `top`; `palette` and `tools`: `stacked` or `row`; `zoom`: `track` or `buttons`; else `narrow` or `wide`), `vw`, `vh`, `input` (`touch`, `mouse`, `pen`, `key`). **No coordinates.** |
+| `setting.change` | `set(k, v)` in `app.js` | `key`, `from`, `to`; a slider's run folds into one record; colors and the symmetry center are never recorded; a lesson's own picks are not counted |
+| `content.start`, `finish`, `abandon` | a drawing: page load, New, Open (start), Save (finish), New/Open over unsaved work or closing the page with it (abandon); a lesson: Start, last step, Stop / another lesson / closing | `kind` (`drawing`, `lesson`), `item` (the lesson), `resumed`, `ms`, `why` (`replaced`, `left`, `stopped`, `switched`) |
+| `error` | `error`, `unhandledrejection` (20 a page load) | `kind`, `where` (`file:line`), `fatal` (before the controls work) |
+| `perf.load` | the controls work | `ms` from navigation start, `cold` (no service worker yet) |
+| `perf.longtask` | `PerformanceObserver`, summed when the page is put away | `n`, `ms` |
+| `isopix.save`, `isopix.strokes`, `isopix.move_arrived` | what a save did; strokes by input (and the drawing's size bucket) per sitting; a drawing carried from an old address | |
+
+`test/events.test.mjs` fails on an event or key not in `EVENTS`, a listed
+event nothing sends, a new write to `app.settings` that skips `set()`, or a
+coordinate; `just look events` (in CI) checks the real page.
+
 ## Adding a count
 
 Most new buttons and settings are counted with no code: a click on a button

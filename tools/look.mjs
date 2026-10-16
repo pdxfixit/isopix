@@ -54,6 +54,24 @@ const VIEWS = {
     if (!document.querySelector('#opt-usage').checked) throw new Error('Send usage counts should start on');
     document.querySelector('#usage-more').open = true;
     document.querySelector('#usage-note').scrollIntoView();` },
+  // Usage events (web/events.js): a tool tap is a control.use with its toolbar and the
+  // layout showing at this width, the brush popover a dialog, Settings a screen, a
+  // setting its from and to; turning Send usage counts off empties the queue.
+  events: { js: `const ev = window.isopix.events; ev.queue.clear();
+    ${q('[data-tool="eraser"]')} ${q('#options')} document.querySelector('#popover [data-pick="hexagon"]').click();
+    ${q('#settings-open')} await new Promise((r) => setTimeout(r, 50)); document.querySelector('#opt-gray').click(); document.querySelector('#opt-gray').click();
+    document.querySelector('#settings').close(); await new Promise((r) => setTimeout(r, 50));
+    const got = ev.queue.items.map((r) => r.event + ' ' + JSON.stringify(r.details));
+    const row = getComputedStyle(document.querySelector('.bottom')).flexDirection === 'row' ? 'row' : 'stacked';
+    const want = ['control.use {"control":"tool-eraser","group":"tools","layout":"' + row + '"', 'dialog.open {"dialog":"brush"}', 'dialog.close {"dialog":"brush","answer":"picked"',
+      'screen.view {"from":"draw"}', 'setting.change {"key":"gray","from":false,"to":true}', 'screen.view {"from":"settings"}'];
+    for (const w of want) if (!got.some((g) => g.startsWith(w))) throw new Error('no ' + w + ' in ' + JSON.stringify(got));
+    if (got.some((g) => /"x"|"y"|clientX/.test(g))) throw new Error('a coordinate was recorded');
+    if (ev.queue.items.some((r, i) => r.seq !== ev.queue.items[0].seq + i || r.app !== 'isopix' || !r.session || !r.player)) throw new Error('records out of order or missing columns');
+    ${q('#settings-open')} document.querySelector('#opt-usage').click();
+    if (ev.queue.items.length || localStorage.getItem('isopix-events')) throw new Error('switching usage off left ' + ev.queue.items.length + ' records');
+    ${q('[data-tool="pencil"]')} if (ev.queue.items.length) throw new Error('recorded with usage off');
+    document.querySelector('#opt-usage').click(); document.querySelector('#settings').close();` },
   // A real swatch tap on the Eraser switches to the Pencil; on Fill it does not; the auto-shade toggle never does.
   'color-pick': { js: `const pressed = () => document.querySelector('[data-tool][aria-pressed="true"]').dataset.tool;
     ${q('[data-tool="eraser"]')} document.querySelector('#palette .swatch:nth-child(2)').click();
