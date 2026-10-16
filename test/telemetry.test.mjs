@@ -72,10 +72,10 @@ test('every column the Worker writes is in the schema, and the schema has no IP 
   assert.doesNotMatch(schema, /\b(ip|city|region|address|user_agent|name)\b\s+TEXT/i);
 });
 
-test('the switch says Share usage data and links the policy, with no note of its own', () => {
+test('the switch says Share play data and links the policy, with no note of its own', () => {
   // What is sent lives in the shared policy only, so every app says it the same way
   // (owner, 2026-10-16: "have it in the privacy policy so that all apps are consistent").
-  assert.match(html, /<label class="row"><input type="checkbox" id="opt-usage"> Share usage data<\/label>\s*<a id="privacy-link"/);
+  assert.match(html, /<label class="row"><input type="checkbox" id="opt-usage"> Share play data<\/label>\s*<a id="privacy-link"/);
   assert.doesNotMatch(html, /id="usage-(note|short|more)"|Send usage counts|set-about-title/);
   // The shared privacy policy, from Settings and from Help.
   for (const id of ['privacy-link', 'privacy-link-help']) assert.match(html, new RegExp(`<a id="${id}"[^>]* href="https://privacy\\.pdxfixit\\.com/isopix/" target="_blank" rel="noopener">Privacy policy</a>`));
