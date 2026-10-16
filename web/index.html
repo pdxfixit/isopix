@@ -30,6 +30,7 @@
   <link rel="modulepreload" href="engine/svg.js">
   <link rel="modulepreload" href="engine/symmetry.js">
   <link rel="modulepreload" href="engine/view.js">
+  <link rel="modulepreload" href="gallery.js">
   <link rel="modulepreload" href="glyphs.js">
   <link rel="modulepreload" href="help.js">
   <link rel="modulepreload" href="keys.js">
@@ -45,6 +46,7 @@
   <link rel="modulepreload" href="update.js">
   <link rel="modulepreload" href="ui/controls.js">
   <link rel="modulepreload" href="ui/files.js">
+  <link rel="modulepreload" href="ui/gallery.js">
   <link rel="modulepreload" href="ui/input.js">
   <link rel="modulepreload" href="ui/screens.js">
   <link rel="modulepreload" href="ui/tools.js">
@@ -291,9 +293,20 @@
   <dialog id="drawing" aria-labelledby="drawing-title">
     <form method="dialog" class="menu sheet">
       <header>
-        <h2 id="drawing-title">Drawing</h2>
+        <h2 id="drawing-title">Drawings</h2>
         <button class="btn" value="close" aria-label="Close the drawing sheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </header>
+      <!-- This browser's drawings, New first (owner's pick of three, mock A; web/ui/gallery.js draws the cards). -->
+      <div id="gallery" class="gallery">
+        <button type="button" id="file-new" class="gallery-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New drawing</span></button>
+      </div>
+      <div id="card-menu" class="card-menu" role="menu" hidden>
+        <button type="button" role="menuitem" data-act="rename">Rename</button>
+        <button type="button" role="menuitem" data-act="copy">Make a copy</button>
+        <button type="button" role="menuitem" data-act="save">Save to a file</button>
+        <button type="button" role="menuitem" data-act="delete" class="danger-item">Delete</button>
+      </div>
+      <h3 class="sheet-group-title this-drawing">This drawing</h3>
       <div class="name-field">
         <label for="drawing-name">Name</label>
         <div class="name-row">
@@ -301,15 +314,12 @@
           <button type="button" id="name-roll" class="btn" aria-label="Roll a new silly name"><span aria-hidden="true">🎲</span></button>
         </div>
       </div>
-      <div class="big-buttons">
-        <button type="button" id="file-new" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span>New</span></button>
-        <button type="button" id="file-open" class="btn big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>Open</span></button>
-      </div>
       <!-- Named by what each is for, not its file type (owner: "it's just not clear which is a png/image, vs a json/isopix drawing"; option A). -->
       <section class="sheet-group" aria-labelledby="group-drawing">
         <h3 id="group-drawing" class="sheet-group-title">Your drawing</h3>
         <button type="button" id="file-save" class="btn big-row" aria-describedby="file-save-says"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 17.6 5.8v6.4L12 15.5l-5.6-3.3V5.8Z"/><path d="M12 9v6.5M12 9l5.6-3.2M12 9 6.4 5.8"/><path d="M4 17v3.5h16V17"/></svg><span class="big-row-words"><span id="file-save-label">Save drawing</span><span class="big-row-says" id="file-save-says">Opens again in Isopix to keep drawing</span></span></button>
         <button type="button" id="file-saveas" class="link-btn" hidden>Save a copy</button>
+        <button type="button" id="file-open" class="btn big-row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span class="big-row-words"><span>Open a file</span><span class="big-row-says">Adds a drawing Isopix saved</span></span></button>
       </section>
       <section class="sheet-group" aria-labelledby="group-share">
         <h3 id="group-share" class="sheet-group-title">Share a picture</h3>
@@ -317,16 +327,30 @@
         <button type="button" id="file-svg" class="link-btn">Sharp picture (SVG)</button>
       </section>
       <button type="button" id="file-replay" class="btn wide watch"><span aria-hidden="true">▶</span> Watch it being drawn</button>
-      <div id="new-confirm" class="confirm" hidden role="group" aria-labelledby="new-confirm-text">
-        <p id="new-confirm-text"></p>
-        <div class="row wrap">
-          <button type="button" id="new-save-first" class="btn wide">Save drawing first</button>
-          <button type="button" id="new-anyway" class="btn wide danger">New anyway</button>
-          <button type="button" id="new-cancel" class="btn wide">Cancel</button>
-        </div>
-      </div>
       <p class="note" id="autosave-status" aria-live="polite"></p>
       <p class="note" id="file-status" aria-live="polite"></p>
+    </form>
+  </dialog>
+  <dialog id="rename" class="small-dialog" aria-labelledby="rename-title">
+    <form method="dialog" class="menu">
+      <h2 id="rename-title">Rename</h2>
+      <label for="rename-name">Name</label>
+      <input type="text" id="rename-name" maxlength="80" autocomplete="off" spellcheck="false">
+      <div class="row">
+        <button class="btn wide" value="cancel">Cancel</button>
+        <button class="btn wide" value="ok">Rename</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="delete-confirm" class="small-dialog" role="alertdialog" aria-labelledby="delete-title" aria-describedby="delete-says">
+    <form method="dialog" class="menu">
+      <h2 id="delete-title">Delete?</h2>
+      <p id="delete-says"></p>
+      <div class="row">
+        <button class="btn wide" value="cancel">Keep it</button>
+        <button class="btn wide danger" value="delete">Delete</button>
+      </div>
+      <button type="button" id="delete-save-first" class="link-btn">Save it to a file first</button>
     </form>
   </dialog>
   <dialog id="help" aria-labelledby="help-title">

@@ -76,12 +76,14 @@ export const SECTIONS = [
   },
   {
     title: 'Drawing sheet',
-    intro: 'Opened by the Drawing button. This browser keeps one drawing and saves it as you go, even when you switch apps. A file keeps it anywhere.',
+    intro: 'Opened by the Drawing button. At the top, Drawings: every drawing this browser keeps, as pictures, newest first, each saved as you go, even when you switch apps. Below, This drawing: the one open now. A file keeps a drawing anywhere.',
     items: [
       { name: 'Name', text: 'Aa', says: 'The drawing\'s name. A new drawing gets a silly one; type your own any time. Saved files are named after it, in lowercase.' },
       { name: 'Roll a name', from: '#name-roll', text: '🎲', says: 'Rolls another silly name for this drawing: two words with the same first letter.' },
-      { name: 'New', from: '#file-new', says: 'Starts a new drawing. If this one has anything in it, you choose: Save drawing first, New anyway, or Cancel.' },
-      { name: 'Open', from: '#file-open', says: 'Opens a drawing Isopix saved: its PNG, an .isopix file, or an older .isopix.json. It replaces this drawing, so it asks first if this one has changes not in a file.' },
+      { name: 'New', from: '#file-new', says: 'Starts another drawing. The one you were on stays in Drawings; tap its picture to go back to it.' },
+      { name: 'A drawing', text: '▦', says: 'Tap a drawing\'s picture to open it. The one open now is outlined and says Open now. A long name gets smaller to fit, then ends in …' },
+      { name: 'More for a drawing', text: '⋯', says: 'On each drawing: Rename, Make a copy, Save to a file, and Delete. Delete asks first, and says when the drawing is in no file and so cannot come back.' },
+      { name: 'Open a file', from: '#file-open', says: 'Opens a drawing Isopix saved: its PNG, an .isopix file, or an older .isopix.json. It joins Drawings as another drawing; none is replaced.' },
       { name: 'Save drawing', from: '#file-save', says: 'Keeps your drawing in a file that opens again in Isopix, ready to keep drawing: its undo history, stamps, paper and trace picture all come along. It is a PNG that photo apps show too (except on iPhone and iPad, Settings → Drawing can make it an .isopix file instead). To share or print, use Save picture: it holds only the picture. On a computer with Chrome or Edge you choose where once, and Save writes that same file after. On an iPhone or iPad the share sheet opens: pick Save to Files. Elsewhere it goes to your downloads. Once the drawing is in a file, a dot on Save means it changed since.' },
       { name: 'Save a copy', from: '#file-saveas', text: '⇩', says: 'Shows after Save drawing has a file to write to: saves the drawing as a new file instead.' },
       { name: 'Save picture', from: '#file-png', says: 'A plain PNG picture of the drawing, to share or print. Nothing else is inside it.' },

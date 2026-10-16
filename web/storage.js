@@ -39,6 +39,19 @@ export async function idbSet(key, value) {
   } catch { return false; }
 }
 
+export async function idbDel(key) {
+  try {
+    const db = await open();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(key);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    return true;
+  } catch { return false; }
+}
+
 export function loadSettings(defaults) {
   try {
     const s = JSON.parse(localStorage.getItem('isopix-settings') || '{}');

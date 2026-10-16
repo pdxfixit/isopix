@@ -10,8 +10,8 @@ import { dropOnSecondFinger, oneFinger } from '../engine/gesture.js';
 import { $, DRAG_BRUSHES, app, canvas, emit, requestRender, set, stopReplay, symCenter, toast } from '../app.js';
 import { chooseNotch, computeLevel, fitView, toggleLock } from './controls.js';
 import { applyCells, applyEdges, brushAt, closePopover, commit, doFill, eraseEdgesNear, marqueeRegion, openPopover, preview, previewEnd, previewStart, previewTo, redo, reportSkips, setMoveMode, setTool, stampItemsAt, undo, updateCursor, updateSelbar } from './tools.js';
-import { askFirst, openDrawing, openHelp, openSettings, syncMenu } from './screens.js';
-import { saveFile } from './files.js';
+import { openDrawing, openHelp, openSettings, syncMenu } from './screens.js';
+import { openProject, saveFile } from './files.js';
 
 // ---------- pointer input ----------
 const pointers = new Map();
@@ -329,7 +329,7 @@ export function onKey(e) {
     move: () => setMoveMode(!app.moveMode, true),
     save: () => saveFile(),
     saveas: () => saveFile({ asNew: true }),
-    open: () => askFirst('open'),
+    open: () => openProject(),
     escape: () => {
       const nothingElse = $('#popover').hidden && !app.moveMode && !app.selection;
       closePopover(); if (app.moveMode) setMoveMode(false);

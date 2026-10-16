@@ -50,13 +50,6 @@ test('the name saves with the drawing; an old project without one gets the defau
   assert.equal(S.cleanName(JSON.parse(JSON.stringify(P.save(d))).name), 'Untitled drawing');
 });
 
-test('New asks only when there is something to lose, with three clear choices', () => {
-  assert.deepEqual(S.newChoices(false), ['new-now']);
-  assert.deepEqual(S.newChoices(true), ['save-first', 'new-anyway', 'cancel']);
-  assert.deepEqual(S.newChoices(true, false), ['new-now'], 'every change is already in a file');
-  assert.deepEqual(S.newChoices(false, true), ['new-now']);
-});
-
 test('the file line says whether the drawing is in a file, and whether it changed since', () => {
   const now = 1e12;
   assert.equal(S.fileLine(null, false, now), '');

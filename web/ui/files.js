@@ -6,6 +6,8 @@ import * as P from '../engine/project.js';
 import { toSVG, bounds } from '../engine/svg.js';
 import { drawCells, drawEdges } from '../render.js';
 import * as store from '../storage.js';
+import { fileKey } from '../gallery.js';
+import { addDrawing } from './gallery.js';
 import { fileBase, saveDot } from '../sheets.js';
 import { paperOf } from '../engine/paper.js';
 import { keysToCopy, landing, hasDrawing } from '../move.js';
@@ -13,7 +15,7 @@ import * as PNGP from '../engine/pngproject.js';
 import { $, DEFAULTS, app, emit, requestRender, scheduleSave, toast } from '../app.js';
 import { buildPalette, computeLevel } from './controls.js';
 import { afterChange } from './tools.js';
-import { drawingRun, hasContent, leaveDrawing, setName, startDrawing, syncMenu, updateChips, updateSavedLine } from './screens.js';
+import { drawingRun, hasContent, setName, syncMenu, updateChips, updateSavedLine } from './screens.js';
 
 // ---------- saving to files ----------
 // storage.js picks the way: the Save dialog (then Save writes that same file
@@ -47,7 +49,9 @@ export function updateFileUI() {
 // Chrome; where it cannot, it is kept without one).
 export async function rememberFile() {
   if (app.practice) return; // a lesson's practice drawing is never this browser's drawing
-  if (!(await store.idbSet('file', app.file))) await store.idbSet('file', { ...app.file, handle: null });
+  if (!app.drawingId) return;
+  const key = fileKey(app.drawingId);
+  if (!(await store.idbSet(key, app.file))) await store.idbSet(key, { ...app.file, handle: null });
 }
 // Every change: the dot follows whether something drawn is not in a file
 // (already "changed" on an empty page, a first stroke still needs the dot).
@@ -148,6 +152,24 @@ export function pngCanvas() {
   drawEdges(ctx, d, t);
   return c;
 }
+// A small picture of the drawing for the Drawings grid, centered on its
+// paper; null when nothing is drawn.
+export function thumbURL(w = 240, h = 160) {
+  const d = app.drawing;
+  const b = bounds(d);
+  if (!b) return null;
+  const bw = b.x1 - b.x0, bh = b.y1 - b.y0, pad = 0.08 * Math.max(bw, bh, 0.1);
+  const scale = Math.min(w / (bw + 2 * pad), h / (bh + 2 * pad));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = paperOf(d.paper).bg;
+  ctx.fillRect(0, 0, w, h);
+  const ox = (b.x0 + b.x1) / 2 - w / 2 / scale, oy = (b.y0 + b.y1) / 2 - h / 2 / scale;
+  drawCells(ctx, d, { zoom: scale, ox, oy }, { x0: ox, y0: oy, x1: ox + w / scale, y1: oy + h / scale }, 0.7);
+  drawEdges(ctx, d, { zoom: scale, ox, oy });
+  return c.toDataURL('image/png');
+}
 export function pngBlob() {
   const c = pngCanvas();
   return c ? new Promise((r) => c.toBlob(r, 'image/png')) : Promise.resolve(null);
@@ -188,12 +210,9 @@ export async function openProject() {
   if (f.size > 50 * 1024 * 1024) return toast('That file is too big for a project');
   try {
     const obj = await projectFromFile(f);
-    leaveDrawing('replaced');
-    loadProjectObject(obj);
-    fileSaved({ name: f.name, handle: r.handle }, 'open');
-    startDrawing(true);
+    // It joins this browser's drawings; the one open now stays in the list.
+    await addDrawing(obj, { file: { name: f.name, at: Date.now(), via: 'open', dirty: false, handle: r.handle || null }, say: `Opened ${f.name}` });
     if ($('#settings').open) $('#settings').close(); if ($('#drawing').open) $('#drawing').close();
-    toast(`Opened ${f.name}`);
   } catch (err) { toast(`Could not open it: ${err.message}`); }
 }
 export async function openTrace() {
@@ -231,17 +250,12 @@ export function placeTrace(f) {
 
 // ---------- moving house (move.js) ----------
 // A drawing that came from an old address while this one had its own waits
-// here, offered by a note, until opened or dismissed.
-export function openMoved() {
+// here, offered by a note, until opened (as another drawing) or dismissed.
+export async function openMoved() {
   const m = app.pendingMove;
   if (!m) return;
   try {
-    leaveDrawing('replaced');
-    loadProjectObject(m);
-    app.file = { name: null, at: null, via: null, dirty: false, handle: null };
-    rememberFile(); updateFileUI();
-    startDrawing(true);
-    toast('Opened the drawing from the old address');
+    await addDrawing(m, { say: 'Opened the drawing from the old address; yours is in Drawings' });
   } catch (err) { toast(`It would not open: ${err.message}`); }
   app.pendingMove = null;
   $('#move-note').hidden = true;
@@ -276,7 +290,7 @@ export async function takeMovedDrawing(arriving) {
   store.idbSet('moved-in', [...(Array.isArray(seen) ? seen : []), { from: arriving.from, savedAt }].slice(-20));
   if (what === 'offer') {
     app.pendingMove = m;
-    showMoveNote('Isopix moved to isopix.app, and your drawing from the old address came along. This browser already has a drawing here, so that one stays open.', true);
+    showMoveNote('Isopix moved to isopix.app, and your drawing from the old address came along. This browser already has a drawing here, so that one stays open; Open it adds the other one.', true);
     return;
   }
   try {

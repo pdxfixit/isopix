@@ -26,7 +26,7 @@ drawing behind. Instead, each old address carries it over (`web/move.js`):
   at isopix.app says so.
 - **At isopix.app**, the app reads `#move=` on start and removes it from the
   address. With no drawing of its own it takes the arrival silently; with one,
-  it keeps its own and offers the arrival in a note ("Open it" asks first). An
+  it keeps its own and offers the arrival in a note ("Open it" adds it as another drawing). An
   arrival it has taken once is never taken again. Isogrid's settings arrive
   under Isopix's names. The old copy stays where it was.
 - An app installed to a home screen from an old address now opens isopix.app

@@ -326,12 +326,44 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
 .btn.big-row { width: 100%; min-height: 64px; justify-content: flex-start; gap: 14px; padding: 8px 16px; text-align: left; }
 .btn.big-row svg { width: 32px; height: 32px; flex: none; }
 .big-row-words { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* Drawings: this browser's drawings as a grid, New first (web/ui/gallery.js). */
+.menu.sheet { position: relative; }
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+.gallery-new, .drawing-card { min-height: 138px; border-radius: 14px; }
+.gallery-new { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 2px dashed var(--border); background: transparent; color: var(--ink); font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; }
+.gallery-new svg { width: 30px; height: 30px; fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linecap: round; }
+.drawing-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); background: var(--panel); }
+.drawing-card.current { border: 2px solid var(--accent); }
+.card-top { display: flex; height: 88px; background: var(--bg); }
+.card-open { position: relative; display: block; flex: 1; min-width: 0; height: 88px; padding: 0; border: 0; background: var(--bg); cursor: pointer; }
+.card-open img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.card-blank { display: flex; height: 100%; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; }
+.card-badge { position: absolute; left: 6px; top: 6px; padding: 2px 7px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.card-foot { display: flex; align-items: center; min-height: 44px; padding: 0 10px; }
+/* A long name shrinks to 12 px (gallery.js fitName), then ends in an ellipsis. */
+.card-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The ⋯ has its own column beside the thumbnail, so the name has the card's whole width. */
+.btn.card-more { width: 44px; height: 44px; flex: none; border: 0; background: transparent; box-shadow: none; }
+.btn.card-more svg { width: 20px; height: 20px; fill: var(--ink); stroke: none; }
+.card-menu { position: absolute; z-index: 5; min-width: 200px; padding: 6px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.card-menu[hidden] { display: none; }
+.card-menu button { min-height: 48px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+.card-menu button:hover, .card-menu button:focus-visible { background: var(--pressed); }
+.card-menu .danger-item { color: #c92a2a; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .card-menu .danger-item { color: #ff8787; } }
+.this-drawing { margin-top: 4px; }
+dialog.small-dialog { border: 1px solid var(--border); border-radius: 20px; padding: 0; background: var(--bg); color: var(--ink); width: min(380px, calc(100vw - 24px)); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); }
+dialog.small-dialog::backdrop { background: rgba(0, 0, 0, 0.42); }
+.small-dialog .menu { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+@media (min-width: 600px) { .gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.small-dialog h2 { margin: 0; font-size: 22px; }
+.small-dialog input { min-height: 48px; padding: 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; font-size: 17px; }
+.small-dialog .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
 .big-row-words > span:first-child { font-size: 16px; }
 .big-row-says { font-size: 13px; font-weight: 500; color: var(--muted); }
 .sheet-group .link-btn { margin-top: 2px; }
 .btn.watch { margin-top: 14px; }
-.confirm { border: 2px solid var(--accent); border-radius: 12px; padding: 8px 12px; margin: 10px 0; }
-.confirm p { margin: 4px 0 8px; }
 
 /* ---- Help sheet: icon, then name and what it does ---- */
 .help-group { margin: 14px 0 2px; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
