@@ -22,4 +22,4 @@ Offered, not yet approved (ask the owner first):
 ## The owner does
 
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
-- Optional: `DROP TABLE visits` in D1 `isopix` (the empty `region` column goes with it); an agent does not run it. In pdxfixit/telemetry, the `[jobs.isopix.ids] visits` entry stays until 2027-10-16, then goes (it blanks the kept copies' device codes); until then its `isopix` job's `TELEMETRY_ISOPIX_D1_ID` secret is unused.
+- In pdxfixit/telemetry, the `[jobs.isopix.ids] visits` entry stays until 2027-10-16, then goes (it blanks the kept copies' device codes); until then its `isopix` job's `TELEMETRY_ISOPIX_D1_ID` secret is unused.
