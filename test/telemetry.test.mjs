@@ -77,9 +77,12 @@ test('the privacy note says what is sent, the 90 days, and what never is', () =>
   assert.match(html, /<input type="checkbox" id="opt-usage"/);
   // One short line shows; the whole note folds under it, never left out.
   assert.match(html, /<p class="note" id="usage-short">[^<]*never your drawings[^<]*<\/p>\s*<details class="usage-more" id="usage-more"><summary>[^<]+<\/summary>\s*<p class="note" id="usage-note">/);
-  for (const words of ['buttons', 'tools', 'keys', 'settings', 'how long a visit lasts', 'screen size', 'touch', 'language', 'light or dark', 'the country the visit came from', 'Never your drawings, names or anything you type', 'never your internet address', 'changes every 90 days', '90 days online', 'never sells or shares']) {
+  for (const words of ['buttons', 'tools', 'keys', 'settings', 'how long a visit lasts', 'screen size', 'touch', 'language', 'light or dark', 'the country the visit came from', 'Never your drawings, names or anything you type', 'never your internet address', 'a random code that never changes', 'removed after a year', '90 days online', 'never sells or shares']) {
     assert.ok(note.includes(words), `the note should say "${words}"`);
   }
+  assert.doesNotMatch(note, /changes every/);
+  // The shared privacy policy, from About and from Help.
+  for (const id of ['privacy-link', 'privacy-link-help']) assert.match(html, new RegExp(`<a id="${id}"[^>]* href="https://privacy\\.pdxfixit\\.com/isopix/" target="_blank" rel="noopener">Privacy policy</a>`));
 });
 
 // A stand-in for D1: records each statement and its values.
