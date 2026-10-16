@@ -9,7 +9,7 @@ how it works and what each field means.
 1. **The app** (`web/telemetry.js`) counts in memory during a visit (one page
    load). When the page is hidden or closed, it sends the whole visit so far to
    `POST /api/visit` with a beacon. It sends only at https://isopix.app, only
-   while Settings → About → **Send usage counts** is on (the default), and never
+   while Settings → **Share usage data** is on (the default), and never
    from automated browsers (`navigator.webdriver`).
 2. **The Worker** (`worker/index.js`, the `isopix-app` Worker) checks it with
    the app's own `cleanVisit`, adds the country Cloudflare read from the
@@ -64,9 +64,13 @@ So the device code is one plain random code that never changes (the owner,
 still an identifier), D1 keeps 90 days, the telemetry runner removes the code
 from every kept copy a year on (its `ids` for this job), the location stops at
 the country (in every app, the owner, 2026-10-16; a city or street counts as
-personal), and the note under the switch in Settings → About says all of it. `test/telemetry.test.mjs` fails when
-the note stops saying any of it, or when the schema gains an IP, city, address,
-User-Agent or name column. This is the building agent's reading, not legal
+personal), and the shared privacy policy (https://privacy.pdxfixit.com/isopix/,
+source `src/isopix/policy.md` in pdxfixit/privacy) says all of it. Settings has
+no note of its own, only the switch and the policy's link, so every app says it
+the same way (the owner, 2026-10-16). Change the policy in the same change as
+anything that changes what is sent. `test/telemetry.test.mjs` fails when the
+link goes missing or a note comes back, or when the schema gains an IP, city,
+address, User-Agent or name column. This is the building agent's reading, not legal
 advice.
 
 ## Usage events (the shared standard)
@@ -122,4 +126,4 @@ Most new buttons and settings are counted with no code: a click on a button
 with an id, and a change in a dialog, name themselves. Something no click
 shows goes through `app.usage.count(countName(kind, word))` in `app.js`. A new
 field in the visit needs `cleanVisit`, the schema, the Worker's `UPSERT`, this
-page and the privacy note, and the tests will say which one is missing.
+page and the shared privacy policy, and the tests will say which one is missing.
