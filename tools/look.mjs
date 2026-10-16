@@ -119,9 +119,17 @@ const VIEWS = {
     if (!a.gallery.some((e) => e.name === secondName + ' copy')) throw new Error('the copy is not named ' + secondName + ' copy');
     const other = [...document.querySelectorAll('#gallery .drawing-card')].findIndex((c) => !c.classList.contains('current'));
     const otherId = document.querySelectorAll('#gallery .drawing-card')[other].dataset.id;
-    await act(other, 'rename'); document.querySelector('#rename-name').value = 'Renamed Rhino';
-    document.querySelector('#rename').close('ok'); ${SETTLE}
+    await act(other, 'rename'); const rn = document.querySelector('#rename-name'); rn.value = 'Renamed Rhino';
+    rn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); ${SETTLE}
     if (a.gallery.find((e) => e.id === otherId).name !== 'Renamed Rhino' || a.drawingId !== second) throw new Error('Rename did not rename the other drawing in place');` },
+  // Mid-lesson, Drawings shows the practice drawing as its own card (no ⋯); theirs stays as saved.
+  'lesson-gallery': { fresh: true, js: `{ ${DRAW} } ${SETTLE} const a = window.isopix, mine = a.drawingId, name = a.drawingName;
+    a.tour.start('basics'); ${nap} ${q('#drawing-open')} ${nap}
+    const cards = [...document.querySelectorAll('#gallery .drawing-card')];
+    const cur = cards.filter((c) => c.classList.contains('current'));
+    if (cur.length !== 1 || cur[0].dataset.id !== 'practice' || cur[0].querySelector('.card-more')) throw new Error('the practice drawing is not its own card without ⋯');
+    const theirs = cards.find((c) => c.dataset.id === mine);
+    if (!theirs || theirs.classList.contains('current') || theirs.querySelector('.card-name').textContent !== name) throw new Error('their drawing does not show as saved');` },
   // Delete asks first; deleting one leaves two; the ask on a drawing in no file says it cannot come back.
   'gallery-delete': { fresh: true, js: `${GALLERY} const del = async (i) => { document.querySelectorAll('#gallery .card-more')[i].click(); ${nap}
       document.querySelector('#card-menu [data-act="delete"]').click(); ${nap} };
