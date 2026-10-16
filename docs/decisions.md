@@ -59,7 +59,7 @@ are open to the owner's change (see [questions.md](questions.md)).
 | Rule | Why | Since |
 |---|---|---|
 | The daily live check (`live.yml`, `tools/live_check.py`) fails when `/`, the manifest or `sw.js` is not 200 after 3 retries 20 s apart. When live `version.js` differs from main's, it passes with a notice if main's `web/version.js` changed under an hour ago (a deploy in flight), and fails after that, naming both versions and the age. | The owner: fewer failure emails, but a down site is never excused. | 2026-10-12 |
-| Actions are pinned by full commit SHA, the release tag in a trailing comment (`test/actions-pinned.test.mjs`); the releases run on Node 24 (checkout v7.0.1, setup-node v7.1.0, upload-artifact v7.0.2); no secrets, `contents: read`. flarepress stays on its rolling `v1`. | GitHub deprecated Node 20 actions. | 2026-10-12 |
+| Actions and flarepress float on their rolling major tags (`@v7`, `@v1`) and run on Node 24; no secrets, `contents: read`. | GitHub deprecated Node 20 actions. Owner, 2026-10-16: "all should use a rolling tag ... I prefer to fail fast". | 2026-10-16 |
 
 ## Drawing, Settings and the top bar
 
