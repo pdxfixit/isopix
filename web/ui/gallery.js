@@ -206,14 +206,19 @@ export async function galleryDelete(id) {
 }
 
 // The grid: the drawing in use (with a fresh thumbnail) is always there.
+// During a lesson that is the practice drawing, a card of its own: the
+// person's own drawings show as saved, theirs under its own name.
+export const PRACTICE_ID = 'practice';
 export function renderGallery() {
   const box = $('#gallery');
   if (!box) return;
   let list = app.gallery;
-  if (app.drawingId) list = G.withEntry(list, { id: app.drawingId, name: app.drawingName, savedAt: app.lastSaved || Date.now(), thumb: thumbURL() });
+  const current = app.practice ? PRACTICE_ID : app.drawingId;
+  if (app.practice) list = [{ id: PRACTICE_ID, name: app.drawingName, savedAt: Date.now(), thumb: thumbURL() }, ...list];
+  else if (app.drawingId) list = G.withEntry(list, { id: app.drawingId, name: app.drawingName, savedAt: app.lastSaved || Date.now(), thumb: thumbURL() });
   for (const card of [...box.querySelectorAll('.drawing-card')]) card.remove();
   for (const e of list) {
-    const now = e.id === app.drawingId;
+    const now = e.id === current;
     const card = document.createElement('div');
     card.className = 'drawing-card' + (now ? ' current' : '');
     card.dataset.id = e.id;
@@ -224,7 +229,7 @@ export function renderGallery() {
     if (e.thumb) { const img = document.createElement('img'); img.src = e.thumb; img.alt = ''; open.append(img); }
     else { const blank = document.createElement('span'); blank.className = 'card-blank'; blank.textContent = 'Nothing drawn yet'; open.append(blank); }
     if (now) { const badge = document.createElement('span'); badge.className = 'card-badge'; badge.textContent = 'Open now'; open.append(badge); }
-    open.addEventListener('click', () => galleryOpen(e.id));
+    open.addEventListener('click', () => (e.id === PRACTICE_ID ? closeSheet() : galleryOpen(e.id)));
     const foot = document.createElement('div');
     foot.className = 'card-foot';
     const name = document.createElement('span');
@@ -240,7 +245,8 @@ export function renderGallery() {
     foot.append(name);
     const top = document.createElement('div');
     top.className = 'card-top';
-    top.append(open, more);
+    top.append(open);
+    if (e.id !== PRACTICE_ID) top.append(more); // the practice drawing is the lesson's, not yet theirs
     card.append(top, foot);
     box.append(card);
   }
@@ -299,6 +305,8 @@ export function wireGallery() {
   });
   document.addEventListener('pointerdown', (ev) => { if (!$('#card-menu').hidden && !ev.target.closest('#card-menu, .card-more')) closeCardMenu(); });
   $('#card-menu').addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { ev.stopPropagation(); ev.preventDefault(); closeCardMenu(); } });
+  // Enter in the name field renames (a form's Enter would press its first button, Cancel).
+  $('#rename-name').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); $('#rename').close('ok'); } });
   $('#rename').addEventListener('close', () => { if ($('#rename').returnValue === 'ok') galleryRename($('#rename').dataset.id, $('#rename-name').value); });
   $('#delete-confirm').addEventListener('close', () => { if ($('#delete-confirm').returnValue === 'delete') galleryDelete($('#delete-confirm').dataset.id); });
   $('#delete-save-first').addEventListener('click', async () => {
