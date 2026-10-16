@@ -29,6 +29,7 @@ test:
 
 #   just look                     the drawing screen at 320, 375, 700, 900 and 1100 px
 #   just look drawn select selmore rail settings drawing-sheet brushes   several views (just look --help lists them all)
+#   just look --all --light       every view, as CI runs it
 #   just look --widths 375 --js 'document.querySelector("#lock").click()'    runs JS first
 #   just look --height 400        a short landscape phone
 #   just look --light             light mode (--dark for dark; default follows this Mac)

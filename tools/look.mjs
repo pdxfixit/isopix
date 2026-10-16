@@ -8,7 +8,7 @@
 // controls under 44 px tall or wide and controls that overlap, and saves a
 // screenshot. Exits 1 when a check fails.
 //
-//   node tools/look.mjs [VIEW ...] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
+//   node tools/look.mjs [VIEW ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
 //   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll loading loading-slow replay
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
@@ -254,7 +254,7 @@ VIEWS['save-file'] = { js: `window.isopix.file = { name: null, at: null, via: nu
 function usage(msg) {
   if (msg) console.error(`❌ ${msg}`);
   // Built from VIEWS, so the list cannot fall behind the views (test/docs.test.mjs reads it).
-  console.error(`usage: just look [${Object.keys(VIEWS).join('|')} ...] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]`);
+  console.error(`usage: just look [${Object.keys(VIEWS).join('|')} ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]`);
   process.exit(msg ? 2 : 0);
 }
 const opts = { screens: [], widths: [320, 375, 700, 900, 1100], js: '', url: null, out: null, height: 800, scheme: null };
@@ -262,6 +262,7 @@ const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--help' || a === '-h') usage();
+  else if (a === '--all') opts.screens.push(...Object.keys(VIEWS)); // every view, as CI runs it
   else if (a === '--js') opts.js = argv[++i];
   else if (a === '--url') opts.url = argv[++i];
   else if (a === '--out') opts.out = argv[++i];

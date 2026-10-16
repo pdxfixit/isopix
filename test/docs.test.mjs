@@ -145,6 +145,7 @@ test('CI runs every `just look` view', () => {
   const m = /run: just look ([^\n]+)/.exec(yml);
   assert.ok(m, 'no `just look` step in .github/workflows/test.yml');
   const run = new Set(m[1].split(/\s+/));
+  if (run.has('--all')) return; // look.mjs runs every view
   const missing = [...lookViews()].filter((v) => !run.has(v));
   assert.deepEqual(missing, [], `views CI does not run: ${missing.join(', ')}`);
 });
