@@ -11,6 +11,7 @@ Approved work, in order. Delete a line in the commit that finishes it.
 5. Two-finger tap undoes, three-finger tap redoes (release-plan item 3).
 6. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
 7. Drawing prompts ("draw a …") for kids, built on the lessons code. Never interrupt a focused person (docs/decisions.md, Lessons).
+8. Light direction for auto-shade: the "Light from: Left / Right" setting, saved with each drawing, and Relight on the selection bar (docs/decisions.md, Drawing). The drawing's light is a new project field: older files open as Left (`project.js` `VERSION`, with a test). Help and a lesson step get their lines.
 
 Offered, not yet approved (ask the owner first):
 
@@ -18,7 +19,6 @@ Offered, not yet approved (ask the owner first):
 - Keep the last few autosaves (3 to 5), not one, so one bad autosave cannot lose the drawing. S.
 - A fuzz test: random strokes, then undo all and redo all, give the same drawing, and save then open gives the same drawing. S.
 - Type checks (JSDoc and `// @ts-check`, run by `tsc` in CI only, never in `web/`). M; it adds a CI dependency, the owner's call.
-- Light direction for auto-shade: [docs/questions.md](docs/questions.md) card 12.
 - Pressure and layers, which the brief puts later. Pen mode (pen-only drawing, palm rejection) is deferred with no date (docs/decisions.md, Drawing).
 
 ## The owner does
