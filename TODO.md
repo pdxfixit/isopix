@@ -4,15 +4,22 @@
 
 Approved work, in order. Delete a line in the commit that finishes it.
 
-1. Several drawings in the browser: a gallery of thumbnails on the Drawing sheet; New adds, never replaces; delete asks ([docs/release-plan.md](docs/release-plan.md) item 1). Show the owner the design before building it.
-2. Pen mode on tablets: once a pen is used, only the pen draws and fingers move the view (item 2).
-3. Two-finger tap undoes, three-finger tap redoes (item 3).
-
+1. Split `web/app.js` (about 2,000 lines) into modules by job: input and gestures, tools, sheets and controls, keeping `app.js` as the state and the wiring. No behavior changes; `just test`, `just look` and `just export-check` stay green. Before the gesture work below, which would land in it (owner, 2026-10-16: "yes").
+2. Several drawings in the browser: a gallery of thumbnails on the Drawing sheet; New adds, never replaces; delete asks ([docs/release-plan.md](docs/release-plan.md) item 1). Show the owner the design before building it.
+3. A starter stamp library: a small built-in set (stairs, a tree, a cube house and so on) beside the person's own stamps, scaling with the level like any stamp. Show the owner the set and where it lives before building it (owner: "yes yes yes", his favorite of the list).
+4. Rotate and flip a selection by 60° steps, exact, through the lattice group in `web/engine/symmetry.js` (owner: "rotate/flip is great").
+5. Two-finger tap undoes, three-finger tap redoes (release-plan item 3).
+6. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
+7. Drawing prompts ("draw a …") for kids, built on the lessons code. Never interrupt a focused person (docs/decisions.md, Lessons).
 
 Offered, not yet approved (ask the owner first):
 
 - The rest of [docs/release-plan.md](docs/release-plan.md) (items 4 to 10, polish and hygiene).
-- Pressure (pen) and layers, which the brief puts later.
+- Keep the last few autosaves (3 to 5), not one, so one bad autosave cannot lose the drawing. S.
+- A fuzz test: random strokes, then undo all and redo all, give the same drawing, and save then open gives the same drawing. S.
+- Type checks (JSDoc and `// @ts-check`, run by `tsc` in CI only, never in `web/`). M; it adds a CI dependency, the owner's call.
+- Light direction for auto-shade: [docs/questions.md](docs/questions.md) card 12.
+- Pressure and layers, which the brief puts later. Pen mode (pen-only drawing, palm rejection) is deferred with no date (docs/decisions.md, Drawing).
 
 ## The owner does
 

@@ -32,9 +32,8 @@ items move to [TODO.md](../TODO.md) "Agents do". Sizes: **S** under an hour,
    one drawing and New replaces it: the biggest way a new user loses work. A
    grid of thumbnails on the Drawing sheet; New adds, never replaces; delete
    asks. Recommended first.
-2. **Pen mode on tablets.** M. Once a pen touches the screen, only the pen
-   draws and fingers move the view (palm rejection). The standard on iPad and
-   Android tablets; needs a real device to tune.
+2. **Pen mode on tablets.** Deferred with no date (owner, 2026-10-16: "I
+   don't have a pen/stylus"). It needs a real pen to tune.
 3. **Two-finger tap undoes, three-finger tap redoes.** S–M. The convention
    from Procreate and most drawing apps; cheap to add on top of the gesture
    code. Needs a real phone to tune timing.
