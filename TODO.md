@@ -4,8 +4,8 @@
 
 Approved work, in order. Delete a line in the commit that finishes it.
 
-1. Several drawings in the browser: a gallery of thumbnails on the Drawing sheet; New adds, never replaces; delete asks ([docs/release-plan.md](docs/release-plan.md) item 1). Show the owner the design before building it.
-2. A starter stamp library: a small built-in set (stairs, a tree, a cube house and so on) beside the person's own stamps, scaling with the level like any stamp. Show the owner the set and where it lives before building it (owner: "yes yes yes", his favorite of the list).
+1. Several drawings in the browser, as the owner picked (docs/decisions.md, "Several drawings"; mock A on the canvas https://claude.ai/artifact/24uNJBzsFU393caXhzgbfC): the Drawings grid on the Drawing sheet, New adds, the ⋯ menu, delete asks, long names shrink then ellipsis. The autosave becomes one record per drawing plus which is open; the old single autosave moves in as the first drawing, and its copies (web/autosave.js) stay per drawing. A look view per new state.
+2. Starter stamps, as the owner picked (docs/decisions.md, "Starter stamps"; mocks on the same canvas): the Stamps drawer with Starter and Mine tabs; the eight stamps drawn on the lattice (more that fit are welcome; show the owner any additions); own stamps move from each drawing to this browser, and stamps inside older drawings and files join Mine on open, without doubles.
 3. Rotate and flip a selection by 60° steps, exact, through the lattice group in `web/engine/symmetry.js` (owner: "rotate/flip is great").
 4. Two-finger tap undoes, three-finger tap redoes (release-plan item 3).
 5. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
