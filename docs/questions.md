@@ -25,3 +25,23 @@ ambiguity: one clear question beats a wrong build.
 2. Deletes the card (keep the numbers going up; do not reuse one).
 3. Adds any work he approved to [TODO.md](../TODO.md) "Agents do".
 4. Commits all three together.
+
+## 13. Fine detail kept under a coarse cell, after a reload
+
+The new fuzz test (`test/fuzz.test.mjs`) found a gap. Coarser keeps the fine
+cells hidden underneath; painting the coarse cell makes them stale, and Undo of
+that paint makes them live again, so Finer brings the detail back. But a file
+(and the autosave, so any reload) leaves stale hidden cells out. After a reload,
+Undo of the paint, then Finer, gives four plain cells instead of the detail.
+The same steps without a reload work.
+
+- **(a) Save every hidden entry, stale ones too.** One line in `project.js`;
+  older files open as before. Files grow about 1.7% (measured on the fuzz
+  drawings). The 12 todo tests in the fuzz file pass with it.
+- **(b) Leave it.** Rare (Coarser, paint, reload, Undo, Finer, in that order),
+  and the files stay smallest.
+
+Recommendation: (a). It is the owner's rule "Keep fidelity as long as
+possible", and the cost is small.
+
+**The owner:**
