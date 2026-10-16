@@ -409,6 +409,19 @@ function wire() {
     D.eraseRegion(app.drawing, app.selection.region);
     commit();
   });
+  // Turn and Flip: what is in the selection, exactly, about its middle vertex (engine/density.js).
+  const turnSelection = (g, what) => {
+    const sel = app.selection;
+    if (!sel) return;
+    app.drawing.begin(what);
+    sel.region = D.transformRegion(app.drawing, sel.region, D.pivotOf(sel.region), g);
+    commit();
+    updateSelbar();
+    requestRender();
+    emit(g.m ? 'flip' : 'turn');
+  };
+  $('#sel-turn').addEventListener('click', () => turnSelection(D.TURN, 'turn selection'));
+  $('#sel-flip').addEventListener('click', () => turnSelection(D.FLIP, 'flip selection'));
   $('#sel-stamp').addEventListener('click', () => {
     const sel = app.selection;
     if (!sel) return;

@@ -21,7 +21,7 @@
 // Events (app.js sends them, see `emit`): stroke {tool, brush, lineStyle,
 // level, cells, skipped}, fill, undo, redo, view, fit, level {level}, color
 // {custom}, shading {on}, tool {tool}, pick {what, value}, mode {mode},
-// select, density {dir}, seldone, stamp, symmetry {mode}, name, saved {what},
+// select, density {dir}, turn, flip, seldone, stamp, symmetry {mode}, name, saved {what},
 // replay, gray {on}, sheet {id}.
 
 const ev = (type, test = () => true) => (e) => e.type === type && test(e);
@@ -140,6 +140,8 @@ export const LESSONS = [
       { id: 'crisp', show: true, target: '#sel-mode',
         say: 'Crisp keeps the color most cells have; Blend mixes them, and Snap moves a blend to the nearest palette color. Erase empties the selection.',
         covers: ['Crisp / Blend', 'Snap', 'Erase selection'] },
+      { id: 'turn', target: ['#sel-turn', '#sel-more'], say: 'Tap Turn (on a phone, under More): it turns a sixth of a turn. Flip mirrors it.',
+        done: ev('turn'), covers: ['Turn', 'Flip', 'More'] },
       { id: 'done', target: '#sel-done',
         say: { touch: 'Tap Done to finish.', mouse: 'Click Done (or press Esc) to finish.', pen: 'Tap Done to finish.' },
         done: ev('seldone'), covers: ['Done'] },

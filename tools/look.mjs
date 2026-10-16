@@ -148,6 +148,14 @@ const VIEWS = {
 };
 // The selection with ⋯ More open, and the level rail held open by a finger.
 VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
+// Turn six times gives the drawing back exactly; Flip changes it (the selection bar's More open).
+VIEWS.selturn = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')} ${nap}
+  const a = window.isopix, snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort());
+  const start = snap(); if (!a.drawing.cells.size) throw new Error('nothing drawn to turn');
+  ${q('#sel-turn')} ${nap} if (snap() === start) throw new Error('Turn changed nothing');
+  for (let i = 0; i < 5; i++) { ${q('#sel-turn')} } ${nap}
+  if (snap() !== start) throw new Error('six turns did not give the drawing back');
+  ${q('#sel-flip')} ${nap} if (snap() === start) throw new Error('Flip changed nothing');` };
 // Stamp in the brush picker opens Stamps; the eight starter tiles; House, then a tap places it.
 const TAP = (x, y) => `{ const c = document.querySelector('#stage'); const f = (t) => c.dispatchEvent(new PointerEvent(t, { clientX: ${x}, clientY: ${y}, pointerId: 7, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: t === 'pointerup' ? 0 : 1 })); f('pointerdown'); f('pointerup'); }`;
 VIEWS.stamps = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}

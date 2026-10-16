@@ -147,10 +147,16 @@
     <button id="sel-done" class="btn" aria-label="Done: clear the selection" title="Done (Esc)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
     </button>
-    <button id="sel-more" class="btn" aria-expanded="false" aria-controls="sel-extra" aria-label="More selection actions: snap, save as stamp, erase" title="More">
+    <button id="sel-more" class="btn" aria-expanded="false" aria-controls="sel-extra" aria-label="More selection actions: turn, flip, snap, save as stamp, erase" title="More">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
     </button>
     <div id="sel-extra" class="sel-extra">
+      <button id="sel-turn" class="btn" aria-label="Turn the selection a sixth of a turn clockwise" title="Turn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>
+      </button>
+      <button id="sel-flip" class="btn" aria-label="Flip the selection left to right" title="Flip">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M9 7 4 17h5Z"/><path d="m15 7 5 10h-5Z"/></svg>
+      </button>
       <button id="sel-snap" class="btn mode" aria-pressed="false" aria-label="Snap blended colors to the palette" title="Snap to palette">Snap</button>
       <button id="sel-stamp" class="btn" aria-label="Save selection as a stamp brush" title="Save as stamp">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v6l3 3v3H5v-3l3-3ZM5 20h14"/></svg>
