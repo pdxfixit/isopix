@@ -21,6 +21,8 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const MIN_TAP = 44;
 const q = (sel) => `document.querySelector(${JSON.stringify(sel)}).click();`;
 const nap = 'await new Promise((r) => setTimeout(r, 150));';
+// A mouse tap on the canvas at screen (x, y): places a stamp or a one-cell brush.
+const TAP = (x, y) => `{ const c = document.querySelector('#stage'); const f = (t) => c.dispatchEvent(new PointerEvent(t, { clientX: ${x}, clientY: ${y}, pointerId: 7, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: t === 'pointerup' ? 0 : 1 })); f('pointerdown'); f('pointerup'); }`;
 // A small drawing made through the real pointer handlers.
 const DRAW = `
   document.querySelector('[data-tool="pencil"]').click();
@@ -148,6 +150,19 @@ const VIEWS = {
 };
 // The selection with ⋯ More open, and the level rail held open by a finger.
 VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
+// Light from the right, then Relight: the right faces take the base color (the mid tone).
+VIEWS.light = { js: `const a = window.isopix; a.settings.shading = true; ${q('[data-tool="pencil"]')}
+  window.isopix.settings.brush = 'hexagon'; ${TAP('innerWidth * 0.5', 'innerHeight * 0.4')} ${nap}
+  const base = a.settings.color, right = () => [...a.drawing.cells.values()].filter((v) => v.f === 'R');
+  if (!right().length || right().some((v) => v.c === base)) throw new Error('no darker right faces to start with');
+  ${q('#settings-open')} ${nap} ${q('#light-flip')} document.querySelector('#settings').close(); ${nap}
+  if (a.drawing.light !== 'right') throw new Error('Light from did not switch');
+  ${q('[data-tool="select"]')} ${nap}
+  const c2 = document.querySelector('#stage');
+  const f = (type, x, y) => c2.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 2, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
+  f('pointerdown', innerWidth * 0.5, innerHeight * 0.4); f('pointermove', innerWidth * 0.5 + 120, innerHeight * 0.4 + 20); f('pointerup', innerWidth * 0.5 + 120, innerHeight * 0.4 + 20); ${nap}
+  ${q('#sel-more')} ${nap} ${q('#sel-relight')} ${nap}
+  if (right().some((v) => v.c !== base)) throw new Error('after Relight the right faces are not the base color');` };
 // Two fingers tapped together undo a stroke, three redo it; the view stays where it was.
 VIEWS.taps = { js: `{ ${DRAW} } const a = window.isopix, drawn = a.drawing.cells.size, view = [a.view.zoom, a.view.cx, a.view.cy].join();
   const c = document.querySelector('#stage');
@@ -171,7 +186,6 @@ VIEWS.selturn = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')} ${nap}
   if (snap() !== start) throw new Error('six turns did not give the drawing back');
   ${q('#sel-flip')} ${nap} if (snap() === start) throw new Error('Flip changed nothing');` };
 // Stamp in the brush picker opens Stamps; the eight starter tiles; House, then a tap places it.
-const TAP = (x, y) => `{ const c = document.querySelector('#stage'); const f = (t) => c.dispatchEvent(new PointerEvent(t, { clientX: ${x}, clientY: ${y}, pointerId: 7, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: t === 'pointerup' ? 0 : 1 })); f('pointerdown'); f('pointerup'); }`;
 VIEWS.stamps = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
   if (!document.querySelector('#stamps').open) throw new Error('Stamp did not open Stamps');
   const tiles = [...document.querySelectorAll('#stamps-grid .stamp-tile')];

@@ -421,6 +421,15 @@ function wire() {
     emit(g.m ? 'flip' : 'turn');
   };
   $('#sel-turn').addEventListener('click', () => turnSelection(D.TURN, 'turn selection'));
+  $('#sel-relight').addEventListener('click', () => {
+    const sel = app.selection;
+    if (!sel) return;
+    app.drawing.begin('relight');
+    const n = D.relightRegion(app.drawing, sel.region, app.drawing.light);
+    commit(); requestRender();
+    toast(n ? `Relit from the ${app.drawing.light}` : `Already lit from the ${app.drawing.light}`);
+    emit('relight');
+  });
   $('#sel-flip').addEventListener('click', () => turnSelection(D.FLIP, 'flip selection'));
   $('#sel-stamp').addEventListener('click', () => {
     const sel = app.selection;

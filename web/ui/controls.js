@@ -165,7 +165,7 @@ export function buildPalette() {
     b.setAttribute('aria-checked', String(c === s.color));
     b.setAttribute('aria-label', inkName(app.drawing.paper, c) || `Custom color ${c}`);
     b.style.setProperty('--c', c);
-    if (s.shading) b.innerHTML = `<span class="tones" aria-hidden="true"><i style="background:${shade(c, 'T')}"></i><i style="background:${shade(c, 'L')}"></i><i style="background:${shade(c, 'R')}"></i></span>`;
+    if (s.shading) b.innerHTML = `<span class="tones" aria-hidden="true"><i style="background:${shade(c, 'T', app.drawing.light)}"></i><i style="background:${shade(c, 'L', app.drawing.light)}"></i><i style="background:${shade(c, 'R', app.drawing.light)}"></i></span>`;
     b.addEventListener('click', () => { set('color', c); buildPalette(); pickedColor(); emit('color', { custom: false }); });
     box.append(b);
   }

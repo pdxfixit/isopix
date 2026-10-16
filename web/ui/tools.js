@@ -84,11 +84,17 @@ export function closePopover(answer = 'dismissed') {
 }
 
 // ---------- painting ----------
+// An auto-shaded paint: the tone for this face with the drawing's light side,
+// the face, the side, and the base color (so Relight is exact; engine/color.js).
+export function shaded(base, f) {
+  const light = app.drawing.light;
+  return { c: shade(base, f, light), f, b: base, s: light === 'right' ? 'r' : undefined };
+}
 function specFor(it, erase) {
   if (erase) return null;
   if (it.c) return { c: it.c, f: it.f };
   const base = app.settings.color;
-  if (app.settings.shading && it.f) return { c: shade(base, it.f), f: it.f };
+  if (app.settings.shading && it.f) return shaded(base, it.f);
   return { c: base };
 }
 export function applyCells(items, erase) {
@@ -161,7 +167,7 @@ export function doFill(x, y) {
     if (r.level < app.level) coarser = true;
     for (const leaf of r.leaves) {
       const f = leaf.kind === 'paint' ? leaf.v.f : undefined;
-      const spec = app.settings.shading && f ? { c: shade(app.settings.color, f), f } : { c: app.settings.color };
+      const spec = app.settings.shading && f ? shaded(app.settings.color, f) : { c: app.settings.color };
       app.drawing.paint(leaf.cell, spec, 'replace');
     }
   }
