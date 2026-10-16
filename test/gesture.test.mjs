@@ -22,3 +22,15 @@ test('one finger draws, except in Move mode, after a pinch, or with a mouse pan 
   assert.equal(oneFinger({ pointerType: 'mouse', spaceHeld: true }), 'pan', 'Space + drag');
   assert.equal(oneFinger({ pointerType: 'mouse', button: 3 }), 'ignore', 'back button');
 });
+
+test('two fingers tapped together undo, three redo; anything slower, longer or moved is not a tap', async () => {
+  const { multiTap, TAP_MS, TAP_PX, LAND_MS } = await import('../web/engine/gesture.js');
+  const tap = { ms: 120, travelPx: 3, landMs: 40 };
+  assert.equal(multiTap({ fingers: 2, ...tap }), 'undo');
+  assert.equal(multiTap({ fingers: 3, ...tap }), 'redo');
+  assert.equal(multiTap({ fingers: 1, ...tap }), null, 'one finger draws');
+  assert.equal(multiTap({ fingers: 4, ...tap }), null);
+  assert.equal(multiTap({ fingers: 2, ...tap, ms: TAP_MS + 1 }), null, 'a hold is a pan or pinch');
+  assert.equal(multiTap({ fingers: 2, ...tap, travelPx: TAP_PX + 1 }), null, 'a moved finger is a pinch');
+  assert.equal(multiTap({ fingers: 2, ...tap, landMs: LAND_MS + 1 }), null, 'a finger that landed late is not the same tap');
+});

@@ -148,6 +148,20 @@ const VIEWS = {
 };
 // The selection with ⋯ More open, and the level rail held open by a finger.
 VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
+// Two fingers tapped together undo a stroke, three redo it; the view stays where it was.
+VIEWS.taps = { js: `{ ${DRAW} } const a = window.isopix, drawn = a.drawing.cells.size, view = [a.view.zoom, a.view.cx, a.view.cy].join();
+  const c = document.querySelector('#stage');
+  const touch = (t, id, x, y) => c.dispatchEvent(new PointerEvent(t, { clientX: x, clientY: y, pointerId: id, pointerType: 'touch', isPrimary: id === 11, bubbles: true, button: 0, buttons: t === 'pointerup' ? 0 : 1 }));
+  const tap = async (n) => { for (let i = 0; i < n; i++) touch('pointerdown', 11 + i, 150 + i * 60, 300); await new Promise((r) => setTimeout(r, 60));
+    for (let i = 0; i < n; i++) touch('pointerup', 11 + i, 150 + i * 60 + 2, 301); await new Promise((r) => setTimeout(r, 80)); };
+  if (!drawn) throw new Error('nothing drawn');
+  await tap(2); if (a.drawing.cells.size !== 0) throw new Error('a two-finger tap did not undo: ' + a.drawing.cells.size + ' cells');
+  if ([a.view.zoom, a.view.cx, a.view.cy].join() !== view) throw new Error('the tap moved the view');
+  await tap(3); if (a.drawing.cells.size !== drawn) throw new Error('a three-finger tap did not redo');
+  // A slow two-finger hold is a pinch or pan, not a tap.
+  touch('pointerdown', 21, 150, 300); touch('pointerdown', 22, 210, 300); await new Promise((r) => setTimeout(r, 450));
+  touch('pointerup', 21, 150, 300); touch('pointerup', 22, 210, 300);
+  if (a.drawing.cells.size !== drawn) throw new Error('a slow two-finger hold undid');` };
 // Turn six times gives the drawing back exactly; Flip changes it (the selection bar's More open).
 VIEWS.selturn = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')} ${nap}
   const a = window.isopix, snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort());
