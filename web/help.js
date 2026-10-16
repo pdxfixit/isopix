@@ -94,6 +94,8 @@ export const SECTIONS = [
       { name: 'Save picture', from: '#file-png', says: 'A plain PNG picture of the drawing, to share or print. Nothing else is inside it.' },
       { name: 'Sharp picture (SVG)', from: '#file-svg', text: 'SVG', says: 'A picture that stays sharp at any size, for printing big or for design apps.' },
       { name: 'Watch it being drawn', from: '#file-replay', text: '▶', says: 'Plays the drawing back from the start, like a time-lapse. Tap Stop, or the paper, to end it.' },
+      { name: 'Save video', from: '#replay-video', says: 'When Watch it being drawn ends: makes the time-lapse into a video (it plays through once, a few seconds), then a second tap saves it, or opens the share sheet on a phone. MP4 or WebM, whichever this browser makes.' },
+      { name: 'Save it as a video', from: '#file-video', says: 'The same video, without watching it first. Not every browser can make one; where it cannot, this is not shown.' },
     ],
   },
   {

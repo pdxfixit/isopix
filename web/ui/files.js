@@ -69,7 +69,7 @@ function fileSaved(r, via) {
   updateFileUI();
 }
 // What a save says: where it went, or that nothing was saved.
-function sayResult(r, what) {
+export function sayResult(r, what) {
   const how = r.cancelled ? 'cancelled' : r.failed ? 'failed' : r.how || (r.handle ? 'file' : 'download');
   app.events?.track('isopix.save', { what: what.replace(/ /g, '-'), how });
   if (r.cancelled) toast('Not saved');

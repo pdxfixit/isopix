@@ -194,8 +194,8 @@ export const LESSONS = [
       { id: 'share', show: true, setup: { open: 'drawing' }, target: '#file-png',
         say: 'To share or print, use Save picture: it holds just the picture. Sharp picture (SVG) stays sharp at any size.',
         covers: ['Save picture', 'Sharp picture (SVG)'] },
-      { id: 'watch', setup: { open: 'drawing' }, target: '#file-replay', say: 'Tap Watch it being drawn.',
-        done: ev('replay'), covers: ['Watch it being drawn'] },
+      { id: 'watch', setup: { open: 'drawing' }, target: '#file-replay', say: 'Tap Watch it being drawn. When it ends, Save video makes it a video to share.',
+        done: ev('replay'), covers: ['Watch it being drawn', 'Save video', 'Save it as a video'] },
     ],
   },
   {

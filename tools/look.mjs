@@ -158,6 +158,21 @@ const VIEWS = {
     const f = (type, x, y) => c2.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 2, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
     f('pointerdown', innerWidth * 0.5, innerHeight * 0.4); f('pointermove', innerWidth * 0.5 + 90, innerHeight * 0.4 + 20); f('pointerup', innerWidth * 0.5 + 90, innerHeight * 0.4 + 20);` },
 };
+// When the replay ends: Done playing · Watch again · Save video · ✕, wrapping rather than running off a phone.
+VIEWS['replay-end'] = { js: `${DRAW} const a = window.isopix; ${q('#drawing-open')} ${q('#file-replay')}
+  for (let i = 0; i < 100 && document.querySelector('#replay-bar').dataset.mode !== 'ended'; i++) await new Promise((r) => setTimeout(r, 100));
+  const bar = document.querySelector('#replay-bar');
+  if (bar.dataset.mode !== 'ended') throw new Error('the replay did not end in Done playing: ' + bar.dataset.mode);
+  for (const id of ['#replay-again', '#replay-video', '#replay-close']) if (document.querySelector(id).hidden) throw new Error(id + ' is not shown');
+  const r = bar.getBoundingClientRect(); if (r.left < 0 || r.right > innerWidth) throw new Error('the bar runs off the screen: ' + Math.round(r.left) + '..' + Math.round(r.right));` };
+// Save video makes the time-lapse (MediaRecorder), then offers Save video.
+VIEWS.video = { js: `${DRAW} ${q('#drawing-open')} ${nap}
+  if (document.querySelector('#file-video').hidden) throw new Error('Save it as a video is not on the sheet');
+  ${q('#file-video')} ${nap}
+  const bar = document.querySelector('#replay-bar');
+  if (bar.dataset.mode !== 'making') throw new Error('Save it as a video did not start making it: ' + bar.dataset.mode);
+  for (let i = 0; i < 150 && bar.dataset.mode === 'making'; i++) await new Promise((r) => setTimeout(r, 100));
+  if (bar.dataset.mode !== 'ready') throw new Error('the video did not become ready: ' + bar.dataset.mode + ' ' + document.querySelector('#replay-say').textContent);` };
 // The selection with ⋯ More open, and the level rail held open by a finger.
 VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
 // Light from the right, then Relight: the right faces take the base color (the mid tone).
