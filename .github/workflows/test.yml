@@ -31,6 +31,8 @@ jobs:
         run: just export-check --out shots/export
       - name: Moving house (just move-check)
         run: just move-check
+      - name: Autosave copies (just autosave-check)
+        run: just autosave-check
       - name: Width check (just look)
         run: just look --all --light --out shots/look
       - name: Upload screenshots

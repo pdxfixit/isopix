@@ -45,6 +45,10 @@ look *args:
 version *args:
     @python3 tools/bump_version.py "$@"
 
+# 🔎 Autosave copies, end to end in headless Chrome: a copy is taken, and a damaged autosave opens it (web/autosave.js)
+autosave-check:
+    @node tools/autosave_check.mjs
+
 # 🚚 Moving house to isopix.app, end to end in headless Chrome: the old addresses carry a drawing over (web/move.js)
 move-check:
     @node tools/move_check.mjs

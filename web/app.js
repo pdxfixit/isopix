@@ -10,7 +10,7 @@ import { Renderer } from './render.js';
 import * as store from './storage.js';
 import { initUpdate, buildStamp, aboutVersion, versionURL } from './update.js';
 import { keyFor } from './keys.js';
-import { unsavedToFile } from './sheets.js';
+import { unsavedToFile, ago } from './sheets.js';
 import { paperOf, matchInk } from './engine/paper.js';
 import { readMoveHash } from './move.js';
 import { welcomeDue, initWelcome } from './welcome.js';
@@ -18,6 +18,7 @@ import { initTour } from './tour.js';
 import { deviceOf, doneLessons } from './lessons.js';
 import { sillyName } from './sillynames.js';
 import { initEvents, cellsBucket } from './events.js';
+import * as AS from './autosave.js';
 import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLock, updateZoomUI } from './ui/controls.js';
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
@@ -91,7 +92,7 @@ export const app = {
   file: { name: null, at: null, via: null, dirty: false, handle: null }, // the file this drawing was last saved to or opened from
   strokeSkips: new Map(), // cells Keep fine detail skipped in the stroke under way
   skipFlash: null,        // skipped cells hatched for a moment after a stroke
-  session: { told: false, storageTold: false }, // the skip and storage notices show once a session
+  session: { told: false, storageTold: false, copyAt: 0 }, // the skip and storage notices show once a session
 };
 window.isopix = app; // for debugging and the look tool
 
@@ -287,15 +288,26 @@ async function saveNow() {
   if (!savePending) return;
   savePending = false;
   if (app.practice) return; // the person's own drawing stays as it was in IndexedDB
-  if (await store.idbSet('autosave', projectData())) {
+  const data = projectData();
+  if (await store.idbSet('autosave', data)) {
     app.lastSaved = Date.now();
     if ($('#drawing').open) updateSavedLine();
-    if (hasContent()) store.keepStorage();
+    if (hasContent()) { store.keepStorage(); await takeCopy(data); }
   } else if (!app.session.storageTold && hasContent()) {
     // A private window, full storage or blocked site data: say so once, with a way out.
     app.session.storageTold = true;
     $('#save-note').hidden = false;
   }
+}
+
+// Every 5 minutes or so, a copy of a drawing with something in it (web/autosave.js):
+// an empty drawing (after New) never pushes a real one out. Best effort, after
+// the autosave itself, so a full disk never costs the autosave.
+async function takeCopy(data) {
+  const now = Date.now();
+  if (!AS.copyDue(app.session.copyAt, now)) return;
+  app.session.copyAt = now;
+  await store.idbSet('autosave-copies', AS.withCopy(await store.idbGet('autosave-copies'), data, now));
 }
 
 // ---------- update notice ----------
@@ -454,9 +466,12 @@ async function boot() {
   resize();
   computeLevel(true);
   const saved = await store.idbGet('autosave');
-  if (saved) {
-    try { loadProjectObject(saved); if (Number.isFinite(saved.savedAt)) app.lastSaved = saved.savedAt; } catch (err) { toast(`The saved drawing could not load: ${err.message}`); }
-  }
+  const copies = await store.idbGet('autosave-copies');
+  app.session.copyAt = AS.copiesOf(copies)[0]?.savedAt || 0;
+  const opened = AS.openFirst(saved, copies, loadProjectObject);
+  if (opened.savedAt) app.lastSaved = opened.savedAt;
+  if (opened.from === 'copy') toast(`The last autosave could not open, so Isopix opened the copy kept ${ago(Date.now() - opened.savedAt)}.`);
+  else if (opened.error) toast(`The saved drawing could not load: ${opened.error.message}`);
   if (!saved && !arriving) setName(sillyName()); // the very first drawing here gets a silly name too
   const file = await store.idbGet('file');
   if (file && typeof file === 'object') app.file = { name: String(file.name || ''), at: Number(file.at) || null, via: file.via === 'open' ? 'open' : 'save', dirty: !!file.dirty, handle: file.handle || null };

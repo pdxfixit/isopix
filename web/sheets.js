@@ -22,7 +22,7 @@ export function fileBase(name) {
 }
 
 // "a moment ago", "3 minutes ago", "2 h ago".
-function ago(ms) {
+export function ago(ms) {
   const min = Math.floor(ms / 60000);
   return ms < 60000 ? 'a moment ago' : min < 60 ? `${min} ${min === 1 ? 'minute' : 'minutes'} ago` : `${Math.floor(min / 60)} h ago`;
 }
