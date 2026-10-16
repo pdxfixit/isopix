@@ -89,12 +89,11 @@ const other = await evaluate(send, `(async () => { const m = await import('./mov
 await go(`${home}/${other.slice(other.indexOf('#'))}`);
 const s4 = await evaluate(send, state);
 check(s4.cells === mine && s4.note && s4.offer, `its own drawing stays (${s4.cells} cells) and the arrival is offered`);
+const mineId = await evaluate(send, 'window.isopix.drawingId');
 await evaluate(send, `document.querySelector('#move-open').click()`);
-await sleep(300);
-const asked = await evaluate(send, `!document.querySelector('#new-confirm').hidden`);
-await evaluate(send, `document.querySelector('#new-anyway').click()`);
-await sleep(500);
-check(asked && (await evaluate(send, 'window.isopix.drawing.cells.size')) === 1, 'Open it asks first, then opens the arrival');
+await sleep(800);
+const s4b = await evaluate(send, `({ cells: window.isopix.drawing.cells.size, id: window.isopix.drawingId, kept: window.isopix.gallery.some((e) => e.id === ${JSON.stringify('MINE')}) })`.replace('"MINE"', JSON.stringify(mineId)));
+check(s4b.cells === 1 && s4b.id !== mineId && s4b.kept, 'Open it opens the arrival as another drawing; its own stays in Drawings');
 // 5. The old Isogrid address: Isogrid's database and settings names, move.js cross-origin.
 await go(`http://oldgrid.test:${oport}/`, 800);
 await evaluate(send, `(async () => {

@@ -53,11 +53,6 @@ export const unsavedToFile = (file, hasContent) => !!hasContent && (!file || !fi
 // nag (Owner: "helpful only if it's been created first. otherwise it's premature").
 export const saveDot = (file, hasContent) => !!hasContent && !!file && !!file.at && !!file.dirty;
 
-// What New and Open do: go ahead when there is nothing to lose (nothing
-// drawn, or every change already in a file), else ask.
-export function newChoices(hasContent, unsaved = true) {
-  return hasContent && unsaved ? ['save-first', 'new-anyway', 'cancel'] : ['new-now'];
-}
 
 // ---------- Settings sections ----------
 export const SECTION_IDS = ['set-drawing', 'set-grid', 'set-selection', 'set-learning'];

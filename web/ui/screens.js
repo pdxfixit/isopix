@@ -1,17 +1,17 @@
-// The sheets: Help, Settings and the Drawing sheet, and New / Open with the
-// ask-first flow (the pure rules are in web/sheets.js).
+// The sheets: Help, Settings and the Drawing sheet (its Drawings grid is
+// web/ui/gallery.js); the pure rules are in web/sheets.js.
 
-import { Drawing } from '../engine/model.js';
 import * as store from '../storage.js';
 import { reportURL, SUPPORT } from '../update.js';
 import { helpHTML, helpIds } from '../help.js';
-import { cleanName, savedAgo, fileLine, unsavedToFile, newChoices, chipText, SECTION_IDS, rememberedOpen, startsOpen, rememberOpen } from '../sheets.js';
+import { cleanName, savedAgo, fileLine, unsavedToFile, chipText, SECTION_IDS, rememberedOpen, startsOpen, rememberOpen } from '../sheets.js';
 import { paperName } from '../engine/paper.js';
 import { sillyName } from '../sillynames.js';
-import { $, app, emit, flipPaper, newDrawing, readDone, requestRender, scheduleSave, set, startLesson, startReplay, toast } from '../app.js';
+import { $, app, emit, flipPaper, readDone, requestRender, scheduleSave, set, startLesson, startReplay, toast } from '../app.js';
 import { buildPalette } from './controls.js';
-import { afterChange, updateModeChip, updateSelbar } from './tools.js';
-import { openMoved, openProject, openTrace, rememberFile, saveFile, savePicture, saveVector, savesPng, updateFileUI } from './files.js';
+import { updateModeChip, updateSelbar } from './tools.js';
+import { galleryNew, renderGallery, wireGallery } from './gallery.js';
+import { openMoved, openProject, openTrace, saveFile, savePicture, saveVector, savesPng, updateFileUI } from './files.js';
 
 // ---------- help ----------
 export function openHelp() {
@@ -114,12 +114,13 @@ export function syncMenu() {
   updateChips();
 }
 
-// The Drawing sheet: the name, New, Open; Your drawing (Save drawing, Save a copy);
-// Share a picture (Save picture, Sharp picture); Watch it being drawn.
+// The Drawing sheet: Drawings (this browser's drawings, New first; web/ui/gallery.js),
+// then This drawing: the name; Save drawing, Save a copy; Save picture, Sharp
+// picture; Open a file; Watch it being drawn.
 export function openDrawing() {
   $('#drawing-name').value = app.drawingName;
-  $('#new-confirm').hidden = true;
   updateSavedLine();
+  renderGallery();
   openSheet('#drawing');
 }
 export function updateSavedLine() {
@@ -133,17 +134,6 @@ export function setName(name) {
 }
 export const hasContent = () => app.drawing.cells.size > 0 || app.drawing.edges.size > 0 || app.drawing.undoStack.length > 0;
 
-function startNew() {
-  leaveDrawing('replaced');
-  app.drawing = newDrawing(); app.selection = null; app.lastDensity = null; app.trace = null;
-  setName(sillyName(Math.random, app.drawingName));
-  app.file = { name: null, at: null, via: null, dirty: false, handle: null };
-  rememberFile();
-  buildPalette(); syncMenu(); afterChange({ changed: false }); updateFileUI();
-  if ($('#drawing').open) $('#drawing').close();
-  startDrawing(false);
-  toast('New drawing');
-}
 // content.start, finish and abandon for a drawing (events.js): it starts at
 // New, Open or the page load, finishes at each Save, and is abandoned when
 // something replaces it, or the page closes, with work not in a file.
@@ -158,35 +148,6 @@ export function leaveDrawing(why) {
   if (unsavedToFile(app.file, hasContent())) app.events?.track('content.abandon', { kind: 'drawing', ms: Date.now() - drawingRun.at, why });
   drawingRun = null;
 }
-// New and Open replace this drawing, so they ask first when there is
-// something not yet in a file (sheets.js newChoices). `pending` is which.
-let pending = 'new';
-const CONFIRM = {
-  new: { ask: 'Start a new drawing? This browser keeps one drawing, so New replaces this one. Save drawing first to keep it in a file.', go: 'New anyway', run: () => startNew() },
-  open: { ask: 'Open a drawing? It replaces this one in this browser. Save drawing first to keep this one in a file.', go: 'Open anyway', run: () => openProject() },
-  moved: { ask: 'Open the drawing from Isopix\'s old address? It replaces this one in this browser. Save drawing first to keep this one in a file.', go: 'Open it', run: () => openMoved() },
-};
-export function askFirst(what) {
-  if (newChoices(hasContent(), unsavedToFile(app.file, true))[0] === 'new-now') return CONFIRM[what].run();
-  pending = what;
-  if (!$('#drawing').open) openDrawing();
-  $('#new-confirm-text').textContent = CONFIRM[what].ask;
-  $('#new-anyway').textContent = CONFIRM[what].go;
-  $('#new-save-first').hidden = false;
-  $('#new-confirm').hidden = false;
-  $('#new-save-first').focus();
-}
-// Save first, then go on. Opening needs a fresh tap (browsers only show the
-// file chooser right after one), so after the save the Open button waits.
-async function saveThenGo() {
-  if (!(await saveFile())) return;
-  if (pending === 'new') return startNew();
-  $('#new-confirm-text').textContent = 'Saved. Now open a file?';
-  $('#new-save-first').hidden = true;
-  $('#new-anyway').textContent = 'Open';
-  $('#new-anyway').focus();
-}
-
 export function wireMenu() {
   $('#settings-open').addEventListener('click', openSettings);
   $('#drawing-open').addEventListener('click', openDrawing);
@@ -231,21 +192,19 @@ export function wireMenu() {
   $('#drawing-name').addEventListener('input', (e) => { setName(e.target.value); scheduleSave(); emit('name'); });
   $('#name-roll').addEventListener('click', () => { setName(sillyName(Math.random, app.drawingName)); $('#drawing-name').value = app.drawingName; scheduleSave(); emit('name'); });
   $('#drawing-name').addEventListener('change', (e) => { e.target.value = app.drawingName; });
-  $('#file-new').addEventListener('click', () => askFirst('new'));
-  $('#top-new').addEventListener('click', () => askFirst('new'));
-  $('#file-open').addEventListener('click', () => askFirst('open'));
-  $('#top-open').addEventListener('click', () => askFirst('open'));
+  // New and Open add a drawing to this browser's drawings, never in place of one.
+  $('#top-new').addEventListener('click', galleryNew);
+  $('#file-open').addEventListener('click', openProject);
+  $('#top-open').addEventListener('click', openProject);
   $('#file-save').addEventListener('click', () => saveFile());
   $('#top-save').addEventListener('click', () => saveFile());
   $('#file-saveas').addEventListener('click', () => saveFile({ asNew: true }));
   $('#file-png').addEventListener('click', savePicture);
   $('#file-svg').addEventListener('click', saveVector);
   $('#file-replay').addEventListener('click', () => { $('#drawing').close(); startReplay(); });
-  $('#new-save-first').addEventListener('click', saveThenGo);
-  $('#new-anyway').addEventListener('click', () => { $('#new-confirm').hidden = true; CONFIRM[pending].run(); });
-  $('#new-cancel').addEventListener('click', () => { $('#new-confirm').hidden = true; $(pending === 'open' ? '#file-open' : '#file-new').focus(); });
   $('#save-note-save').addEventListener('click', async () => { if (await saveFile()) $('#save-note').hidden = true; });
   $('#save-note-close').addEventListener('click', () => { $('#save-note').hidden = true; });
-  $('#move-open').addEventListener('click', () => askFirst('moved'));
+  $('#move-open').addEventListener('click', openMoved);
+  wireGallery();
   $('#move-close').addEventListener('click', () => { $('#move-note').hidden = true; app.pendingMove = null; });
 }

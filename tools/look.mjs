@@ -28,6 +28,20 @@ const DRAW = `
   const fire = (type, x, y, id = 1) => c.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: id, pointerType: 'touch', isPrimary: true, bubbles: true, button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
   const w = innerWidth, h = innerHeight;
   fire('pointerdown', w * 0.3, h * 0.35); for (let i = 1; i <= 10; i++) fire('pointermove', w * (0.3 + i * 0.04), h * (0.35 + i * 0.01)); fire('pointerup', w * 0.7, h * 0.45);`;
+const SETTLE = 'await new Promise((r) => setTimeout(r, 1100));'; // past the 800 ms autosave
+// Three drawings made with the real New button; the last, open one has a long name.
+const GALLERY = `{ ${DRAW} } ${SETTLE} ${q('#drawing-open')} ${q('#file-new')} ${SETTLE}
+  { ${DRAW} } ${SETTLE} ${q('#drawing-open')} ${q('#file-new')} ${SETTLE} { ${DRAW} }
+  const nm = document.querySelector('#drawing-name'); nm.value = 'Wobbly Woolly Whirligig Watermelon Wonderland'; nm.dispatchEvent(new Event('input', { bubbles: true }));
+  ${SETTLE} ${q('#drawing-open')} await new Promise((r) => setTimeout(r, 300));
+  const cards = document.querySelectorAll('#gallery .drawing-card');
+  if (cards.length !== 3) throw new Error('Drawings shows ' + cards.length + ' cards, not 3');
+  if (!cards[0].classList.contains('current')) throw new Error('the open drawing is not first and outlined');
+  const long = cards[0].querySelector('.card-name'), px = parseFloat(long.style.fontSize);
+  if (!(px >= 12 && px <= 15)) throw new Error('a long name is ' + px + ' px');
+  if (long.scrollWidth > long.clientWidth && getComputedStyle(long).textOverflow !== 'ellipsis') throw new Error('a long name neither fits nor ends in an ellipsis');
+  if ([...cards].some((c) => !c.querySelector('img'))) throw new Error('a drawing has no thumbnail');
+  for (const n of document.querySelectorAll('#gallery .card-name')) if (n.scrollWidth > n.clientWidth && parseFloat(n.style.fontSize) > 12) throw new Error(n.textContent + ' ends in an ellipsis at ' + n.style.fontSize + ' before shrinking to 12 px');`;
 const VIEWS = {
   // A long drawing name: the widest the top bar's Drawing button gets, so the
   // top-bar clearance check in MEASURE sees the worst case at every width.
@@ -83,9 +97,41 @@ const VIEWS = {
     if (document.activeElement !== b) throw new Error('focus did not return to Settings, it is on ' + (document.activeElement.id || document.activeElement.tagName));
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', bubbles: true }));
     if (!document.querySelector('#drawing').open) throw new Error('D did not open the Drawing sheet');` },
-  // New with something drawn: the three choices.
-  'drawing-new': { js: `${DRAW} ${q('#drawing-open')} ${q('#file-new')}
-    if (document.querySelector('#new-confirm').hidden) throw new Error('New did not ask first');` },
+  // New with something drawn adds a drawing: the old one stays in Drawings (web/ui/gallery.js).
+  'drawing-new': { fresh: true, js: `${DRAW} ${SETTLE} const a = window.isopix, first = a.drawingId;
+    ${q('#drawing-open')} ${q('#file-new')} ${SETTLE}
+    if (a.drawing.cells.size || a.drawingId === first) throw new Error('New did not start an empty drawing');
+    if (!a.gallery.some((e) => e.id === first)) throw new Error('New dropped the drawing it left');
+    ${q('#drawing-open')} ${nap} const n = document.querySelectorAll('#gallery .drawing-card').length;
+    if (n !== 2) throw new Error('Drawings shows ' + n + ' cards, not 2');` },
+  // Three drawings, one with a long name: it shrinks to 12 px at most, then ends in an ellipsis.
+  gallery: { fresh: true, js: GALLERY },
+  'gallery-menu': { fresh: true, js: `${GALLERY} document.querySelectorAll('#gallery .card-more')[1].click(); ${nap}
+    if (document.querySelector('#card-menu').hidden) throw new Error('the ⋯ menu did not open');` },
+  // Tap a drawing to open it; Make a copy adds one; Rename names another drawing without opening it.
+  'gallery-ops': { fresh: true, js: `${GALLERY} const a = window.isopix, act = async (i, what) => { document.querySelectorAll('#gallery .card-more')[i].click(); ${nap}
+      document.querySelector('#card-menu [data-act="' + what + '"]').click(); ${nap} };
+    const second = document.querySelectorAll('#gallery .drawing-card')[1].dataset.id, secondName = a.gallery.find((e) => e.id === second).name;
+    document.querySelectorAll('#gallery .card-open')[1].click(); ${SETTLE}
+    if (a.drawingId !== second || a.drawingName !== secondName || !a.drawing.cells.size) throw new Error('tapping ' + secondName + ' opened ' + a.drawingName);
+    ${q('#drawing-open')} ${nap} await act(0, 'copy'); ${SETTLE}
+    if (document.querySelectorAll('#gallery .drawing-card').length !== 4) throw new Error('Make a copy did not add a drawing');
+    if (!a.gallery.some((e) => e.name === secondName + ' copy')) throw new Error('the copy is not named ' + secondName + ' copy');
+    const other = [...document.querySelectorAll('#gallery .drawing-card')].findIndex((c) => !c.classList.contains('current'));
+    const otherId = document.querySelectorAll('#gallery .drawing-card')[other].dataset.id;
+    await act(other, 'rename'); document.querySelector('#rename-name').value = 'Renamed Rhino';
+    document.querySelector('#rename').close('ok'); ${SETTLE}
+    if (a.gallery.find((e) => e.id === otherId).name !== 'Renamed Rhino' || a.drawingId !== second) throw new Error('Rename did not rename the other drawing in place');` },
+  // Delete asks first; deleting one leaves two; the ask on a drawing in no file says it cannot come back.
+  'gallery-delete': { fresh: true, js: `${GALLERY} const del = async (i) => { document.querySelectorAll('#gallery .card-more')[i].click(); ${nap}
+      document.querySelector('#card-menu [data-act="delete"]').click(); ${nap} };
+    await del(2); const d = document.querySelector('#delete-confirm');
+    if (!d.open) throw new Error('Delete did not ask first');
+    d.close('delete'); ${SETTLE}
+    const n = document.querySelectorAll('#gallery .drawing-card').length;
+    if (n !== 2) throw new Error(n + ' cards after a delete, not 2');
+    await del(1);
+    if (!/cannot come back/.test(document.querySelector('#delete-says').textContent)) throw new Error('the ask does not say it cannot come back');` },
   brushes: { js: q('[data-tool="pencil"]') + q('#options') },
   select: { js: `${DRAW} ${q('[data-tool="select"]')} ${nap}
     const c2 = document.querySelector('#stage');
@@ -180,11 +226,12 @@ VIEWS['lesson-end'] = { js: `${DRAW} ${STROKE} ${STEP} const a = window.isopix; 
   btn('Back to my drawing').click(); await new Promise((r) => setTimeout(r, 150));
   if (a.drawing.cells.size !== mine || a.drawingName !== name) throw new Error('Back did not bring the drawing back: ' + a.drawing.cells.size + ' cells, ' + a.drawingName);
   if (a.tour.active()) throw new Error('the lesson is still on');
+  // Keep it adds the practice drawing as another drawing; theirs stays in Drawings, as it was.
+  const mineId = a.drawingId;
   await run(); const practice = a.drawing.cells.size;
-  btn('Keep it').click(); await new Promise((r) => setTimeout(r, 100));
-  if (!btn('Save mine first') || !btn('Replace it')) throw new Error('Keep it did not ask first: ' + say());
-  btn('Replace it').click(); await new Promise((r) => setTimeout(r, 150));
-  if (a.drawing.cells.size !== practice || a.drawingName === 'Practice' || a.tour.active()) throw new Error('Keep it did not keep the practice drawing');` };
+  btn('Keep it').click(); await new Promise((r) => setTimeout(r, 600));
+  if (a.drawing.cells.size !== practice || a.drawingName === 'Practice' || a.tour.active()) throw new Error('Keep it did not keep the practice drawing');
+  if (a.drawingId === mineId || !a.gallery.some((e) => e.id === mineId && e.name === name)) throw new Error('Keep it took the place of their drawing');` };
 // Help lists the lessons first, each folded with its step count and Start inside.
 VIEWS['help-lessons'] = { js: `${q('#settings-open')} ${nap} ${q('#settings-help')} ${nap}
   const head = document.querySelector('#help-body .set-head[aria-controls="lesson-basics"]');
@@ -345,6 +392,8 @@ const MEASURE = (width) => `(() => {
   const pin = (el) => (getComputedStyle(el).position === 'sticky' ? el : up(el, (cs) => cs.position === 'sticky'));
   const scroller = (el) => up(el, (cs) => /auto|scroll/.test(cs.overflowX + cs.overflowY));
   const pinnedOver = (a, b) => !!pin(a) !== !!pin(b) && scroller(a) && scroller(a) === scroller(b);
+  // An open menu (the ⋯ on a drawing, role="menu") floats over the sheet under it.
+  const menuOver = (a, b) => !!a.closest('[role="menu"]') !== !!b.closest('[role="menu"]');
   // Two SVG shapes (the welcome cube's triangles) can share a box and not
   // touch: they overlap only if one sampled point of the shared box lies in both.
   const inFill = (el, px, py) => { const m = el.getScreenCTM(); if (!m) return false;
@@ -362,7 +411,7 @@ const MEASURE = (width) => `(() => {
   const overlaps = [];
   for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
     const [a, ra] = boxes[i], [b, rb] = boxes[j];
-    if (a.contains(b) || b.contains(a) || pinnedOver(a, b)) continue;
+    if (a.contains(b) || b.contains(a) || pinnedOver(a, b) || menuOver(a, b)) continue;
     const x = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
     const y = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
     if (x > 2 && y > 2 && !shapesApart(a, b, ra, rb)) overlaps.push(name(a) + ' ↔ ' + name(b) + ' (' + Math.round(Math.min(x, y)) + 'px)');

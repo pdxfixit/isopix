@@ -4,13 +4,12 @@
 
 Approved work, in order. Delete a line in the commit that finishes it.
 
-1. Several drawings in the browser, as the owner picked (docs/decisions.md, "Several drawings"; mock A on the canvas https://claude.ai/artifact/24uNJBzsFU393caXhzgbfC): the Drawings grid on the Drawing sheet, New adds, the ⋯ menu, delete asks, long names shrink then ellipsis. The autosave becomes one record per drawing plus which is open; the old single autosave moves in as the first drawing, and its copies (web/autosave.js) stay per drawing. A look view per new state.
-2. Starter stamps, as the owner picked (docs/decisions.md, "Starter stamps"; mocks on the same canvas): the Stamps drawer with Starter and Mine tabs; the eight stamps drawn on the lattice (more that fit are welcome; show the owner any additions); own stamps move from each drawing to this browser, and stamps inside older drawings and files join Mine on open, without doubles.
-3. Rotate and flip a selection by 60° steps, exact, through the lattice group in `web/engine/symmetry.js` (owner: "rotate/flip is great").
-4. Two-finger tap undoes, three-finger tap redoes (release-plan item 3).
-5. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
-6. Drawing prompts ("draw a …") for kids, built on the lessons code. Never interrupt a focused person (docs/decisions.md, Lessons).
-7. Light direction for auto-shade: the "Light from: Left / Right" setting, saved with each drawing, and Relight on the selection bar (docs/decisions.md, Drawing). The drawing's light is a new project field: older files open as Left (`project.js` `VERSION`, with a test). Help and a lesson step get their lines.
+1. Starter stamps, as the owner picked (docs/decisions.md, "Starter stamps"; mocks on the same canvas): the Stamps drawer with Starter and Mine tabs; the eight stamps drawn on the lattice (more that fit are welcome; show the owner any additions); own stamps move from each drawing to this browser, and stamps inside older drawings and files join Mine on open, without doubles.
+2. Rotate and flip a selection by 60° steps, exact, through the lattice group in `web/engine/symmetry.js` (owner: "rotate/flip is great").
+3. Two-finger tap undoes, three-finger tap redoes (release-plan item 3).
+4. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
+5. Drawing prompts ("draw a …") for kids, built on the lessons code. Never interrupt a focused person (docs/decisions.md, Lessons).
+6. Light direction for auto-shade: the "Light from: Left / Right" setting, saved with each drawing, and Relight on the selection bar (docs/decisions.md, Drawing). The drawing's light is a new project field: older files open as Left (`project.js` `VERSION`, with a test). Help and a lesson step get their lines.
 
 Offered, not yet approved (ask the owner first):
 

@@ -10,7 +10,6 @@ import { Renderer } from './render.js';
 import * as store from './storage.js';
 import { initUpdate, buildStamp, aboutVersion, versionURL } from './update.js';
 import { keyFor } from './keys.js';
-import { unsavedToFile, ago } from './sheets.js';
 import { paperOf, matchInk } from './engine/paper.js';
 import { readMoveHash } from './move.js';
 import { welcomeDue, initWelcome } from './welcome.js';
@@ -19,11 +18,13 @@ import { deviceOf, doneLessons } from './lessons.js';
 import { sillyName } from './sillynames.js';
 import { initEvents, cellsBucket } from './events.js';
 import * as AS from './autosave.js';
+import * as G from './gallery.js';
 import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLock, updateZoomUI } from './ui/controls.js';
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
+import { addDrawing, openAtStart } from './ui/gallery.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
 import { hasContent, leaveDrawing, openDrawing, openSettings, setName, showFold, startDrawing, syncMenu, updateSavedLine, watchDialogs, wireMenu } from './ui/screens.js';
-import { isopixFile, loadProjectObject, markChanged, placeTrace, pngBlob, pngCanvas, projectData, projectFromFile, projectPng, rememberFile, saveFile, svgBlob, takeMovedDrawing, takeMovedSettings, updateFileUI } from './ui/files.js';
+import { isopixFile, loadProjectObject, markChanged, placeTrace, pngBlob, pngCanvas, projectData, projectFromFile, projectPng, svgBlob, takeMovedDrawing, takeMovedSettings, updateFileUI } from './ui/files.js';
 export { projectData, svgBlob, pngCanvas, pngBlob }; // for tools/export_check.mjs
 
 // ---------- palette and settings ----------
@@ -90,6 +91,8 @@ export const app = {
   drawingName: 'Untitled drawing', // saved with the drawing (project file and autosave)
   lastSaved: null,       // when the autosave last landed in IndexedDB
   file: { name: null, at: null, via: null, dirty: false, handle: null }, // the file this drawing was last saved to or opened from
+  drawingId: null,       // which of this browser's drawings is open (web/gallery.js)
+  gallery: [],           // this browser's drawings: [{id, name, savedAt, thumb}], newest first
   strokeSkips: new Map(), // cells Keep fine detail skipped in the stroke under way
   skipFlash: null,        // skipped cells hatched for a moment after a stroke
   session: { told: false, storageTold: false, copyAt: 0 }, // the skip and storage notices show once a session
@@ -185,9 +188,10 @@ function resize() {
 
 // ---------- lessons (web/lessons.js, web/tour.js) ----------
 // A lesson draws in a practice drawing: the person's own drawing, its file
-// record, settings, stamps and view are set aside and come back at the end
-// (or the practice one replaces it: Keep it). Nothing of the practice drawing
-// reaches IndexedDB until it is kept (saveNow and rememberFile skip it).
+// record, settings, stamps and view are set aside and come back at the end.
+// Keep it adds the practice one as another drawing (web/ui/gallery.js); it
+// never takes the place of theirs. Nothing of the practice drawing reaches
+// IndexedDB until it is kept (saveNow and rememberFile skip it).
 const DONE_KEY = 'isopix-lessons-done';
 export const readDone = () => { try { return doneLessons(localStorage.getItem(DONE_KEY)); } catch { return new Set(); } };
 function beginPractice() {
@@ -203,39 +207,24 @@ function beginPractice() {
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
   buildPalette(); syncMenu(); afterChange({ changed: false }); updateFileUI();
 }
-function endPractice(keep) {
+async function endPractice(keep) {
   const was = app.practice;
   if (!was) return;
   leaveLesson('stopped');
-  const practiceName = app.drawingName;
-  if (!keep) {
-    loadProjectObject(was.obj);
-    app.file = was.file;
-    app.lastSaved = was.lastSaved;
-  }
+  if (keep && app.drawingName === 'Practice') setName(sillyName());
+  const kept = keep ? projectData() : null;
+  // Theirs comes back first, as it was, so nothing of the practice one is saved over it.
+  loadProjectObject(was.obj);
+  app.file = was.file;
+  app.lastSaved = was.lastSaved;
   // The person's settings come back either way (the lesson picked tools and brushes for them).
   app.settings = { ...was.settings, welcomed: app.settings.welcomed };
   store.saveSettings(app.settings);
   app.practice = null;
-  if (keep) {
-    if (practiceName === 'Practice') setName(sillyName());
-    rememberFile();
-    savePending = true; saveNow();
-  }
+  if (kept) await addDrawing(kept);
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
   buildPalette(); setTool(app.settings.tool); updateModeChip(); syncMenu(); computeLevel(true); afterChange({ changed: false }); updateFileUI();
-  toast(keep ? 'Kept: this is your drawing now' : 'Back to your drawing');
-}
-// Keep it asks first when the person's own drawing has something not in a file.
-const practiceNeedsAsk = () => !!app.practice && app.practice.has && unsavedToFile(app.practice.file, true);
-// "Save mine first": their drawing back for a moment, saved to a file, then the practice one again.
-async function saveMineFirst() {
-  const was = app.practice, practice = projectData(), practiceFile = app.file;
-  loadProjectObject(was.obj); app.file = was.file;
-  const ok = await saveFile();
-  loadProjectObject(practice); app.file = practiceFile;
-  updateFileUI();
-  return ok;
+  toast(kept ? 'Kept: it is in Drawings with your other drawings' : 'Back to your drawing');
 }
 // A step's setup (lessons.js): the tool and brush it needs, or a sheet open at the right place.
 function lessonSetup(su) {
@@ -283,14 +272,16 @@ export function scheduleSave(changed = true) {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveNow, 800);
 }
-async function saveNow() {
+export async function saveNow() {
   clearTimeout(saveTimer);
   if (!savePending) return;
   savePending = false;
-  if (app.practice) return; // the person's own drawing stays as it was in IndexedDB
+  if (app.practice || !app.drawingId) return; // the person's own drawing stays as it was in IndexedDB
   const data = projectData();
-  if (await store.idbSet('autosave', data)) {
+  if (await store.idbSet(G.recordKey(app.drawingId), data)) {
     app.lastSaved = Date.now();
+    app.gallery = G.withEntry(app.gallery, { id: app.drawingId, name: app.drawingName, savedAt: app.lastSaved });
+    await store.idbSet(G.LIST, app.gallery);
     if ($('#drawing').open) updateSavedLine();
     if (hasContent()) { store.keepStorage(); await takeCopy(data); }
   } else if (!app.session.storageTold && hasContent()) {
@@ -307,8 +298,11 @@ async function takeCopy(data) {
   const now = Date.now();
   if (!AS.copyDue(app.session.copyAt, now)) return;
   app.session.copyAt = now;
-  await store.idbSet('autosave-copies', AS.withCopy(await store.idbGet('autosave-copies'), data, now));
+  const key = G.copiesKey(app.drawingId);
+  await store.idbSet(key, AS.withCopy(await store.idbGet(key), data, now));
 }
+// Save now whatever the timer: before another drawing opens, or a lesson starts.
+export function flushSave() { savePending = true; return saveNow(); }
 
 // ---------- update notice ----------
 // Not now: mid-stroke or drag, a density preview, a replay, picking the
@@ -465,23 +459,16 @@ async function boot() {
   syncMenu();
   resize();
   computeLevel(true);
-  const saved = await store.idbGet('autosave');
-  const copies = await store.idbGet('autosave-copies');
-  app.session.copyAt = AS.copiesOf(copies)[0]?.savedAt || 0;
-  const opened = AS.openFirst(saved, copies, loadProjectObject);
-  if (opened.savedAt) app.lastSaved = opened.savedAt;
-  if (opened.from === 'copy') toast(`The last autosave could not open, so Isopix opened the copy kept ${ago(Date.now() - opened.savedAt)}.`);
-  else if (opened.error) toast(`The saved drawing could not load: ${opened.error.message}`);
-  if (!saved && !arriving) setName(sillyName()); // the very first drawing here gets a silly name too
-  const file = await store.idbGet('file');
-  if (file && typeof file === 'object') app.file = { name: String(file.name || ''), at: Number(file.at) || null, via: file.via === 'open' ? 'open' : 'save', dirty: !!file.dirty, handle: file.handle || null };
+  // This browser's drawings (web/gallery.js): the one in use opens.
+  const had = await openAtStart();
+  if (!had && !arriving) setName(sillyName()); // the very first drawing here gets a silly name too
   if (arriving) await takeMovedDrawing(arriving);
   afterChange({ changed: false });
   updateFileUI();
   startDrawing(hasContent());
   app.tour = initTour({
     device: () => deviceOf({ pointerType: app.lastPointer, coarse: matchMedia('(pointer: coarse)').matches }),
-    begin: beginPractice, end: endPractice, needsAsk: practiceNeedsAsk, saveMineFirst, setup: lessonSetup,
+    begin: beginPractice, end: endPractice, needsAsk: () => false, setup: lessonSetup, // Keep it adds a drawing: nothing to ask
     practiceHasContent: hasContent,
     markDone: (id) => { lessonDone(id); const done = readDone(); done.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...done])); } catch { /* storage blocked */ } },
   });

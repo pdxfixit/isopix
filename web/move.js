@@ -132,8 +132,10 @@ export async function readMoveHash() {
   try { return arrival(await unpack(m[1])); } catch { return null; }
 }
 
-// One IndexedDB database, read only: its autosave and file record, from the
-// first store that has an autosave. A database that does not exist is not made.
+// One IndexedDB database, read only: the drawing in use and its file record,
+// from the first store that has one. Since several drawings (web/gallery.js)
+// that is drawing:<id> and file:<id> for the id at drawing-open; before, one
+// drawing at autosave and file. A database that does not exist is not made.
 function readDb(name) {
   return new Promise((resolve) => {
     let req;
@@ -148,11 +150,16 @@ function readDb(name) {
         if (i >= stores.length) { db.close(); resolve(null); return; }
         try {
           const st = db.transaction(stores[i]).objectStore(stores[i]);
-          const a = st.get('autosave'), f = st.get('file');
-          f.onsuccess = () => {
-            if (isObj(a.result)) { db.close(); resolve({ autosave: a.result, file: isObj(f.result) ? { ...f.result, handle: null } : null }); } else next(i + 1);
+          const open = st.get('drawing-open');
+          open.onsuccess = () => {
+            const id = typeof open.result === 'string' ? open.result : null;
+            const a = st.get(id ? `drawing:${id}` : 'autosave'), f = st.get(id ? `file:${id}` : 'file');
+            f.onsuccess = () => {
+              if (isObj(a.result)) { db.close(); resolve({ autosave: a.result, file: isObj(f.result) ? { ...f.result, handle: null } : null }); } else next(i + 1);
+            };
+            f.onerror = () => next(i + 1);
           };
-          f.onerror = () => next(i + 1);
+          open.onerror = () => next(i + 1);
         } catch { next(i + 1); }
       };
       next(0);
