@@ -18,7 +18,9 @@ export function save(drawing, extra = {}) {
     cells: [...drawing.cells],
     edges: [...drawing.edges],
     hiddenEdges: [...drawing.hiddenEdges],
-    hidden: [...drawing.hidden].filter(([k, h]) => (h.empty ? !drawing.cells.has(k) : drawing.cells.get(k)?.id === h.id)),
+    // Every hidden entry, stale ones too: undoing the paint that covered them
+    // makes them live again, so Finer after a reload still brings the detail back.
+    hidden: [...drawing.hidden],
     log: drawing.undoStack,
     redo: drawing.redoStack,
     ...extra,

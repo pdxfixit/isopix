@@ -139,6 +139,7 @@ are open to the owner's change (see [questions.md](questions.md)).
 | Finer/Coarser buttons always work; the Handle is the default gesture; pinch inside the selection and long-press-then-pinch stay experimental settings, off by default. | The owner, after trying them. | 2026-10-12 |
 | Coarsening below the marquee level snaps the marquee to the whole bigger cells inside it. | Brief: the boundary must lie on the target level's edges. | 2026-10-12 |
 | Crisp is the default and the last choice is remembered; a cell Crisp leaves empty also keeps its children; painting a cell drops its kept children. | Brief: keep fidelity until the user paints there. | 2026-10-12 |
+| A file (and the autosave) keeps every hidden child, also those whose coarse cell was since refined or painted. Undo can make them live again: Coarser, Finer, a reload, Undo of the Finer, then Finer again brings the fine detail back, as it does without the reload. Files grow about 1.7%; older files open as before. | Owner, on card 13: "(a). Save every hidden entry, stale ones too". Found by `test/fuzz.test.mjs`; before, a file left them out. | 2026-10-16 |
 
 ## Screens
 
