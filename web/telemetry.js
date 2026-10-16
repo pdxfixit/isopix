@@ -1,8 +1,8 @@
 // Usage counts (docs/telemetry.md; docs/decisions.md, Telemetry): which
 // buttons, tools, keys and settings get used in a visit, how long it lasts and
 // what kind of device it is, sent once the page is hidden to the site's own
-// Worker (POST /api/visit, worker/index.js), which adds the country and region
-// and keeps it in D1 for 90 days. Settings → About → "Send usage counts"
+// Worker (POST /api/visit, worker/index.js), which adds the country and
+// keeps it in D1 for 90 days. Settings → About → "Send usage counts"
 // turns it off; it is on by default.
 //
 // Never sent: the drawing, any name, anything typed, the IP address (the

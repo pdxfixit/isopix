@@ -17,4 +17,5 @@ Offered, not yet approved (ask the owner first):
 ## The owner does
 
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
+- Optional, any time: drop the now-empty `region` column from D1 `isopix` (country only since 2026-10-16): `ALTER TABLE visits DROP COLUMN region` ([worker/schema.sql](worker/schema.sql)). The Worker no longer writes it.
 - Ship usage counts: the flarepress changes, the `isopix` D1 database and its tables, then one deploy ([docs/state.md](docs/state.md) "In flight", Usage counts). Not before: the app would post to a page that does not exist.

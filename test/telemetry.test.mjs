@@ -66,7 +66,7 @@ test('cleanVisit keeps checked fields and drops everything else', () => {
 test('every column the Worker writes is in the schema, and the schema has no IP or city', () => {
   const cols = UPSERT.match(/INSERT INTO visits \(([^)]+)\)/)[1].split(',').map((c) => c.trim());
   for (const c of cols) assert.match(schema, new RegExp(`\\n  ${c}\\s`), `schema lacks ${c}`);
-  assert.doesNotMatch(schema, /\b(ip|city|address|user_agent|name)\b\s+TEXT/i);
+  assert.doesNotMatch(schema, /\b(ip|city|region|address|user_agent|name)\b\s+TEXT/i);
 });
 
 test('the privacy note says what is sent, the 90 days, and what never is', () => {
@@ -74,7 +74,7 @@ test('the privacy note says what is sent, the 90 days, and what never is', () =>
   assert.match(html, /<input type="checkbox" id="opt-usage"/);
   // One short line shows; the whole note folds under it, never left out.
   assert.match(html, /<p class="note" id="usage-short">[^<]*never your drawings[^<]*<\/p>\s*<details class="usage-more" id="usage-more"><summary>[^<]+<\/summary>\s*<p class="note" id="usage-note">/);
-  for (const words of ['buttons', 'tools', 'keys', 'settings', 'how long a visit lasts', 'screen size', 'touch', 'language', 'light or dark', 'country and region', 'Never your drawings, names or anything you type', 'never your internet address', 'changes every 90 days', '90 days online', 'never sells or shares']) {
+  for (const words of ['buttons', 'tools', 'keys', 'settings', 'how long a visit lasts', 'screen size', 'touch', 'language', 'light or dark', 'the country the visit came from', 'Never your drawings, names or anything you type', 'never your internet address', 'changes every 90 days', '90 days online', 'never sells or shares']) {
     assert.ok(note.includes(words), `the note should say "${words}"`);
   }
 });
@@ -93,7 +93,7 @@ const post = (body, headers = {}) => new Request('https://isopix.app/api/visit',
 });
 const withCf = (req, cf) => Object.defineProperty(req, 'cf', { value: cf });
 
-test('a visit is kept with its country and region, and never the IP or city', async () => {
+test('a visit is kept with its country, and never the region, IP or city', async () => {
   const DB = fakeDB();
   const req = withCf(post(good(), { 'CF-Connecting-IP': '203.0.113.9' }), { country: 'US', regionCode: 'OR', city: 'Portland', postalCode: '97201', latitude: '45.5' });
   const res = await handleVisit(req, { DB }, null, Date.UTC(2026, 9, 15));
@@ -102,9 +102,10 @@ test('a visit is kept with its country and region, and never the IP or city', as
   assert.match(sql, /INSERT INTO visits/);
   assert.equal(v[0], 'aaaaaaaaaaaa');
   assert.equal(v[3], '2026-10-15');
-  assert.deepEqual([v[5], v[6]], ['US', 'OR']);
+  assert.equal(v[5], 'US');
+  assert.doesNotMatch(sql, /region/);
   const all = JSON.stringify(v);
-  for (const secret of ['203.0.113.9', 'Portland', '97201', '45.5']) assert.ok(!all.includes(secret), `${secret} was stored`);
+  for (const secret of ['203.0.113.9', 'OR', 'Portland', '97201', '45.5']) assert.ok(!all.includes(secret), `${secret} was stored`);
   assert.deepEqual(JSON.parse(v.at(-2)), { 'tool:pencil': 3, 'key:undo': 1 });
 });
 
@@ -131,9 +132,9 @@ test('a database error never fails a visit, and old rows are swept', async () =>
 });
 
 test('placeOf keeps only well-formed codes', () => {
-  assert.deepEqual(placeOf({ cf: { country: 'GB', regionCode: 'ENG' } }), { country: 'GB', region: 'ENG' });
-  assert.deepEqual(placeOf({ cf: { country: 'Great Britain', regionCode: '<b>' } }), { country: null, region: null });
-  assert.deepEqual(placeOf({}), { country: null, region: null });
+  assert.deepEqual(placeOf({ cf: { country: 'GB', regionCode: 'ENG' } }), { country: 'GB' });
+  assert.deepEqual(placeOf({ cf: { country: 'Great Britain', regionCode: '<b>' } }), { country: null });
+  assert.deepEqual(placeOf({}), { country: null });
 });
 
 test('every other path goes to the static files', async () => {
