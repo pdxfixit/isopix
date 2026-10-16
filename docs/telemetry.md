@@ -1,57 +1,41 @@
-# Usage counts (telemetry)
+# Usage events (telemetry)
 
-Isopix counts how it is used, so the owner can decide what to build and fix
+Isopix records how it is used, so the owner can decide what to build and fix
 next. The rules are in [decisions.md](decisions.md) (Telemetry); this page says
 how it works and what each field means.
 
+The per-visit beacon (`POST /api/visit` into the D1 table `visits`) was retired
+on 2026-10-16, once the events below replaced it. Its rows in D1 and in the
+telemetry runner's archive stay until the owner drops them; nothing writes new
+ones.
+
 ## The path
 
-1. **The app** (`web/telemetry.js`) counts in memory during a visit (one page
-   load). When the page is hidden or closed, it sends the whole visit so far to
-   `POST /api/visit` with a beacon. It sends only at https://isopix.app, only
-   while Settings → **Share play data** is on (the default), and never
-   from automated browsers (`navigator.webdriver`).
-2. **The Worker** (`worker/index.js`, the `isopix-app` Worker) checks it with
-   the app's own `cleanVisit`, adds the country Cloudflare read from the
-   request, and writes one row per visit to D1 (`worker/schema.sql`). A
-   later send from the same visit replaces the row. It never reads the IP
-   address. One visit in 50 also deletes rows older than 90 days.
-3. **The harvest** copies D1 and Cloudflare's daily stats into an archive
-   kept for good, except the device code: the runner removes it a year on.
-   The telemetry runner (pdxfixit/telemetry) is the only harvester (the owner, 2026-10-15): daily, in a cloud container, flarepress's
-   `harvest.py` on this repo's `site/` (`site/harvest.conf` says what: the
-   `visits` table, upserted by `visit`, and Cloudflare's stats). The runner's
-   job stays off until it has the `isopix` database's id.
-   Deploys do not harvest. The owner reads the archive on his Mac with the
-   runner's `telemetry.py pull`.
+1. **The app** (`web/events.js`) records events in memory and localStorage
+   during a visit and sends them from https://isopix.app only, only while
+   Settings → **Share play data** is on (the default), and never from automated
+   browsers (`navigator.webdriver`).
+2. **The Worker** (`worker/index.js`, the `isopix-app` Worker) writes each
+   batch as it came to the R2 bucket `isopix-telemetry` (details below). It
+   never reads the IP address.
+3. **The harvest** is the telemetry runner's (pdxfixit/telemetry), the only
+   harvester: its `isopix_events` job reads and empties the bucket into an
+   archive kept for good, except the device code, which the runner removes a
+   year on. Cloudflare's daily stats come from `site/harvest.conf` (`analytics=1`;
+   its `table=visits` line is for the retired beacon and goes once the runner
+   has dropped its `visits` entry). Deploys do not harvest. The owner reads the
+   archive on his Mac with the runner's `telemetry.py pull`.
 4. **Cloudflare Web Analytics** counts page views on its own (no cookies). The
    CSP in `web/_headers` allows its beacon.
-
-## What a visit holds
-
-| Field | What it is |
-|---|---|
-| `visit` | Random, one per page load. |
-| `device` | One plain random code, made on the device and never changed. Linked to nothing else. The telemetry runner removes it from every kept copy a year on. |
-| `app` | The release (`version.js`). |
-| `width` | Screen width rounded down to 0, 400, 700, 1000, 1400 or 2000 px. |
-| `touch`, `pwa`, `dark`, `reduced` | Touch screen; opened as an installed app; prefers dark mode; asks for reduced motion. |
-| `lang` | The browser's language, two or three letters (`en`, not `en-US`). |
-| `since` | How long since this device first used Isopix: new, week, month, quarter, year, older. Kept on the device. |
-| `seconds` | How long the visit has lasted, up to a day. |
-| `cells` | The drawing's size: 0, 1-99, 100-999, 1k-10k, 10k+ cells. |
-| `longtasks` | Main-thread tasks over 50 ms (Chrome only): a sign of slowness. |
-| `counts` | `{"kind:word": n}`. Kinds: `tool` (a tool button), `btn` (any other button, by id), `color:swatch`, `brush`, `line`, `marquee` (a shape picked), `key` (a key's action from `web/keys.js`), `set` (a setting changed: `set:gray-on`, `set:protect-behind`), `stroke` (a pointer down on the canvas, by pointer type), `touch:second` (a second finger), `view:wheel`, `saved` (what a save did), `move:arrived`. |
-| `errors` | Up to 5 uncaught errors as kind and place (`TypeError app.js:120`), never the message: a message can carry a file's text. |
-| `country` | Added by the Worker from Cloudflare: the ISO country code. Never the region or city. |
 
 ## What is never sent
 
 The drawing, its name, file names, anything typed (key presses inside a text
-field are not counted, since their counts would spell part of a name), colors
-chosen, the IP address, the city, or the User-Agent. `cleanVisit` drops any
-field not in the table above, and a count whose name is not `kind:word` in
-lower-case letters, digits and dashes.
+field are not recorded, since they would spell part of a name), colors chosen,
+the symmetry center, coordinates, the IP address, the city, the User-Agent, or
+an error's message. `cleanDetails` in `web/events.js` drops any key an event
+may not carry and any value that is not a number, a boolean or one of the app's
+own words.
 
 ## COPPA
 
@@ -61,21 +45,20 @@ it is used only to support the site's internal operations (here: deciding what
 to improve), the privacy notice says so, and it is kept no longer than needed.
 So the device code is one plain random code that never changes (the owner,
 2026-10-16: "do away with the cleverness … keep it simple"; a rotating code is
-still an identifier), D1 keeps 90 days, the telemetry runner removes the code
-from every kept copy a year on (its `ids` for this job), the location stops at
-the country (in every app, the owner, 2026-10-16; a city or street counts as
-personal), and the shared privacy policy (https://privacy.pdxfixit.com/isopix/,
+still an identifier), the telemetry runner removes the code
+from every kept copy a year on (its `ids` for this job), no location is recorded, only the time zone's offset (2026-10-16: the events carry
+no country; the owner chose country-only in every app, a city or street counts
+as personal), and the shared privacy policy (https://privacy.pdxfixit.com/isopix/,
 source `src/isopix/policy.md` in pdxfixit/privacy) says all of it. Settings has
 no note of its own, only the switch and the policy's link, so every app says it
 the same way (the owner, 2026-10-16). Change the policy in the same change as
 anything that changes what is sent. `test/telemetry.test.mjs` fails when the
-link goes missing or a note comes back, or when the schema gains an IP, city,
-address, User-Agent or name column. This is the building agent's reading, not legal
+link goes missing or a note comes back, or when the visit beacon returns. This is the building agent's reading, not legal
 advice.
 
 ## Usage events (the shared standard)
 
-Isopix also records **events**, one record per thing that happened, in the
+Isopix records **events**, one record per thing that happened, in the
 shape every app shares (the standard in pdxfixit/telemetry, Arrow-Rama
 backlog #151). `web/events.js` keeps only each event's listed keys and hands
 it to flarepress's shared client (`web/events-client.js`, vendored: never
@@ -87,16 +70,15 @@ lines to `POST /api/events` every 60 s and when the page is hidden. The
 Worker (`worker/events-worker.js`, vendored) writes each batch as it came to
 the R2 bucket `isopix-telemetry` (binding `EVENTS`, `site/wrangler.toml`)
 under `v1/<day>/<batch>.jsonl`; the telemetry runner's job reads and empties
-it. It sends only from https://isopix.app and never from automated browsers,
-like the visit beacon above, which still runs alongside. With the switch off
-nothing is recorded and the queue is emptied.
+it. It sends only from https://isopix.app and never from automated browsers.
+With the switch off nothing is recorded and the queue is emptied.
 
 | Column | Isopix |
 |---|---|
 | `app`, `platform` | `isopix`, `web` |
 | `form` | `phone`, `tablet` or `desktop`, from the screen size and whether the main pointer is a finger |
 | `version` | `version.js` |
-| `player` | the device code above (`playerId()` in `web/events.js`, which calls `deviceCode` in `web/telemetry.js`) |
+| `player` | the device code: one random 12-hex code kept in localStorage (`playerId()` and `deviceCode` in `web/events.js`) |
 | `session`, `seq` | random per page load; order within it from 0 |
 | `at`, `tz` | epoch ms; UTC offset in minutes |
 | `screen` | `draw`, or the open sheet: `settings`, `drawing`, `help` |
@@ -108,7 +90,7 @@ nothing is recorded and the queue is emptied.
 | `app.foreground`, `app.background`, `app.close` | `visibilitychange`, `pagehide` | time away or shown |
 | `screen.view` | a sheet opens or the last one closes (watching each `<dialog>`'s `open`) | `from` |
 | `dialog.open`, `dialog.close` | the welcome card, the brush popover (`brush`, `line`, `marquee`), the grid rail on phones (`levels`) | `answer` (`picked`, `dismissed`, `closed`, the card's return value), `ms` |
-| `control.use` | the click listener in `telemetry.js`; keyboard shortcuts (`group: keys`) | `control` (id, `tool-…`, `pick-…`, `swatch`), `group` (`topleft`, `topright`, `levels`, `zoom`, `palette`, `tools`, `selbar`, `popover`, a sheet …), `layout` (`levels`: `rail` or `top`; `palette` and `tools`: `stacked` or `row`; `zoom`: `track` or `buttons`; else `narrow` or `wide`), `vw`, `vh`, `input` (`touch`, `mouse`, `pen`, `key`). **No coordinates.** |
+| `control.use` | the one document click listener in `events.js`; keyboard shortcuts (`group: keys`) | `control` (id, `tool-…`, `pick-…`, `swatch`), `group` (`topleft`, `topright`, `levels`, `zoom`, `palette`, `tools`, `selbar`, `popover`, a sheet …), `layout` (`levels`: `rail` or `top`; `palette` and `tools`: `stacked` or `row`; `zoom`: `track` or `buttons`; else `narrow` or `wide`), `vw`, `vh`, `input` (`touch`, `mouse`, `pen`, `key`). **No coordinates.** |
 | `setting.change` | `set(k, v)` in `app.js` | `key`, `from`, `to`; a slider's run folds into one record; colors and the symmetry center are never recorded; a lesson's own picks are not counted |
 | `content.start`, `finish`, `abandon` | a drawing: page load, New, Open (start), Save (finish), New/Open over unsaved work or closing the page with it (abandon); a lesson: Start, last step, Stop / another lesson / closing | `kind` (`drawing`, `lesson`), `item` (the lesson), `resumed`, `ms`, `why` (`replaced`, `left`, `stopped`, `switched`) |
 | `error` | `error`, `unhandledrejection` (20 a page load) | `kind`, `where` (`file:line`), `fatal` (before the controls work) |
@@ -120,10 +102,11 @@ nothing is recorded and the queue is emptied.
 event nothing sends, a new write to `app.settings` that skips `set()`, or a
 coordinate; `just look events` (in CI) checks the real page.
 
-## Adding a count
+## Adding an event
 
-Most new buttons and settings are counted with no code: a click on a button
-with an id, and a change in a dialog, name themselves. Something no click
-shows goes through `app.usage.count(countName(kind, word))` in `app.js`. A new
-field in the visit needs `cleanVisit`, the schema, the Worker's `UPSERT`, this
-page and the shared privacy policy, and the tests will say which one is missing.
+Most new buttons are recorded with no code: a click on a button with an id is a
+`control.use`, and a setting written through `set()` in `app.js` is a
+`setting.change`. Something else needs its event and keys in `EVENTS`
+(`web/events.js`), the shared list in pdxfixit/telemetry `events.toml`, this
+page and the shared privacy policy; `test/events.test.mjs` says which one is
+missing.

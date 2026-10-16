@@ -79,7 +79,7 @@ items move to [TODO.md](../TODO.md) "Agents do". Sizes: **S** under an hour,
   instead of a blank page. S.
 - **A privacy policy link** in About, to https://privacy.pdxfixit.com/isopix/ (done 2026-10-16: About and Help).
   (the shared policy for every app): no accounts, no ads, drawings never leave
-  the device, and usage counts as the note under the switch says. S.
+  the device, and usage events as the shared policy says. S.
 - **Errors:** a friendly "Something went wrong" with a Copy details button and
   no telemetry. S.
 - **Words in one table**, ready for other languages later. M.

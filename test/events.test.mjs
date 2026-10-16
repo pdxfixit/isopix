@@ -9,7 +9,6 @@ import { createEvents } from '../web/events-client.js';
 
 const appJs = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
 const eventsJs = fs.readFileSync(new URL('../web/events.js', import.meta.url), 'utf8');
-const telemetryJs = fs.readFileSync(new URL('../web/telemetry.js', import.meta.url), 'utf8');
 
 // A stand-in for localStorage, with the key()/length the client lists entries by.
 function fakeStorage(init = {}) {
@@ -62,7 +61,7 @@ test('seq counts from 0 within a session; the player is the device code, one fun
   const [a, b] = records();
   assert.deepEqual([a.seq, b.seq], [0, 1]);
   assert.equal(a.player, b.player);
-  assert.equal(JSON.parse(storage.getItem('isopix-usage-device')).id, a.player, 'the same code the visit beacon sends');
+  assert.equal(JSON.parse(storage.getItem('isopix-usage-device')).id, a.player, 'the stored device code');
 });
 
 test('an event not in the list is not recorded, and a detail key not listed for it is dropped', () => {
@@ -198,10 +197,10 @@ test('every event app.js and events.js record is in the list, with only listed k
 });
 
 test('the hooks: the click, key and stroke listeners pass on to events, and every setting goes through set()', () => {
-  assert.match(telemetryJs, /count\(clickName\(el\)\);\s*\n\s*onControl\(el, e\);/);
-  assert.match(telemetryJs, /onShortcut\(a\)/);
-  assert.match(telemetryJs, /onStroke\(e\)/);
-  assert.match(appJs, /onControl: app\.events\.control, onShortcut: app\.events\.shortcut, onStroke: app\.events\.stroke/);
+  assert.match(eventsJs, /control\(el, e\);/);
+  assert.match(eventsJs, /shortcut\(a\)/);
+  assert.match(eventsJs, /addEventListener\('pointerdown', stroke/);
+  assert.match(appJs, /initEvents\(\{ enabled: \(\) => app\.settings\.usage, keyAction: /);
   assert.match(appJs, /const from = app\.settings\[k\];[\s\S]{0,300}app\.events\?\.setting\(k, from, v\)/);
   assert.match(appJs, /if \(k === 'usage' && !v\) app\.events\?\.clear\(\)/);
   // app.settings is written only in set(), at load, and when a lesson gives the person's settings back.

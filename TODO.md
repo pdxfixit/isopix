@@ -24,4 +24,4 @@ Offered, not yet approved (ask the owner first):
 ## The owner does
 
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
-- Optional, any time: drop the now-empty `region` column from D1 `isopix` (country only since 2026-10-16): `ALTER TABLE visits DROP COLUMN region` ([worker/schema.sql](worker/schema.sql)). The Worker no longer writes it.
+- After the visit-beacon retirement ships (deployed by GitHub): optionally `DROP TABLE visits` in D1 `isopix` (the empty `region` column goes with it). Then, once the telemetry runner has dropped its `[jobs.isopix.ids] visits` entry, ask an agent to remove `table=visits` from [site/harvest.conf](site/harvest.conf) and the `[[d1_databases]]` binding from [site/wrangler.toml](site/wrangler.toml) (and the `D1_DATABASE_ID` secret and workflow lines).

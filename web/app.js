@@ -28,8 +28,7 @@ import { initTour } from './tour.js';
 import { deviceOf, doneLessons } from './lessons.js';
 import { sillyName } from './sillynames.js';
 import * as PNGP from './engine/pngproject.js';
-import { initUsage, countName, cellsBucket } from './telemetry.js';
-import { initEvents } from './events.js';
+import { initEvents, cellsBucket } from './events.js';
 
 // ---------- palette and settings ----------
 // The inks come from the drawing's paper (engine/paper.js).
@@ -45,7 +44,7 @@ const DEFAULTS = {
   custom: '',
   welcomed: false, // the welcome card was closed on this device
   savePng: true, // Save writes a PNG with the drawing inside; off: a .isopix.json file
-  usage: true, // Share play data (telemetry.js, events.js; Settings)
+  usage: true, // Share play data (events.js; Settings)
 };
 const BRUSH_LABEL = { triangle: 'Triangle', rhombus: 'Rhombus', hexagon: 'Hexagon', trapezoid: 'Trapezoid', bigtri: 'Big triangle', face: 'Drag a face', cube: 'Drag a cube', stamp: 'Stamp' };
 const DRAG_BRUSHES = new Set(['face', 'cube', 'stamp']);
@@ -102,13 +101,10 @@ export const app = {
 window.isopix = app; // for debugging and the look tool
 
 // ---------- small helpers ----------
-// Picks no click names (a brush, a line style, a selection shape) are counted here.
-const PICKS = { brush: 'brush', lineStyle: 'line', marquee: 'marquee' };
 // Every setting passes here, so setting.change (events.js) has the old value
 // too. A lesson's own picks are not the person's: its settings come back after.
 const set = (k, v) => {
   const from = app.settings[k];
-  if (PICKS[k] && from !== v) app.usage?.count(countName(PICKS[k], v));
   app.settings[k] = v;
   store.saveSettings(app.settings);
   if (k === 'usage' && !v) app.events?.clear(); // off: nothing recorded, the queue emptied
@@ -1289,7 +1285,6 @@ function fileSaved(r, via) {
 // What a save says: where it went, or that nothing was saved.
 function sayResult(r, what) {
   const how = r.cancelled ? 'cancelled' : r.failed ? 'failed' : r.how || (r.handle ? 'file' : 'download');
-  app.usage?.count(countName('saved', `${what}-${how}`));
   app.events?.track('isopix.save', { what: what.replace(/ /g, '-'), how });
   if (r.cancelled) toast('Not saved');
   else if (r.failed) toast(`Could not save the ${what}: ${r.failed}`);
@@ -1701,7 +1696,6 @@ function lessonSetup(su) {
 }
 function startLesson(id) {
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
-  app.usage?.count(countName('lesson', id));
   leaveLesson('switched');
   app.tour.start(id);
   if (!app.tour.active()) return;
@@ -1885,17 +1879,13 @@ function wire() {
 }
 
 async function boot() {
-  app.events = initEvents({ enabled: () => app.settings.usage });
+  app.events = initEvents({ enabled: () => app.settings.usage, keyAction: (e) => keyFor(e)?.action ?? null });
   app.events.cells(() => cellsBucket(app.drawing.cells.size));
   app.events.onLeave(() => { leaveDrawing('left'); leaveLesson('left'); });
-  app.usage = initUsage({
-    enabled: () => app.settings.usage, snapshot: () => ({ cells: app.drawing.cells.size }), keyAction: (e) => keyFor(e)?.action ?? null,
-    onControl: app.events.control, onShortcut: app.events.shortcut, onStroke: app.events.stroke,
-  });
   watchDialogs();
   // A drawing carried here from an old address (move.js).
   const arriving = await readMoveHash();
-  if (arriving) { app.usage.count('move:arrived'); app.events.track('isopix.move_arrived'); }
+  if (arriving) app.events.track('isopix.move_arrived');
   if (arriving) takeMovedSettings(arriving);
   readTheme();
   buildNotches();
