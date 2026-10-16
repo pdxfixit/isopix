@@ -70,11 +70,28 @@ export async function openAtStart() {
     }
   }
   app.gallery = G.entriesOf(list);
+  await toSpecOnce();
   const id = G.whichOpen(app.gallery, await store.idbGet(G.OPEN));
   if (id && (await load(id))) return true;
   fresh();
   return !!id;
 }
+// TEMPORARY, to remove with P.fromOldLayout on or after 2026-10-23 (TODO.md):
+// every drawing and copy this browser kept in the layout before spec 1.0 is
+// rewritten in spec 1.0 at once, so none is left behind when the converter goes.
+async function toSpecOnce() {
+  for (const e of app.gallery) {
+    try {
+      const record = await store.idbGet(G.recordKey(e.id));
+      if (record && !record.picture) await store.idbSet(G.recordKey(e.id), P.fromOldLayout(record));
+      const copies = await store.idbGet(G.copiesKey(e.id));
+      if (Array.isArray(copies) && copies.some((c) => c?.project && !c.project.picture)) {
+        await store.idbSet(G.copiesKey(e.id), copies.map((c) => { try { return { ...c, project: P.fromOldLayout(c.project) }; } catch { return c; } }));
+      }
+    } catch { /* one that will not convert stays as it was, and says so when opened */ }
+  }
+}
+
 // The old single drawing, opened in place when it cannot move in.
 async function openLegacy() {
   const autosave = await store.idbGet('autosave');
@@ -158,7 +175,7 @@ export async function galleryCopy(id) {
   if (!record) return toast('That drawing could not be copied');
   const name = G.copyName(nameOf(id), app.gallery.map((e) => e.name));
   const copy = G.newId();
-  if (!(await store.idbSet(G.recordKey(copy), { ...record, name }))) return toast('There is no room to copy it');
+  if (!(await store.idbSet(G.recordKey(copy), P.withName(record, name)))) return toast('There is no room to copy it');
   const thumb = id === app.drawingId ? thumbURL() : app.gallery.find((e) => e.id === id)?.thumb;
   app.gallery = G.withEntry(app.gallery, { id: copy, name, savedAt: Date.now(), thumb: thumb || null });
   await saveList();
@@ -171,7 +188,7 @@ export async function galleryRename(id, name) {
   if (!name) return;
   if (id === app.drawingId) { setName(name); $('#drawing-name').value = app.drawingName; scheduleSave(); return renderGallery(); }
   const record = await store.idbGet(G.recordKey(id));
-  if (record) await store.idbSet(G.recordKey(id), { ...record, name });
+  if (record) await store.idbSet(G.recordKey(id), P.withName(record, name));
   app.gallery = G.withEntry(app.gallery, { id, name });
   await saveList();
   renderGallery();

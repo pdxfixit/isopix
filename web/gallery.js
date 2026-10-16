@@ -11,6 +11,8 @@
 // Before several drawings, one drawing lived at `autosave`, `autosave-copies`
 // and `file`; migrate() moves it in once and leaves those keys as they were.
 
+import { meta } from './engine/project.js';
+
 export const LIST = 'drawings';
 export const OPEN = 'drawing-open';
 export const recordKey = (id) => `drawing:${id}`;
@@ -70,11 +72,12 @@ export const afterDelete = (list, id) => without(list, id)[0]?.id ?? null;
 export function migrate({ list, autosave, copies, file }, id, now = Date.now()) {
   if (Array.isArray(list)) return null;
   if (!autosave || typeof autosave !== 'object') return null;
-  const savedAt = Number.isFinite(autosave.savedAt) ? autosave.savedAt : now;
+  const m = meta(autosave);
+  const savedAt = m.savedAt ?? now;
   const writes = [[recordKey(id), autosave]];
   if (copies) writes.push([copiesKey(id), copies]);
   if (file && typeof file === 'object') writes.push([fileKey(id), file]);
-  const entry = { id, name: typeof autosave.name === 'string' && autosave.name.trim() ? autosave.name : 'Untitled drawing', savedAt, thumb: null };
+  const entry = { id, name: typeof m.name === 'string' && m.name.trim() ? m.name : 'Untitled drawing', savedAt, thumb: null };
   return { id, list: [entry], writes };
 }
 

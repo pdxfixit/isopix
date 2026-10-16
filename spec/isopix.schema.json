@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pdxfixit/isopix/blob/main/spec/isopix.schema.json",
+  "title": "Isopix drawing, file format 1.0",
+  "description": "An Isopix drawing: picture (all a reader needs to draw it) and app (Isopix's own state). See spec/README.md. CC0.",
+  "type": "object",
+  "required": ["format", "version", "picture"],
+  "properties": {
+    "format": { "const": "isopix" },
+    "version": { "const": 1 },
+    "picture": {
+      "type": "object",
+      "required": ["cells"],
+      "properties": {
+        "name": { "type": "string", "maxLength": 80 },
+        "paper": { "enum": ["light", "dark"] },
+        "cells": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[0-7],-?[0-9]+,-?[0-9]+,[01]$" },
+          "additionalProperties": { "$ref": "#/$defs/color" }
+        },
+        "edges": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[0-7],-?[0-9]+,-?[0-9]+,[012]$" },
+          "additionalProperties": { "$ref": "#/$defs/color" }
+        }
+      }
+    },
+    "app": {
+      "type": "object",
+      "description": "Isopix's own state; optional for anyone else, and may gain keys.",
+      "properties": {
+        "light": { "enum": ["left", "right"] },
+        "faces": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["f"],
+            "properties": { "f": { "enum": ["T", "L", "R"] }, "s": { "const": "r" }, "b": { "$ref": "#/$defs/color" } }
+          }
+        },
+        "ids": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 } },
+        "edgeTimes": { "type": "object", "additionalProperties": { "type": "number" } },
+        "seq": { "type": "number" },
+        "savedAt": { "type": "number" },
+        "view": { "type": "object", "properties": { "zoom": { "type": "number" }, "cx": { "type": "number" }, "cy": { "type": "number" } } },
+        "log": { "type": "array" },
+        "redo": { "type": "array" },
+        "hidden": { "type": "array" },
+        "hiddenEdges": { "type": "array" }
+      }
+    }
+  },
+  "$defs": { "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" } }
+}

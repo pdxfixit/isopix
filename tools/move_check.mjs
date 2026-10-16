@@ -84,7 +84,8 @@ check(!s3.note && s3.cells === drawn, 'the same drawing arriving twice is ignore
 // 4. Another drawing arrives while the home has its own.
 const mine = await evaluate(send, DRAW(120, 500));
 const other = await evaluate(send, `(async () => { const m = await import('./move.js'); const P = await import('./engine/project.js');
-  const s = JSON.parse(JSON.stringify(P.save(window.isopix.drawing, { savedAt: 42 }))); s.cells = s.cells.slice(0, 1);
+  const s = JSON.parse(JSON.stringify(P.save(window.isopix.drawing, { savedAt: 42 })));
+  const one = Object.keys(s.picture.cells)[0]; s.picture.cells = { [one]: s.picture.cells[one] }; s.app.log = []; s.app.redo = [];
   return (await m.moveURL({ from: 'isopix.pdxfixit.com', autosave: s, local: {} })).url; })()`);
 await go(`${home}/${other.slice(other.indexOf('#'))}`);
 const s4 = await evaluate(send, state);

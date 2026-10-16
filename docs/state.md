@@ -25,6 +25,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Several drawings** (2026-10-16): the Drawing sheet opens as Drawings, a grid of this browser's drawings with thumbnails, New first; the one open is outlined. New, Open a file, an arrival from an old address and a lesson's Keep it each add a drawing; nothing replaces one. Each card's ⋯: Rename, Make a copy, Save to a file, Delete (asks first). A long name shrinks to 12 px, then ends in an ellipsis. Storage is per drawing (`drawing:<id>`, `copies:<id>`, `file:<id>`, the list at `drawings`, `web/gallery.js`); the single drawing kept before moves in once, its old keys left as they were. Checked: `test/gallery.test.mjs`, `just look drawing-new gallery gallery-menu gallery-ops gallery-delete`, `just autosave-check` (the move), `just move-check`. Not tried: a real phone, Save to a file from the ⋯ menu (a file picker), a browser with years of drawings.
 
+**File format, spec 1.0** (2026-10-16): [spec/README.md](../spec/README.md), CC0: `picture` (name, paper, cells and edges as key → color) apart from `app`; a JSON Schema, two examples (one hand-written), reference renderers `spec/render-svg.py` and `spec/render-svg.mjs` (`test/spec.test.mjs`: they draw exactly what the app draws, from all three containers). Isopix saves spec 1.0; a file it cannot read gets one plain message (`test/fileformat.test.mjs`). In flight: the temporary old-layout converter, to remove on or after 2026-10-23 (TODO.md).
+
 **Drawing ideas** (2026-10-16): "💡 Need an idea?" on the Drawings sheet, only when asked; Draw this starts a new drawing named after it (`web/prompts.js`, `test/prompts.test.mjs`, `just look idea`).
 
 **Light direction** (2026-10-16): Settings → Drawing → Light from the left or right, kept per drawing; Relight on the selection bar re-shades side faces (`engine/color.js` shade and baseOf, `D.relightRegion`, `test/density.test.mjs`, `just look light`). Shaded cells keep their base color and side for an exact Relight.
@@ -96,8 +98,11 @@ Before that:
 4. Turn the phone sideways: the palette and tools share one row, and the rails hang under the top buttons. Is anything hard to reach?
 5. Settings → Drawing → Paper: flip a drawing to dark paper and draw with the light inks; then start a New drawing and check it opens on the paper matching the phone's mode.
 
+**Seen once, cause unknown** (2026-10-16): in a local `just look --all`, the dev server (`tools/serve.py`) answered one module request (`engine/svg.js`) with a response Chrome called `ERR_INVALID_HTTP_RESPONSE`, so `welcome-first` at 900 px failed; three reruns of that view at every width passed. If it comes back, especially in CI, look at `serve.py` (it reads `web/_headers` on every request) before blaming the app.
+
 ## CI gaps closed
 
+- 2026-10-16: `tools/autosave_check.mjs`'s IndexedDB helper fails after 10 s instead of waiting forever: a throw inside an IndexedDB callback (a field renamed by spec 1.0) hung the check silently until a timeout killed it.
 - 2026-10-16: `just install-check` runs in CI: Chrome's own installability check (service worker, manifest, icons) and the iPhone and iPad home-screen tags, so a change that stops Isopix installing fails the build (it found the missing iOS tags).
 - 2026-10-16: `test/imports.test.mjs` fails when a module in `web/` imports a name its target does not export: that is a SyntaxError at page load, so nothing starts, and no other test saw it (Ctrl+O still imported the removed ask-first code; proven red on it).
 - 2026-10-16: `test/fuzz.test.mjs`: 12 seeded runs of 60 random edits through every engine write path; undo all and redo all must pass through the same drawings, and save then open must give the same drawing (proven red with undo of hidden children broken). It found that a file dropped hidden children a Finer had made stale, so after a reload Undo of the Finer, then Finer, lost the detail; files keep them now (the owner's pick, card 13), with `test/density.test.mjs` on those exact steps.

@@ -3,6 +3,8 @@
 // the drawing. Which copies to keep, and which save to open at start.
 // Pure logic, no DOM or IndexedDB (test/autosave.test.mjs); app.js stores them.
 
+import { meta } from './engine/project.js';
+
 export const KEEP = 3; // copies kept besides the autosave
 export const EVERY = 5 * 60 * 1000; // at most one new copy per 5 minutes, so they span time
 
@@ -28,7 +30,7 @@ export function withCopy(stored, project, now, keep = KEEP) {
 // the app can say why the autosave did not open.
 export function openFirst(autosave, stored, load) {
   const tries = [];
-  if (autosave) tries.push({ from: 'autosave', savedAt: autosave.savedAt, project: autosave });
+  if (autosave) tries.push({ from: 'autosave', savedAt: meta(autosave).savedAt, project: autosave });
   for (const c of copiesOf(stored)) tries.push({ from: 'copy', savedAt: c.savedAt, project: c.project });
   let error = null;
   for (const t of tries) {

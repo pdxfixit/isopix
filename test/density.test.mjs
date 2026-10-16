@@ -313,8 +313,8 @@ test('a file with a bad base color or light mark on a cell is refused', async ()
   const good = JSON.parse(JSON.stringify(P.save(d)));
   assert.equal(P.load(good).cells.size, 1);
   for (const bad of [{ b: 'red' }, { s: 'x' }]) {
-    const f = JSON.parse(JSON.stringify(good)); Object.assign(f.cells[0][1], bad);
-    assert.throws(() => P.load(f), /Bad cell/);
+    const f = JSON.parse(JSON.stringify(good)); Object.assign(f.app.faces['2,0,0,1'], bad);
+    assert.throws(() => P.load(f), /bad cell/);
   }
 });
 

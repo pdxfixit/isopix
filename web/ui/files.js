@@ -11,7 +11,7 @@ import { addDrawing } from './gallery.js';
 import { addToMine } from './stamps.js';
 import { fileBase, saveDot } from '../sheets.js';
 import { paperOf } from '../engine/paper.js';
-import { keysToCopy, landing, hasDrawing } from '../move.js';
+import { keysToCopy, landing } from '../move.js';
 import * as PNGP from '../engine/pngproject.js';
 import { $, DEFAULTS, app, emit, requestRender, scheduleSave, toast } from '../app.js';
 import { buildPalette, computeLevel } from './controls.js';
@@ -178,11 +178,12 @@ export function loadProjectObject(obj) {
   const d = P.load(obj);
   app.drawing = d;
   // Stamps a drawing or file carries join this browser's own (Mine), once each.
-  if (Array.isArray(obj.stamps)) addToMine(obj.stamps);
-  if (obj.view && Number.isFinite(obj.view.zoom)) { app.view.zoom = obj.view.zoom; app.view.cx = obj.view.cx || 0; app.view.cy = obj.view.cy || 0; }
+  const m = P.meta(obj);
+  if (Array.isArray(m.stamps)) addToMine(m.stamps);
+  if (m.view && Number.isFinite(m.view.zoom)) { app.view.zoom = m.view.zoom; app.view.cx = m.view.cx || 0; app.view.cy = m.view.cy || 0; }
   app.selection = null;
   app.trace = null;
-  setName(obj.name); // old projects have none: "Untitled drawing"
+  setName(m.name); // none: "Untitled drawing"
   const tr = P.traceOf(obj);
   if (tr) {
     const img = new Image();
@@ -196,13 +197,17 @@ export function loadProjectObject(obj) {
 }
 // A PNG Isopix saved (the drawing is inside it), an .isopix file (gzip or
 // plain JSON), or an older .isopix.json.
+// Whatever goes wrong inside (not gzip, not JSON, a damaged chunk), the
+// person hears one plain sentence (P.NOT_ISOPIX), not a parser's message.
 export async function projectFromFile(f) {
   let bytes = new Uint8Array(await f.arrayBuffer());
-  if (bytes[0] === 0x1f && bytes[1] === 0x8b) bytes = await store.gunzip(bytes);
-  if (!PNGP.isPNG(bytes)) return JSON.parse(new TextDecoder().decode(bytes));
-  const text = await PNGP.extract(bytes, store.inflate);
+  const json = (text) => { try { return JSON.parse(text); } catch { throw new Error(P.NOT_ISOPIX); } };
+  try { if (bytes[0] === 0x1f && bytes[1] === 0x8b) bytes = await store.gunzip(bytes); } catch { throw new Error(P.NOT_ISOPIX); }
+  if (!PNGP.isPNG(bytes)) return json(new TextDecoder().decode(bytes));
+  let text;
+  try { text = await PNGP.extract(bytes, store.inflate); } catch { throw new Error(P.NOT_ISOPIX); }
   if (text == null) throw new Error('this picture has no Isopix drawing inside. To draw over a picture, use Settings → Learning → Trace a picture');
-  return JSON.parse(text);
+  return json(text);
 }
 export async function openProject() {
   const r = await store.openFile({ accept: { 'image/png': ['.png'], 'application/x-isopix': ['.isopix'], 'application/json': ['.json'] }, description: 'Isopix drawing' });
@@ -285,8 +290,8 @@ export async function takeMovedDrawing(arriving) {
   const m = arriving.autosave;
   if (!m) return;
   const seen = (await store.idbGet('moved-in')) || [];
-  const savedAt = Number(m.savedAt) || null;
-  const what = landing({ incoming: { from: arriving.from, savedAt, hasContent: hasDrawing(m) }, current: { hasContent: hasContent(), savedAt: app.lastSaved }, seen: Array.isArray(seen) ? seen : [] });
+  const savedAt = P.meta(m).savedAt;
+  const what = landing({ incoming: { from: arriving.from, savedAt, hasContent: P.hasContent(m) }, current: { hasContent: hasContent(), savedAt: app.lastSaved }, seen: Array.isArray(seen) ? seen : [] });
   if (what === 'ignore') return;
   store.idbSet('moved-in', [...(Array.isArray(seen) ? seen : []), { from: arriving.from, savedAt }].slice(-20));
   if (what === 'offer') {

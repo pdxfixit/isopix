@@ -1,0 +1,15 @@
+CC0 1.0 Universal
+
+To the extent possible under law, PDXfixIT has waived all copyright and
+related or neighboring rights to the Isopix file format specification and
+everything in this folder: README.md, isopix.schema.json, the examples, and
+the reference renderers render-svg.py and render-svg.mjs. This work is
+published from the United States of America.
+
+Anyone may copy, change, use and build on it, for any purpose, without asking
+and without credit.
+
+The full legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+The rest of the Isopix repository is under its own license (LICENSE at the
+repository root).

@@ -46,8 +46,8 @@ test('drawing names and file names', () => {
 test('the name saves with the drawing; an old project without one gets the default', () => {
   const d = new Drawing();
   const saved = JSON.parse(JSON.stringify(P.save(d, { name: 'Sky castle' })));
-  assert.equal(S.cleanName(saved.name), 'Sky castle');
-  assert.equal(S.cleanName(JSON.parse(JSON.stringify(P.save(d))).name), 'Untitled drawing');
+  assert.equal(S.cleanName(saved.picture.name), 'Sky castle');
+  assert.equal(S.cleanName(JSON.parse(JSON.stringify(P.save(d))).picture.name), 'Untitled drawing');
 });
 
 test('the file line says whether the drawing is in a file, and whether it changed since', () => {

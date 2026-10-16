@@ -5,7 +5,7 @@
 Approved work, in order. Delete a line in the commit that finishes it.
 
 1. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
-2. File format version 2 and its open spec (docs/file-format.md, a draft): once the owner has read the draft, build save and load of v2 (v1 still opens), `spec/` with the spec under CC0, a JSON Schema, example files, and reference renderers in Python and JavaScript with a test that they draw what the app draws.
+2. **On or after 2026-10-23: remove the old-layout converter** so it does not go vestigial (owner, 2026-10-16). Delete `fromOldLayout` and its uses in `web/engine/project.js` (`meta`, `hasContent`, `withName`, `load`), `toSpecOnce` in `web/ui/gallery.js`, the flat-layout branches in `web/move.js` (`hasDrawing`, `shrinkings`), the last test in `test/fileformat.test.mjs`, scenario 3 of `tools/autosave_check.mjs` and the spec's "For now Isopix also opens…" line. First check the old addresses: their move pages (isopix.pdxfixit.com, the Isogrid one, the owner's Workers) carry old-layout drawings, so if they still send people over, ask the owner before removing it. A browser not opened since 2026-10-16 will then show "this is not an Isopix drawing" for its old drawing: the owner accepted that.
 
 Offered, not yet approved (ask the owner first):
 

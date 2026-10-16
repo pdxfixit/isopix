@@ -128,9 +128,10 @@ test('paper: saved with the drawing; an old project without it opens light', asy
   d.begin(); d.paint(L.mk(1, 0, 0, 1), { c: '#74c0fc' }); d.commit();
   const back = P.load(JSON.parse(JSON.stringify(P.save(d))));
   assert.equal(back.paper, 'dark');
-  const old = P.save(d); delete old.paper;
+  const old = P.save(d); delete old.picture.paper;
   assert.equal(P.load(JSON.parse(JSON.stringify(old))).paper, 'light');
-  assert.equal(P.load({ ...P.save(d), paper: 'purple' }).paper, 'light');
+  const odd = P.save(d); odd.picture.paper = 'purple';
+  assert.equal(P.load(odd).paper, 'light');
 });
 
 test('inks follow the paper; flipping keeps the chosen ink by position, custom colors stay', async () => {
