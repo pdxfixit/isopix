@@ -7,6 +7,7 @@
 // A region is {l, keys: Set<cellKey>}: lattice cells at the marquee level.
 import * as L from './lattice.js';
 import { mixOklab, nearest } from './color.js';
+import * as S from './symmetry.js';
 
 export function makeRegion(l, cells) {
   return { l, keys: new Set(cells.map((c) => L.cellKey(c.cell || c))) };
@@ -266,6 +267,36 @@ export function eraseRegion(drawing, r) {
   for (const c of regionCells(r)) drawing.paint(c, null, 'replace');
   for (const e of edgesIn(drawing, r)) drawing.setEdge(L.edgeKey(e), null);
 }
+
+// ---------- rotate and flip ----------
+// Turn what is inside the selection by a lattice symmetry g ({k: sixths of a
+// turn, m: mirror first}; engine/symmetry.js) about a vertex `center` at the
+// region's level: erased, then painted turned, exactly; face tags and bold
+// edges follow. Cells landing outside paint over what is there, as any paint
+// does. Returns the turned region.
+export function transformRegion(drawing, r, center, g) {
+  splitBorder(drawing, r);
+  const cells = paintedIn(drawing, r).map((c) => ({ c, v: drawing.cells.get(L.cellKey(c)) }));
+  const edges = edgesIn(drawing, r).map((e) => ({ e, v: drawing.edges.get(L.edgeKey(e)) }));
+  eraseRegion(drawing, r);
+  for (const { c, v } of cells) {
+    const f = S.transformFace(v.f, g);
+    for (const t of S.transformCell(c, center, g)) drawing.paint(t, f ? { c: v.c, f } : { c: v.c }, 'replace');
+  }
+  for (const { e, v } of edges) for (const t of S.transformEdge(e, center, g)) drawing.setEdge(L.edgeKey(t), v);
+  return makeRegion(r.l, regionCells(r).flatMap((c) => S.transformCell(c, center, g)));
+}
+
+// The pivot: the region-level vertex nearest the region's middle (a hexagon
+// selection's own center, so it turns in place).
+export function pivotOf(r) {
+  const ws = regionCells(r).map((c) => L.centroid(c));
+  const x = ws.reduce((a, w) => a + w.x, 0) / ws.length, y = ws.reduce((a, w) => a + w.y, 0) / ws.length;
+  return L.nearestVertex(r.l, x, y);
+}
+// One turn clockwise on screen, and a left-right flip.
+export const TURN = { k: 1, m: false }; // symmetry.rot sends up (-1, 0) to up-right (-1, 1): clockwise
+export const FLIP = { k: 0, m: true };
 
 // ---------- stamps ----------
 // A stamp keeps cells relative to an anchor vertex at its base level, so it can

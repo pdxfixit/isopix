@@ -230,3 +230,49 @@ test('drawing over a cell ends the promise for edges hidden in it', () => {
   D.changeDensity(d, r, 2);
   assert.ok(!d.edges.has('2,0,1,0'), 'painted over: the hidden edge is gone');
 });
+
+// Rotate and flip a selection (owner, 2026-10-16: "rotate/flip is great").
+test('six turns, or two flips, give back the exact drawing; the hexagon turns in place', () => {
+  const d = new Drawing();
+  const A = { l: 2, p: 2, q: 2 };
+  const r = D.makeRegion(2, B.hexagon(A, 2).cells);
+  d.begin();
+  // An asymmetric picture: a cube's faces, one finer cell and a bold edge.
+  B.hexagon(A, 1).cells.forEach(({ cell, f }) => d.paint(cell, { c: '#3a86ff', f }));
+  d.paint(L.children(L.mk(2, 2, 3, 1))[0], { c: '#e63946' });
+  d.setEdge(L.edgeKey({ l: 2, p: 2, q: 2, d: 0 }), { c: '#000000', t: 1 });
+  d.commit();
+  const start = snapshot(d), edges = JSON.stringify([...d.edges.keys()].sort());
+  assert.deepEqual(D.pivotOf(r), A, 'a hexagon selection pivots on its own center');
+  let reg = r;
+  for (let i = 0; i < 6; i++) {
+    d.begin(); reg = D.transformRegion(d, reg, D.pivotOf(reg), D.TURN); d.commit();
+    if (i === 0) assert.notEqual(snapshot(d), start, 'one turn changes it');
+    assert.equal(d.checkInvariant(), null);
+  }
+  assert.equal(snapshot(d), start, 'six turns: the same cells, colors and faces');
+  assert.equal(JSON.stringify([...d.edges.keys()].sort()), edges, 'and the same bold edge');
+  assert.deepEqual([...reg.keys].sort(), [...r.keys].sort(), 'the hexagon turned onto itself');
+  d.begin(); reg = D.transformRegion(d, reg, D.pivotOf(reg), D.FLIP); d.commit();
+  assert.notEqual(snapshot(d), start, 'a flip changes it');
+  d.begin(); reg = D.transformRegion(d, reg, D.pivotOf(reg), D.FLIP); d.commit();
+  assert.equal(snapshot(d), start, 'two flips give it back');
+  d.undo(); d.undo();
+  assert.equal(d.checkInvariant(), null);
+});
+
+test('a turn moves a cell 60° clockwise on screen; a flip mirrors it left to right', () => {
+  const A = { l: 2, p: 2, q: 2 }, o = L.vertexWorld(2, 2, 2);
+  const r = D.makeRegion(2, B.hexagon(A, 2).cells);
+  const where = (d) => { const c = L.centroid(L.parseKey([...d.cells.keys()][0])); return { x: c.x - o.x, y: c.y - o.y }; };
+  const angle = ({ x, y }) => (Math.atan2(y, x) * 180) / Math.PI; // screen: y down, so a bigger angle is clockwise
+  const one = () => { const d = new Drawing(); d.begin(); d.paint(B.hexagon(A, 2).cells.find(({ cell }) => L.centroid(cell).y < o.y - 0.01).cell, { c: '#e63946' }); d.commit(); return d; };
+  const d = one(), before = where(d);
+  d.begin(); D.transformRegion(d, r, A, D.TURN); d.commit();
+  const turned = (angle(where(d)) - angle(before) + 360) % 360;
+  assert.ok(Math.abs(turned - 60) < 1e-6, `turned ${turned}°`);
+  const e = one(), b2 = where(e);
+  e.begin(); D.transformRegion(e, r, A, D.FLIP); e.commit();
+  const after = where(e);
+  assert.ok(Math.abs(after.x + b2.x) < 1e-9 && Math.abs(after.y - b2.y) < 1e-9, 'mirrored across the vertical line through the pivot');
+});
