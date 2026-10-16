@@ -1,8 +1,9 @@
 # Hosting: isopix.app
 
 **The app is served at https://isopix.app/**, public: anyone with
-the address can open and use it. It is static files only (no server, no
-accounts, no analytics). Drawings stay in the browser that made them.
+the address can open and use it. It is static files, plus a small Worker
+that keeps usage counts ([telemetry.md](telemetry.md)). No accounts. Drawings
+stay in the browser that made them.
 
 **Status:** the first publish was release 1.0.1 at isopix.pdxfixit.com, 2026-10-13. The move to isopix.app (the owner bought it and set up its DNS, 2026-10-15) is committed and waits for its first deploy ([state.md](state.md)).
 
