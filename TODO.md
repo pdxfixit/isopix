@@ -5,6 +5,7 @@
 Approved work, in order. Delete a line in the commit that finishes it.
 
 1. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
+2. File format version 2 and its open spec (docs/file-format.md, a draft): once the owner has read the draft, build save and load of v2 (v1 still opens), `spec/` with the spec under CC0, a JSON Schema, example files, and reference renderers in Python and JavaScript with a test that they draw what the app draws.
 
 Offered, not yet approved (ask the owner first):
 
