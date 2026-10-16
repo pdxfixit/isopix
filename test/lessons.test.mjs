@@ -7,9 +7,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LESSONS, NOT_TAUGHT, TAUGHT_SECTIONS, deviceOf, sayFor, startLesson, onEvent, next, finished, progress, doneLessons } from '../web/lessons.js';
 import { SECTIONS } from '../web/help.js';
+import { appSource } from './appsource.mjs';
 
 const html = fs.readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
-const app = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+const app = appSource; // web/app.js and web/ui/*.js
 
 test('every step is well formed: an id, wording for each device, and a way to finish', () => {
   for (const l of LESSONS) {

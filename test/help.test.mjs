@@ -6,9 +6,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { KEYS, keyFor } from '../web/keys.js';
 import { SECTIONS, helpHTML, helpIds } from '../web/help.js';
+import { appSource } from './appsource.mjs';
 
 const html = fs.readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
-const app = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+const app = appSource; // web/app.js and web/ui/*.js
 const sheet = helpHTML((sel) => `<svg data-from='${sel}'></svg>`);
 const items = SECTIONS.flatMap((s) => s.items);
 
