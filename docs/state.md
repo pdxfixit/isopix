@@ -25,6 +25,10 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Several drawings** (2026-10-16): the Drawing sheet opens as Drawings, a grid of this browser's drawings with thumbnails, New first; the one open is outlined. New, Open a file, an arrival from an old address and a lesson's Keep it each add a drawing; nothing replaces one. Each card's ⋯: Rename, Make a copy, Save to a file, Delete (asks first). A long name shrinks to 12 px, then ends in an ellipsis. Storage is per drawing (`drawing:<id>`, `copies:<id>`, `file:<id>`, the list at `drawings`, `web/gallery.js`); the single drawing kept before moves in once, its old keys left as they were. Checked: `test/gallery.test.mjs`, `just look drawing-new gallery gallery-menu gallery-ops gallery-delete`, `just autosave-check` (the move), `just move-check`. Not tried: a real phone, Save to a file from the ⋯ menu (a file picker), a browser with years of drawings.
 
+**Starter stamps** (2026-10-16): the Stamp brush opens the Stamps drawer, Starter (Cube, Stairs, House, Tree, Wall, Pyramid, Flower, Star) and Mine; own stamps are kept per browser across drawings (`web/stampbook.js`, `web/ui/stamps.js`, art by `tools/make_stamps.mjs`). Checked: `test/stampbook.test.mjs` (every stamp places at every level), `just look stamps stamps-mine`.
+
+**Installing** (2026-10-16): Chrome's installability check passes locally and on isopix.app; iPhone and iPad home-screen tags added; `just install-check` in CI. Not tried on a real iPhone.
+
 **Autosave copies** (2026-10-16): besides the autosave, up to 3 older copies, one per 5 minutes at most, only of a drawing with something in it; a damaged autosave opens the newest copy that loads, with a message (`web/autosave.js`, `test/autosave.test.mjs`, `just autosave-check` in CI). No button opens a copy by hand (offered in TODO).
 
 **Moving house** (2026-10-15, live): https://isopix.app is the home (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers whose page carries a browser's drawing, settings and file record over in the `#move=` fragment and goes (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
@@ -86,6 +90,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-16: `just install-check` runs in CI: Chrome's own installability check (service worker, manifest, icons) and the iPhone and iPad home-screen tags, so a change that stops Isopix installing fails the build (it found the missing iOS tags).
 - 2026-10-16: `test/imports.test.mjs` fails when a module in `web/` imports a name its target does not export: that is a SyntaxError at page load, so nothing starts, and no other test saw it (Ctrl+O still imported the removed ask-first code; proven red on it).
 - 2026-10-16: `test/fuzz.test.mjs`: 12 seeded runs of 60 random edits through every engine write path; undo all and redo all must pass through the same drawings, and save then open must give the same drawing (proven red with undo of hidden children broken). It found that a file dropped hidden children a Finer had made stale, so after a reload Undo of the Finer, then Finer, lost the detail; files keep them now (the owner's pick, card 13), with `test/density.test.mjs` on those exact steps.
 - 2026-10-16: `just autosave-check` runs in CI: headless Chrome takes a copy and opens it when the autosave is damaged (proven red with the fallback taken out). CI runs `just look --all`, so a new look view needs no workflow edit.
@@ -126,8 +131,6 @@ Before that:
 - 2026-10-12: `test/help.test.mjs` fails when a bound key, a tool, a brush shape or any button on the page or in the Drawing sheet has no Help line, or when Help borrows an icon that no longer exists; keys are bound from the same table Help lists.
 
 ## In flight
-
-**Several drawings: on `main`, not deployed** (2026-10-16). Its deploy run ([38961144283](https://github.com/pdxfixit/isopix/actions/runs/38961144283)) failed before uploading anything: it could not read the test run (unsigned gh, rate limit) and gave up after 20 minutes although CI was green. Fixed in `deploy.yml` and `tools/deploy.sh`; the next deploy (Actions → deploy → Run workflow, the owner's call, or the next push that changes `web/`) ships 1.2.99 or later.
 
 **Usage events, #151** (2026-10-16, on `main`): `web/events.js` records the shared standard's events (lifecycle, screens, dialogs, controls with group and layout, settings from and to, drawings and lessons started, finished and abandoned, errors, load time, long tasks) through flarepress's shared client (vendored), which sends them from isopix.app to `POST /api/events`; the Worker writes them to R2 `isopix-telemetry` (binding `EVENTS`). The device code, `errorAt` and the click, key and stroke listeners that the retired visit beacon owned now live in `events.js`. How: [telemetry.md](telemetry.md#usage-events-the-shared-standard).
 

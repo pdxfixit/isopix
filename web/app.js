@@ -19,9 +19,11 @@ import { sillyName } from './sillynames.js';
 import { initEvents, cellsBucket } from './events.js';
 import * as AS from './autosave.js';
 import * as G from './gallery.js';
+import * as SB from './stampbook.js';
 import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLock, updateZoomUI } from './ui/controls.js';
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
+import { loadMine, saveMine, wireStamps } from './ui/stamps.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
 import { hasContent, leaveDrawing, openDrawing, openSettings, setName, showFold, startDrawing, syncMenu, updateSavedLine, watchDialogs, wireMenu } from './ui/screens.js';
 import { isopixFile, loadProjectObject, markChanged, placeTrace, pngBlob, pngCanvas, projectData, projectFromFile, projectPng, svgBlob, takeMovedDrawing, takeMovedSettings, updateFileUI } from './ui/files.js';
@@ -75,7 +77,7 @@ export const app = {
   level: 3,
   selection: null, // {region, anchor}
   stamps: [],
-  stampIndex: 0,
+  stampChoice: { from: 'starter', i: 0 }, // the stamp the Stamp brush places (web/stampbook.js chosen)
   ghost: null,
   crosshair: null,
   trace: null,
@@ -201,7 +203,7 @@ function beginPractice() {
   if (app.replaying) stopReplay();
   app.drawing = newDrawing();
   app.drawing.paper = theirs.paper;
-  app.stamps = []; app.selection = null; app.lastDensity = null; app.trace = null;
+  app.stamps = app.stamps.slice(); app.selection = null; app.lastDensity = null; app.trace = null;
   app.file = { name: null, at: null, via: null, dirty: false, handle: null };
   setName('Practice');
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
@@ -217,11 +219,13 @@ async function endPractice(keep) {
   loadProjectObject(was.obj);
   app.file = was.file;
   app.lastSaved = was.lastSaved;
+  // A stamp saved in the lesson stays only when the practice drawing is kept.
+  if (!kept) app.stamps = was.stamps;
   // The person's settings come back either way (the lesson picked tools and brushes for them).
   app.settings = { ...was.settings, welcomed: app.settings.welcomed };
   store.saveSettings(app.settings);
   app.practice = null;
-  if (kept) await addDrawing(kept);
+  if (kept) { saveMine(); await addDrawing(kept); }
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
   buildPalette(); setTool(app.settings.tool); updateModeChip(); syncMenu(); computeLevel(true); afterChange({ changed: false }); updateFileUI();
   toast(kept ? 'Kept: it is in Drawings with your other drawings' : 'Back to your drawing');
@@ -410,11 +414,12 @@ function wire() {
     if (!sel) return;
     const stamp = D.extractStamp(app.drawing, sel.region, sel.anchor);
     if (!stamp.cells.length && !stamp.edges.length) return toast('The selection is empty');
-    app.stamps.push({ name: `Stamp ${app.stamps.length + 1}`, stamp });
-    app.stampIndex = app.stamps.length - 1;
+    app.stamps.push({ name: SB.nextName(app.stamps), stamp });
+    app.stampChoice = { from: 'mine', i: app.stamps.length - 1 };
+    saveMine();
     set('brush', 'stamp');
     scheduleSave();
-    toast('Saved as a stamp. Pick the pencil to place it.');
+    toast('Saved as a stamp in Stamps → Mine. Pick the pencil to place it.');
     emit('stamp');
   });
 
@@ -438,6 +443,7 @@ function wire() {
     if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); setDensity(selDensity() - 1); }
   });
   wireMenu();
+  wireStamps();
 }
 
 async function boot() {
@@ -459,6 +465,7 @@ async function boot() {
   syncMenu();
   resize();
   computeLevel(true);
+  await loadMine(); // this browser's own stamps (web/ui/stamps.js), before any drawing adds to them
   // This browser's drawings (web/gallery.js): the one in use opens.
   const had = await openAtStart();
   if (!had && !arriving) setName(sillyName()); // the very first drawing here gets a silly name too

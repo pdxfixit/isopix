@@ -146,9 +146,12 @@ export const LESSONS = [
     ],
   },
   {
-    id: 'stamps', title: 'Stamps', about: 'Turn part of a drawing into a stamp, and place it at any size.',
+    id: 'stamps', title: 'Stamps', about: 'Place a ready-made stamp, turn part of a drawing into your own, and place it at any size.',
     steps: [
       DRAW_SOMETHING,
+      { id: 'starter', show: true, setup: { tool: 'pencil', brush: 'stamp' }, target: '#options',
+        say: 'Stamp opens Stamps: Starter has a cube, stairs, a house, a tree and more; Mine keeps the ones you make, in every drawing. Tap one, then the grid. Next, make one of your own.',
+        covers: ['Starter stamps', 'My stamps'] },
       { id: 'select', setup: { marquee: 'hexagon' }, target: '[data-tool="select"]', say: 'Pick Select and drag around it.',
         done: ev('select'), covers: [] },
       { id: 'save', target: ['#sel-stamp', '#sel-more'], say: 'Tap Save as stamp (on a phone, it is under More).',
