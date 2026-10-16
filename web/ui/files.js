@@ -8,6 +8,7 @@ import { drawCells, drawEdges } from '../render.js';
 import * as store from '../storage.js';
 import { fileKey } from '../gallery.js';
 import { addDrawing } from './gallery.js';
+import { addToMine } from './stamps.js';
 import { fileBase, saveDot } from '../sheets.js';
 import { paperOf } from '../engine/paper.js';
 import { keysToCopy, landing, hasDrawing } from '../move.js';
@@ -152,10 +153,9 @@ export function pngCanvas() {
   drawEdges(ctx, d, t);
   return c;
 }
-// A small picture of the drawing for the Drawings grid, centered on its
-// paper; null when nothing is drawn.
-export function thumbURL(w = 240, h = 160) {
-  const d = app.drawing;
+// A small picture of a drawing (the open one unless given) for the Drawings
+// grid and the Stamps drawer, centered on its paper; null when nothing is drawn.
+export function thumbURL(w = 240, h = 160, d = app.drawing) {
   const b = bounds(d);
   if (!b) return null;
   const bw = b.x1 - b.x0, bh = b.y1 - b.y0, pad = 0.08 * Math.max(bw, bh, 0.1);
@@ -177,7 +177,8 @@ export function pngBlob() {
 export function loadProjectObject(obj) {
   const d = P.load(obj);
   app.drawing = d;
-  if (Array.isArray(obj.stamps)) app.stamps = obj.stamps.filter((s) => s && s.stamp && Array.isArray(s.stamp.cells));
+  // Stamps a drawing or file carries join this browser's own (Mine), once each.
+  if (Array.isArray(obj.stamps)) addToMine(obj.stamps);
   if (obj.view && Number.isFinite(obj.view.zoom)) { app.view.zoom = obj.view.zoom; app.view.cx = obj.view.cx || 0; app.view.cy = obj.view.cy || 0; }
   app.selection = null;
   app.trace = null;

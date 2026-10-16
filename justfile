@@ -45,6 +45,12 @@ look *args:
 version *args:
     @python3 tools/bump_version.py "$@"
 
+#   just install-check --url https://isopix.app    the live site
+# 🔎 Installable as an app: Chrome's own check (Android, Windows, Mac), and the iPhone and iPad home-screen tags
+[positional-arguments]
+install-check *args:
+    @node tools/install_check.mjs "$@"
+
 # 🔎 Autosave copies, end to end in headless Chrome: a copy is taken, and a damaged autosave opens it (web/autosave.js)
 autosave-check:
     @node tools/autosave_check.mjs

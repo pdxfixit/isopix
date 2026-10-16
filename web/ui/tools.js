@@ -12,6 +12,8 @@ import { protectSplit, nextMode, MODE_LABEL, MODE_SAYS, skipNotice } from '../en
 import { $, BRUSH_LABEL, app, canvas, emit, palette, requestRender, scheduleSave, set, symCenter, toast } from '../app.js';
 import { cancelGesture, gesture, spaceHeld } from './input.js';
 import { syncMenu } from './screens.js';
+import * as SB from '../stampbook.js';
+import { openStamps } from './stamps.js';
 
 // ---------- tools and the options popover ----------
 export function setTool(tool) {
@@ -56,7 +58,7 @@ export function openPopover() {
     ? [['strip', 'Strip'], ['edge', 'Edge']].map(([k, t]) => ({ k, t, g: GLYPHS[k], on: s.lineStyle === k, pick: () => set('lineStyle', k) }))
     : s.tool === 'select'
       ? [['triangle', 'Triangle'], ['rhombus', 'Rhombus'], ['hexagon', 'Hexagon']].map(([k, t]) => ({ k, t, g: GLYPHS['m-' + k], on: s.marquee === k, pick: () => set('marquee', k) }))
-      : Object.entries(BRUSH_LABEL).map(([k, t]) => ({ k, t, g: GLYPHS[k], on: s.brush === k, pick: () => set('brush', k), off: k === 'stamp' && !app.stamps.length }));
+      : Object.entries(BRUSH_LABEL).map(([k, t]) => ({ k, t, g: GLYPHS[k], on: s.brush === k, pick: () => { set('brush', k); if (k === 'stamp') openStamps(); } })); // Stamp opens the Stamps drawer (web/ui/stamps.js)
   const title = s.tool === 'line' ? 'Line style' : s.tool === 'select' ? 'Selection shape (press a grid point, drag)' : 'Brush shape';
   pop.innerHTML = `<h4>${title}</h4>`;
   pop.setAttribute('aria-label', title);
@@ -66,21 +68,8 @@ export function openPopover() {
     b.setAttribute('aria-pressed', String(it.on));
     b.dataset.pick = it.k; // its name as a control (events.js)
     b.innerHTML = `${it.g}<span>${it.t}</span>`;
-    if (it.off) { b.disabled = true; b.title = 'Select something, then Save as stamp'; }
     b.addEventListener('click', () => { it.pick(); closePopover('picked'); updateOptionsButton(); });
     pop.append(b);
-  }
-  if (s.tool !== 'line' && s.tool !== 'select' && app.stamps.length > 1 && s.brush === 'stamp') {
-    const h = document.createElement('h4'); h.textContent = 'Stamps'; pop.append(h);
-    app.stamps.forEach((st, i) => {
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.setAttribute('aria-pressed', String(i === app.stampIndex));
-      b.dataset.pick = 'stamp-pick';
-      b.innerHTML = `${GLYPHS.stamp}<span>${st.name}</span>`;
-      b.addEventListener('click', () => { app.stampIndex = i; closePopover('picked'); });
-      pop.append(b);
-    });
   }
   if (pop.hidden) { popoverOpen = { dialog: s.tool === 'line' ? 'line' : s.tool === 'select' ? 'marquee' : 'brush', at: Date.now() }; app.events?.track('dialog.open', { dialog: popoverOpen.dialog }); }
   pop.hidden = false;
@@ -153,8 +142,7 @@ export function brushAt(x, y) {
   return B.brushCells(app.settings.brush, app.level, x, y);
 }
 export function stampItemsAt(x, y) {
-  const st = app.stamps[app.stampIndex];
-  if (!st) return { cells: [], edges: [] };
+  const st = SB.chosen(app.stampChoice, app.stamps);
   const A = L.nearestVertex(app.level, x, y);
   return D.placeStamp(st.stamp, A);
 }

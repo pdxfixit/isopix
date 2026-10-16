@@ -148,6 +148,27 @@ const VIEWS = {
 };
 // The selection with ⋯ More open, and the level rail held open by a finger.
 VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
+// Stamp in the brush picker opens Stamps; the eight starter tiles; House, then a tap places it.
+const TAP = (x, y) => `{ const c = document.querySelector('#stage'); const f = (t) => c.dispatchEvent(new PointerEvent(t, { clientX: ${x}, clientY: ${y}, pointerId: 7, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: t === 'pointerup' ? 0 : 1 })); f('pointerdown'); f('pointerup'); }`;
+VIEWS.stamps = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
+  if (!document.querySelector('#stamps').open) throw new Error('Stamp did not open Stamps');
+  const tiles = [...document.querySelectorAll('#stamps-grid .stamp-tile')];
+  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Tree,Wall,Pyramid,Flower,Star') throw new Error('the starter tiles are ' + tiles.map((t) => t.textContent));
+  if (tiles.some((t) => !t.querySelector('img').src.startsWith('data:image/'))) throw new Error('a tile has no picture');
+  tiles[2].click(); ${nap}
+  if (document.querySelector('#stamps').open || window.isopix.settings.brush !== 'stamp') throw new Error('picking House did not close Stamps and pick the Stamp brush');
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
+  const n = window.isopix.drawing.cells.size;
+  if (n !== 88) throw new Error('a tap placed ' + n + ' cells, not 88 (the House)');
+  ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}` };
+// A stamp of one's own goes in Mine and stays there in a new drawing.
+VIEWS['stamps-mine'] = { fresh: true, js: `${VIEWS.select.js} ${nap} ${q('#sel-stamp')} ${nap}
+  ${q('#drawing-open')} ${q('#file-new')} await new Promise((r) => setTimeout(r, 1100));
+  ${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
+  if (document.querySelector('#stamps-mine').getAttribute('aria-selected') !== 'true') throw new Error('Stamps did not open on Mine');
+  ${q('#stamps-mine')} ${nap}
+  const mine = [...document.querySelectorAll('#stamps-grid .stamp-tile')].map((t) => t.textContent);
+  if (mine.join() !== 'Stamp 1') throw new Error('Mine in a new drawing shows ' + JSON.stringify(mine));` };
 VIEWS.rail = { js: `const n = document.querySelector('.notch[aria-checked="true"]'); const r = n.getBoundingClientRect();
   n.dispatchEvent(new PointerEvent('pointerdown', { clientX: r.x + 22, clientY: r.y + 22, pointerId: 5, pointerType: 'touch', bubbles: true, buttons: 1 }));` };
 
