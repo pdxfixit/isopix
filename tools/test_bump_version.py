@@ -32,5 +32,16 @@ class Staged(unittest.TestCase):
         self.assertIn("PATCH must be 27", bv.staged_problem("1.2.23", 26, ("1.2.20", "1.2.22")))
 
 
+
+class GoesDown(unittest.TestCase):
+    def test_a_stamp_only_goes_up(self):
+        # 2026-10-16: a shallow cloud clone counted 2 commits and stamped 1.2.2 over 1.2.64.
+        self.assertIn("below 1.2.64", bv.goes_down("1.2.64", "1.2.2"))
+        self.assertIsNone(bv.goes_down("1.2.64", "1.2.66"))
+        self.assertIsNone(bv.goes_down("1.2.66", "1.2.66"))
+        self.assertIsNone(bv.goes_down("1.2.64", "1.3.2"))
+        self.assertIsNone(bv.goes_down("2026.10.13-2", "1.0.1"))
+
+
 if __name__ == "__main__":
     unittest.main()
