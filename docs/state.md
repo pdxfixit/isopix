@@ -23,6 +23,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Saving** (2026-10-14, live at isopix.app since 1.2.13): Save picks the way per device (`saveMethod` in `web/storage.js`): the browser's Save dialog once, then the same file each Save (Chrome, Edge on a computer; the handle is kept in IndexedDB); the share sheet on iPhone and iPad; else a download. Ctrl+S, Ctrl+Shift+S (save as new file) and Ctrl+O. A dot on Save marks changes not in a file; the Drawing sheet's file line says which file and whether it changed; New and Open ask first only then. The autosave also runs at once when the page is hidden; `navigator.storage.persist` is asked for (not in Firefox); a private window gets a one-time notice with Save drawing (`just look save-file`, `test/sheets.test.mjs`, `test/storage.test.mjs`).
 
+**Autosave copies** (2026-10-16): besides the autosave, up to 3 older copies, one per 5 minutes at most, only of a drawing with something in it; a damaged autosave opens the newest copy that loads, with a message (`web/autosave.js`, `test/autosave.test.mjs`, `just autosave-check` in CI). No button opens a copy by hand (offered in TODO).
+
 **Moving house** (2026-10-15, live): https://isopix.app is the home (Worker `isopix-app`); isopix.pdxfixit.com and the old Isogrid address are move Workers whose page carries a browser's drawing, settings and file record over in the `#move=` fragment and goes (`web/move.js`, `test/move.test.mjs`, `just move-check`, in CI).
 
 **Save as a picture** (2026-10-15, on `main`): Save drawing writes `name.isopix.png`, a picture with the whole project inside; Open reads it back; a setting in Settings → Drawing switches it to **Save Isopix drawing**, an `.isopix` file (gzip JSON; older `.isopix.json` still opens) (`web/engine/pngproject.js`, `test/pngproject.test.mjs`, four `just export-check` checks; the file also checked with Python's own PNG reading).
@@ -82,6 +84,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-16: `just autosave-check` runs in CI: headless Chrome takes a copy and opens it when the autosave is damaged (proven red with the fallback taken out). CI runs `just look --all`, so a new look view needs no workflow edit.
 - 2026-10-16: `web/app.js` was split into `web/ui/` (controls, tools, input, screens, files). Each ui module loads before app.js has made `app`, so a top-level line in one that uses it throws and the app never starts; the split nearly shipped three such lines. `test/uisplit.test.mjs` fails on any (proven red with one put back). The tests that read the app's source read all of it through `test/appsource.mjs`.
 - 2026-10-16: the support address was plain text in `web/index.html` and `web/update.js`, there for any spam harvester to read. It is built from an encoded constant now, and `test/no-plain-email.test.mjs` fails on a plain address in any tracked file (proven red on the old `web/update.js` and `web/index.html`).
 - 2026-10-16: `.githooks/pre-push` runs `bump_version.py --check`, so a stamp a rebase made stale is refused before the push (proven on `7aa9b90`, stamped 1.2.69 but commit 70, red in CI). `just version` also refuses a shallow clone and a stamp that goes down (a shallow cloud clone stamped `dee1a7d` 1.2.2), and `tools/cloud_setup.sh` fetches the full history.

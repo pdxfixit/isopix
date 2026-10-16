@@ -79,7 +79,10 @@ The drawing saves itself to IndexedDB in this browser 800 ms after each change,
 and at once when the app is put away (with its undo log, so undo and time-lapse
 survive a reload). Isopix asks the browser to keep that storage (not Firefox,
 which would prompt). If the browser will not store it (a private window), a
-notice says so once, with a Save drawing button. Settings live in `localStorage`.
+notice says so once, with a Save drawing button. Besides the autosave it keeps
+up to three older copies, at most one per 5 minutes (`web/autosave.js`): if the
+autosave cannot open, the newest copy that does opens instead, and the app says
+so. Settings live in `localStorage`.
 **Save drawing** writes a PNG picture with the whole project inside
 (`name.isopix.png`; `web/engine/pngproject.js`): it opens in any photo app,
 and Open reads the drawing back out. Settings → Drawing → "Save as a
