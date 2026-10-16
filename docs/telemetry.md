@@ -12,8 +12,8 @@ how it works and what each field means.
    while Settings → About → **Send usage counts** is on (the default), and never
    from automated browsers (`navigator.webdriver`).
 2. **The Worker** (`worker/index.js`, the `isopix-app` Worker) checks it with
-   the app's own `cleanVisit`, adds the country and region Cloudflare read from
-   the request, and writes one row per visit to D1 (`worker/schema.sql`). A
+   the app's own `cleanVisit`, adds the country Cloudflare read from the
+   request, and writes one row per visit to D1 (`worker/schema.sql`). A
    later send from the same visit replaces the row. It never reads the IP
    address. One visit in 50 also deletes rows older than 90 days.
 3. **The harvest** copies D1 and Cloudflare's daily stats into an archive
@@ -42,7 +42,7 @@ how it works and what each field means.
 | `longtasks` | Main-thread tasks over 50 ms (Chrome only): a sign of slowness. |
 | `counts` | `{"kind:word": n}`. Kinds: `tool` (a tool button), `btn` (any other button, by id), `color:swatch`, `brush`, `line`, `marquee` (a shape picked), `key` (a key's action from `web/keys.js`), `set` (a setting changed: `set:gray-on`, `set:protect-behind`), `stroke` (a pointer down on the canvas, by pointer type), `touch:second` (a second finger), `view:wheel`, `saved` (what a save did), `move:arrived`. |
 | `errors` | Up to 5 uncaught errors as kind and place (`TypeError app.js:120`), never the message: a message can carry a file's text. |
-| `country`, `region` | Added by the Worker from Cloudflare: ISO country, and state or province code. |
+| `country` | Added by the Worker from Cloudflare: the ISO country code. Never the region or city. |
 
 ## What is never sent
 
@@ -59,7 +59,7 @@ personal information, but it may be collected without a parent's consent when
 it is used only to support the site's internal operations (here: deciding what
 to improve), the privacy notice says so, and it is kept no longer than needed.
 So the device code changes every 90 days, D1 keeps 90 days, the location stops
-at the region (a city or street counts as personal), and the note under the
+at the country (in every app, the owner, 2026-10-16; a city or street counts as personal), and the note under the
 switch in Settings → About says all of it. `test/telemetry.test.mjs` fails when
 the note stops saying any of it, or when the schema gains an IP, city, address,
 User-Agent or name column. This is the building agent's reading, not legal

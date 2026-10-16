@@ -4,6 +4,8 @@
 -- ~/src/flarepress/tools/wrangler.sh site d1 execute isopix --remote --file ../worker/schema.sql`
 -- (wrangler runs from site/). What each field means: docs/telemetry.md.
 -- Times are milliseconds since 1970.
+-- 2026-10-16: country only, no region (the owner). A database made before
+-- keeps an empty `region` column; `ALTER TABLE visits DROP COLUMN region` removes it.
 
 -- One row per visit (a page load), replaced as the visit sends its tally.
 -- Kept 90 days (worker/index.js KEEP_MS); the harvest copies it to the Mac.
@@ -15,7 +17,6 @@ CREATE TABLE IF NOT EXISTS visits (
   day        TEXT NOT NULL,     -- UTC date of the first send, YYYY-MM-DD
   app        TEXT,              -- release, e.g. 1.3.20
   country    TEXT,              -- ISO 3166 code, from Cloudflare
-  region     TEXT,              -- state or province code, from Cloudflare
   width      INTEGER,           -- screen width, rounded down to a bucket
   touch      INTEGER,           -- 1: has a touch screen
   pwa        INTEGER,           -- 1: opened as an installed app

@@ -3,8 +3,8 @@
 // Static Assets before this runs; it sees only paths no file matches.
 //
 // POST /api/visit: one visit's usage counts (web/telemetry.js), checked with
-// the app's own cleanVisit, given the country and region Cloudflare read from
-// the request, and kept in D1's `visits` table (worker/schema.sql) for 90
+// the app's own cleanVisit, given the country Cloudflare read from the
+// request, and kept in D1's `visits` table (worker/schema.sql) for 90
 // days. The IP address is never read. A visit sends its whole tally each time
 // the page is hidden, so the row is replaced, never added to. Every answer is
 // 204 unless the request is plainly wrong; a database error is swallowed.
@@ -19,12 +19,11 @@ export const SWEEP_EVERY = 50;
 
 const reply = (status, text = '') => new Response(text ? `${text}\n` : null, { status, headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' } });
 
-// Cloudflare's guess of where a request came from: country and region only
-// (COPPA treats a street or a city as personal; a region is neither).
+// Cloudflare's guess of where a request came from: the country only, in
+// every app (the owner, 2026-10-16; COPPA treats a street or a city as personal).
 export function placeOf(request) {
   const cf = request.cf || {};
-  const code = (v, n) => (typeof v === 'string' && new RegExp(`^[A-Z0-9]{1,${n}}$`).test(v) ? v : null);
-  return { country: code(cf.country, 2), region: code(cf.regionCode, 3) };
+  return { country: typeof cf.country === 'string' && /^[A-Z0-9]{1,2}$/.test(cf.country) ? cf.country : null };
 }
 
 // Reads at most `max` bytes of the body, or null when it is longer.
@@ -35,9 +34,9 @@ async function readCapped(request, max) {
   return new TextEncoder().encode(text).length > max ? null : text;
 }
 
-export const UPSERT = `INSERT INTO visits (visit, device, first_seen, last_seen, day, app, country, region, width, touch, pwa, dark, reduced, lang, since, seconds, cells, longtasks, counts, errors)
-VALUES (?1, ?2, ?3, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)
-ON CONFLICT (visit) DO UPDATE SET last_seen = ?3, seconds = ?15, cells = ?16, longtasks = ?17, counts = ?18, errors = ?19
+export const UPSERT = `INSERT INTO visits (visit, device, first_seen, last_seen, day, app, country, width, touch, pwa, dark, reduced, lang, since, seconds, cells, longtasks, counts, errors)
+VALUES (?1, ?2, ?3, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
+ON CONFLICT (visit) DO UPDATE SET last_seen = ?3, seconds = ?14, cells = ?15, longtasks = ?16, counts = ?17, errors = ?18
 WHERE visits.device = ?2`;
 
 export async function handleVisit(request, env, ctx, now = Date.now()) {
@@ -53,11 +52,11 @@ export async function handleVisit(request, env, ctx, now = Date.now()) {
   const r = cleanVisit(body);
   if (!r.ok) return reply(400, `Not a visit: ${r.why}`);
   if (!env.DB) return reply(204);
-  const v = r.visit, { country, region } = placeOf(request);
+  const v = r.visit, { country } = placeOf(request);
   const write = async () => {
     try {
       await env.DB.prepare(UPSERT).bind(
-        v.visit, v.device, now, new Date(now).toISOString().slice(0, 10), v.app, country, region,
+        v.visit, v.device, now, new Date(now).toISOString().slice(0, 10), v.app, country,
         v.width, v.touch, v.pwa, v.dark, v.reduced, v.lang, v.since, v.seconds, v.cells, v.longtasks,
         JSON.stringify(v.counts), JSON.stringify(v.errors),
       ).run();
