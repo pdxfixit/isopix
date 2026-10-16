@@ -93,7 +93,7 @@ Rules:
 - **A new key goes in `web/keys.js`; a new button, tool or brush gets its line in `web/help.js`.** `test/help.test.mjs` fails otherwise.
 - **Every control has a label a screen reader reads,** and nothing is gesture-only (density change always has buttons).
 - **Respect `prefers-reduced-motion`.**
-- **Fresh clone: `just setup` first.** It turns on the pre-commit hook (`.githooks/pre-commit` runs `just test`, about 3 s, and checks a staged `web/version.js` carries this commit's number) and sets the PDXfixIT author. Never skip the hook; fix what it reports.
+- **Fresh clone: `just setup` first.** It turns on the pre-commit hook (`.githooks/pre-commit` runs `just test`, about 3 s, and checks a staged `web/version.js` carries this commit's number; `.githooks/pre-push` checks the stamp again, since a rebase moves the commit count) and sets the PDXfixIT author. Never skip the hook; fix what it reports.
 - **No personal names.** Never write the owner's or his family's names in any file or commit message; `test/names.test.mjs` fails on them, and on any commit not authored by PDXfixIT.
 - **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Push after every commit to `main` (see Ship).
 - **Agents are agents.** Call subagents "agents", never people.

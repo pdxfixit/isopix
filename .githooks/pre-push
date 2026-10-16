@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Before every push: the last web/version.js stamp must carry the number of
+# the commit that set it, as CI checks. 2026-10-16: a rebase onto another
+# session's commit after 'just version' made 7aa9b90 commit 70 with stamp
+# 1.2.69, and CI went red after the push. Turned on by `just setup`.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+if ! python3 tools/bump_version.py --check >/dev/null 2>/tmp/isopix-pre-push.$$; then
+  cat /tmp/isopix-pre-push.$$ >&2; rm -f /tmp/isopix-pre-push.$$
+  echo "🛑 push refused: run 'just version', commit web/version.js, then push (a rebase moves the commit count)." >&2
+  exit 1
+fi
+rm -f /tmp/isopix-pre-push.$$
