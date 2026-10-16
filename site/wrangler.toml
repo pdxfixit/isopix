@@ -4,9 +4,6 @@
 # tools/deploy.sh: by .github/workflows/deploy.yml, or the owner's
 # `just --yes deploy`. The old addresses are move Workers kept by the owner
 # outside this repo; their page loads move.js from here.
-# This repo is public: the database id is ${D1_DATABASE_ID}, filled at deploy
-# time from the repo secret (or the owner's environment on his Mac). Until it
-# is set, every deploy stops before uploading anything.
 name = "isopix-app"
 compatibility_date = "2026-10-15"
 main = "../worker/index.js"
@@ -18,16 +15,6 @@ routes = [
 [assets]
 directory = "../web"
 binding = "ASSETS"
-
-# Retired: nothing in worker/ reads or writes D1 any more (the visit beacon was
-# retired 2026-10-16). The binding stays only because flarepress's harvest.py
-# takes the database id from here while site/harvest.conf still names
-# `table=visits`. Remove both, and then the D1_DATABASE_ID secret, once the
-# telemetry runner has dropped its `visits` entry and the owner has dropped the table.
-[[d1_databases]]
-binding = "DB"
-database_name = "isopix"
-database_id = "${D1_DATABASE_ID}"
 
 # Usage events (web/events.js, worker/events-worker.js). The bucket must exist
 # before a deploy: wrangler refuses a binding to a missing bucket.
