@@ -9,7 +9,7 @@
 // screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
-//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll loading loading-slow
+//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll loading loading-slow replay
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -125,6 +125,9 @@ VIEWS.fit = { js: `${DRAW} const app = window.isopix; app.view.zoomAt(app.view.w
 // The update notice: the page loads as version look-a, then look-b goes "live".
 VIEWS.update = { live: ['look-a', 'look-b'], js: `await window.isopix.update.ask();
   if (document.querySelector('#update-bar').hidden) throw new Error('the update bar did not appear');` };
+// A replay in progress: its bar sits above the palette and tools, clear of everything.
+VIEWS.replay = { js: `${DRAW} document.querySelector('#replay').click(); ${nap}
+  if (document.querySelector('#replay-bar').hidden) throw new Error('the replay bar did not appear');` };
 // With a selection open, the bar must sit above the selection bar.
 VIEWS.updatesel = { live: ['look-a', 'look-b'], js: `${VIEWS.select.js} ${nap} await window.isopix.update.ask(); ${nap}
   if (document.querySelector('#update-bar').hidden) throw new Error('the update bar did not appear');` };
