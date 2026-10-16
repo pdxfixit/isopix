@@ -29,6 +29,12 @@ if [ -d "$ROOT/.git" ] && command -v just >/dev/null; then
   (cd "$ROOT" && just setup >/dev/null 2>&1) && say "git: pre-commit hook on, commits authored as PDXfixIT"
 fi
 
+# Cloud clones are shallow: `just version` needs the whole history (PATCH is
+# the commit count), and bump_version.py refuses a shallow clone.
+if [ "$(git -C "$ROOT" rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
+  git -C "$ROOT" fetch -q --unshallow 2>/dev/null && say "git: full history fetched (just version counts commits)" || say "⚠️ could not fetch the full history: run 'git fetch --unshallow' before 'just version'"
+fi
+
 # A Cloudflare token here would let any agent in the environment change every
 # site in the account: deploys need none in a session.
 [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || say "⚠️ CLOUDFLARE_API_TOKEN is set in this environment: remove it (cloud environment settings); GitHub deploys"

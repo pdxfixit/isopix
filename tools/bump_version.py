@@ -51,6 +51,23 @@ def bumped(old, part, count):
     return f"{major}.{minor}.{count + 1}"
 
 
+def goes_down(old, new):
+    """Why new is below old, or None. Pure. A stamp only ever goes up:
+    a lower PATCH means the commit count is wrong (a shallow clone counts
+    only the commits it fetched)."""
+    a, b = SEMVER.match(old), SEMVER.match(new)
+    if not a or not b:
+        return None
+    if tuple(map(int, b.groups())) >= tuple(map(int, a.groups())):  # equal: bumped twice before committing
+        return None
+    return (f"{new} is below {old}: the commit count looks wrong. "
+            f"In a shallow clone run 'git fetch --unshallow' first.")
+
+
+def shallow():
+    return git("rev-parse", "--is-shallow-repository") == "true"
+
+
 def stamp_of(text):
     m = PATTERN.search(text)
     if not m:
@@ -95,6 +112,8 @@ def staged():
         parents = tuple(stamp_of(git("show", f"{r}:web/version.js")).group(1) for r in ("HEAD", "MERGE_HEAD"))
         problem = staged_problem(stamp, int(git("rev-list", "--count", "HEAD", "MERGE_HEAD")), parents)
     else:
+        if shallow():
+            sys.exit("🛑 this clone is shallow, so the commit count is wrong: run 'git fetch --unshallow', then 'just version'")
         problem = staged_problem(stamp, commits())
     if problem:
         sys.exit(f"🛑 {problem}")
@@ -115,7 +134,12 @@ def main():
     part = args[0] if args else "patch"
     if part not in ("patch", "minor", "major"):
         sys.exit(f"❌ unknown part {part!r}: patch, minor or major")
+    if shallow():
+        sys.exit("🛑 this clone is shallow, so its commit count is wrong: run 'git fetch --unshallow', then 'just version'")
     new = bumped(old, part, commits())
+    problem = goes_down(old, new)
+    if problem:
+        sys.exit(f"🛑 {problem}")
     FILE.write_text(text.replace(m.group(0), f"self.ISOPIX_VERSION = '{new}';"))
     print(f"🏷️  {old} -> {new}  (web/version.js; commit it with the release)")
 
