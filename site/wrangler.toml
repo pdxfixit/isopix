@@ -1,5 +1,6 @@
-# Isopix at https://isopix.app: static assets (web/) and the usage-counts
-# Worker (worker/: POST /api/visit into D1 `isopix`), one hostname.
+# Isopix at https://isopix.app: static assets (web/) and the usage Worker
+# (worker/: POST /api/visit into D1 `isopix`, POST /api/events into R2
+# `isopix-telemetry`), one hostname.
 # Deployed by flarepress (github.com/pdxfixit/flarepress) through this repo's
 # tools/deploy.sh: by .github/workflows/deploy.yml, or the owner's
 # `just --yes deploy`. The old addresses are move Workers kept by the owner
@@ -23,3 +24,9 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "isopix"
 database_id = "${D1_DATABASE_ID}"
+
+# Usage events (web/events.js, worker/events-worker.js). The bucket must exist
+# before a deploy: wrangler refuses a binding to a missing bucket.
+[[r2_buckets]]
+binding = "EVENTS"
+bucket_name = "isopix-telemetry"

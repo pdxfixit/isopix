@@ -2,12 +2,17 @@
 // and §4; Arrow-Rama backlog #151): one record per thing that happened, with
 // its time and order, instead of one row of counts per visit.
 //
-// `track(event, details)` fills in the rest of a record (app, platform, form,
-// version, player, session, seq, at, tz, screen) and queues it, in memory and
-// in localStorage. Nothing here sends yet: the visit beacon (telemetry.js)
-// stays until the shared flarepress client takes over the transport (#151
-// phase B). With Settings → About → "Send usage counts" off, nothing is
-// recorded and the queue is emptied.
+// `track(event, details)` keeps only the keys the event may carry (`EVENTS`,
+// `cleanDetails`) and hands the record to the shared client vendored from
+// flarepress (events-client.js), which adds app, platform, form, version,
+// player, session, seq, at, tz and screen, queues it in memory and
+// localStorage, and sends batches to POST /api/events (worker/index.js, R2).
+// With Settings → About → "Send usage counts" off, nothing is recorded and
+// the queue is emptied.
+//
+// It sends only at https://isopix.app and never from automated browsers
+// (`navigator.webdriver`), like the visit beacon (telemetry.js), which stays
+// for now. Anywhere else the client queues but has no way to send.
 //
 // Never recorded: coordinates, the drawing, any name or text typed, colors
 // chosen, an error's message. A detail is a number, a boolean or one of the
@@ -16,12 +21,15 @@
 // The pure parts are exported for tests. Nothing touches the page until
 // initEvents runs.
 
-import { randomHex, deviceCode, DEVICE_KEY, FIRST_KEY, errorAt } from './telemetry.js';
+import { deviceCode, DEVICE_KEY, FIRST_KEY, HOST, errorAt } from './telemetry.js';
+import { createEvents } from './events-client.js';
 
 export const APP = 'isopix';
-export const PLATFORM = 'web';
-export const QUEUE_KEY = 'isopix-events';
-export const MAX_QUEUE = 1000;      // oldest dropped first: nothing sends until phase B
+export const SEND = true;           // false: queue only (R2 bucket `isopix-telemetry`, binding EVENTS, site/wrangler.toml)
+// Sends from here only: the live site, never a test browser or a preview.
+export const sendsFrom = ({ hostname, webdriver }) => SEND && hostname === HOST && !webdriver;
+export const OLD_QUEUE_KEY = 'isopix-events'; // phase A's own queue (release 1.2.68), removed at start
+export const MAX_QUEUE = 1000;      // records kept on the device, oldest dropped first
 export const MAX_ERRORS = 20;       // per page load
 export const SETTLE_MS = 1000;      // a slider's run of number changes is one setting.change
 
@@ -74,26 +82,6 @@ export function cleanDetails(event, details = {}) {
   return out;
 }
 
-// The kind of device, from the screen (not the window, so rotating or
-// resizing does not change it) and whether its main pointer is a finger.
-export function formOf({ screenW, screenH, coarse }) {
-  const short = Math.min(screenW || 0, screenH || 0);
-  if (!coarse) return 'desktop';
-  return short && short < 600 ? 'phone' : 'tablet';
-}
-// UTC offset in minutes (east positive): Date's offset is the other way round.
-export const tzOf = (d = new Date()) => -d.getTimezoneOffset() || 0;
-
-// A record of the standard shape (standard.md §3), or null for an unknown event.
-export function makeRecord(event, details, ctx) {
-  if (!Object.hasOwn(EVENTS, event)) return null;
-  return {
-    app: APP, platform: PLATFORM, form: ctx.form, version: ctx.version ?? null,
-    player: ctx.player, session: ctx.session, seq: ctx.seq, at: ctx.at, tz: ctx.tz,
-    event, screen: ctx.screen, details: cleanDetails(event, details),
-  };
-}
-
 // Which toolbar or cluster holds a control (`closest` on the element).
 export const GROUPS = [
   ['.topleft', 'topleft'], ['.topright', 'topright'], ['#levels', 'levels'], ['#zoom', 'zoom'],
@@ -129,19 +117,15 @@ export function layoutOf(group, look) {
   return look.wide ? 'wide' : 'narrow';
 }
 
-// The queue: kept in memory, copied to localStorage, at most MAX_QUEUE records.
-export class Queue {
-  constructor(storage, key = QUEUE_KEY, max = MAX_QUEUE) {
-    this.storage = storage; this.key = key; this.max = max;
-    this.items = [];
-    try {
-      const old = JSON.parse(storage?.getItem(key) || '[]');
-      if (Array.isArray(old)) this.items = old.filter((r) => r && typeof r === 'object' && typeof r.event === 'string').slice(-max);
-    } catch { /* storage blocked or spoiled: start empty */ }
-  }
-  push(r) { this.items.push(r); if (this.items.length > this.max) this.items.splice(0, this.items.length - this.max); }
-  save() { try { this.storage?.setItem(this.key, JSON.stringify(this.items)); } catch { /* full or blocked */ } }
-  clear() { this.items = []; try { this.storage?.removeItem(this.key); } catch { /* blocked */ } }
+// A random UUID (v4): crypto.randomUUID where there is one, else from
+// getRandomValues, which works on plain http too.
+export function uuidV4(c = globalThis.crypto) {
+  if (typeof c?.randomUUID === 'function') { try { return c.randomUUID(); } catch { /* not a secure context */ } }
+  const b = c.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
 // The player: the existing device code (telemetry.js), through this one
@@ -154,48 +138,49 @@ export function playerId(storage, now = Date.now()) {
   return code.id;
 }
 
-// The core, without the page: records, the screen, settings, the switch.
-// `env` gives enabled(), now(), storage, form and version.
-export function createTracker(env) {
-  const queue = new Queue(env.storage);
-  const session = randomHex(16);
-  let seq = 0, screen = 'draw', saveTimer = 0;
-  const lastSetting = new Map(); // key -> {rec, at}: a slider's run folds into one record
-  const on = () => { if (env.enabled()) return true; if (queue.items.length) queue.clear(); return false; };
+// The core, without the page: the listed events and their keys, the screen,
+// settings, the switch. `client` is the shared client (createEvents), or a
+// stand-in in tests; `enabled()` is the switch.
+export function createTracker({ client, enabled, now = Date.now, later = setTimeout, cancel = clearTimeout }) {
+  let screen = 'draw';
+  let pending = null; // a slider's setting.change, waiting for the slider to settle: {key, from, to, at, timer}
+  const send = (event, details) => (Object.hasOwn(EVENTS, event) ? client.track(event, cleanDetails(event, details)) : false);
+  function settle() {
+    if (!pending) return;
+    const p = pending;
+    pending = null;
+    cancel(p.timer);
+    if (p.from !== p.to) send('setting.change', { key: p.key, from: p.from, to: p.to });
+  }
+  // Every record goes through here; a waiting slider change goes first, so seq keeps the order things happened.
   function track(event, details = {}) {
-    if (!on()) return null;
-    const at = env.now();
-    const r = makeRecord(event, details, { form: env.form, version: env.version, player: playerId(env.storage, at), session, seq, at, tz: tzOf(new Date(at)), screen });
-    if (!r) return null;
-    seq++;
-    queue.push(r);
-    if (!saveTimer) saveTimer = (env.setTimeout || setTimeout)(() => { saveTimer = 0; queue.save(); }, 2000);
-    return r;
+    settle();
+    return send(event, details);
   }
   return {
     track,
-    session,
-    queue,
     get screen() { return screen; },
     // A new screen: screen.view says where it came from.
     view(name) { if (name === screen) return; const from = screen; screen = name; track('screen.view', { from }); },
     // A setting changed. Number changes to one key less than SETTLE_MS apart
-    // (a slider dragged) fold into the first one's record: from its old value
-    // to the latest. A switch flipped twice is two records. Colors and the symmetry center are never recorded.
+    // (a slider dragged) become one record, from the first old value to the
+    // last; anything else is recorded at once. Colors and the symmetry center
+    // are never recorded.
     setting(key, from, to) {
-      if (from === to || PRIVATE_SETTINGS.has(key) || !env.enabled()) return;
-      const at = env.now(), last = lastSetting.get(key);
-      if (last && typeof to === 'number' && typeof last.rec.details.to === 'number' && at - last.at < SETTLE_MS && queue.items.includes(last.rec)) {
-        last.at = at;
-        const v = cleanValue(to);
-        if (v === null) delete last.rec.details.to; else last.rec.details.to = v;
-        return;
+      if (from === to || PRIVATE_SETTINGS.has(key) || !enabled()) return;
+      if (typeof to !== 'number' || typeof from !== 'number') { track('setting.change', { key, from, to }); return; }
+      if (pending && pending.key === key && now() - pending.at < SETTLE_MS) {
+        cancel(pending.timer);
+        Object.assign(pending, { to, at: now() });
+      } else {
+        settle();
+        pending = { key, from, to, at: now() };
       }
-      const rec = track('setting.change', { key, from, to });
-      if (rec) lastSetting.set(key, { rec, at });
+      pending.timer = later(settle, SETTLE_MS);
     },
-    flush() { queue.save(); },
-    clear() { lastSetting.clear(); queue.clear(); },
+    // Before the page is put away: a waiting slider change is recorded now.
+    settle,
+    clear() { if (pending) cancel(pending.timer); pending = null; client.clear(); },
   };
 }
 
@@ -217,21 +202,12 @@ export function initEvents({ enabled, now = Date.now, storage = globalThis.local
   const coarse = matchMedia('(pointer: coarse)').matches;
   // The first page load on this device (telemetry.js keeps the same day for its `since`).
   const firstRun = (() => { try { if (storage.getItem(FIRST_KEY) != null) return false; storage.setItem(FIRST_KEY, JSON.stringify(now())); return true; } catch { return false; } })();
-  const t = createTracker({ enabled, now, storage, version: self.ISOPIX_VERSION, form: formOf({ screenW: screen.width, screenH: screen.height, coarse }) });
+  try { storage.removeItem(OLD_QUEUE_KEY); } catch { /* blocked */ }
+  let t = null; // the tracker, made below once this file's page listeners are in (the client's beacon goes after them)
   let lastPointer = coarse ? 'touch' : 'mouse';
   let shownAt = now(), hiddenAt = 0, ready = false, closed = false, errors = 0;
   let longN = 0, longMs = 0;
   const strokes = { n: 0, touch: 0, mouse: 0, pen: 0, second: 0 };
-
-  t.track('app.open', {
-    first_run: firstRun, vw: innerWidth, vh: innerHeight, density: devicePixelRatio,
-    font_scale: (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16,
-    dark: matchMedia('(prefers-color-scheme: dark)').matches,
-    reduced_motion: matchMedia('(prefers-reduced-motion: reduce)').matches,
-    lang: String(navigator.language || '').toLowerCase().split('-')[0],
-    input: lastPointer,
-    pwa: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
-  });
 
   document.addEventListener('pointerdown', (e) => { if (e.pointerType) lastPointer = e.pointerType; }, { capture: true, passive: true });
   // A control used, from the one document click listener (telemetry.js).
@@ -253,13 +229,13 @@ export function initEvents({ enabled, now = Date.now, storage = globalThis.local
     if (errors >= MAX_ERRORS) return;
     errors++;
     const [kind, where] = errorAt(e.error?.name, e.filename, e.lineno).split(' ');
-    t.track('error', { kind, where: where.replace(/^\?/, 'unknown'), fatal: !ready });
+    t?.track('error', { kind, where: where.replace(/^\?/, 'unknown'), fatal: !ready });
   });
   addEventListener('unhandledrejection', (e) => {
     if (errors >= MAX_ERRORS) return;
     errors++;
     const [kind] = errorAt(`Unhandled${e.reason?.name || ''}`, '', 0).split(' ');
-    t.track('error', { kind, where: 'unknown:0', fatal: false });
+    t?.track('error', { kind, where: 'unknown:0', fatal: false });
   });
   try {
     new PerformanceObserver((l) => { for (const en of l.getEntries()) { longN++; longMs += en.duration; } }).observe({ type: 'longtask', buffered: true });
@@ -274,12 +250,12 @@ export function initEvents({ enabled, now = Date.now, storage = globalThis.local
   const leaving = []; // what the app says when the page closes (work left unsaved)
   document.addEventListener('visibilitychange', () => {
     const at = now();
-    if (closed) return t.flush(); // app.close already said how long it was shown
+    if (closed) return t.settle(); // app.close already said how long it was shown
     if (document.visibilityState === 'hidden') {
       summaries(cellsNow());
       t.track('app.background', { shown_ms: at - shownAt });
       hiddenAt = at;
-      t.flush();
+      t.settle();
     } else {
       t.track('app.foreground', { away_ms: hiddenAt ? at - hiddenAt : 0 });
       shownAt = at;
@@ -291,14 +267,42 @@ export function initEvents({ enabled, now = Date.now, storage = globalThis.local
     if (document.visibilityState !== 'hidden') summaries(cellsNow());
     t.track('app.close', { shown_ms: document.visibilityState === 'hidden' ? 0 : now() - shownAt });
     hiddenAt = now();
-    t.flush();
+    t.settle();
+  });
+
+  // The shared client, after the listeners above, so app.background and
+  // app.close are in the batch its beacon sends. Away from the live site it
+  // has no fetch and no beacon: it queues, and sends nothing.
+  // crypto.randomUUID exists only on https (and localhost); the client needs
+  // one for its session and batch ids, so plain http gets uuidV4. Telemetry
+  // never stops the app: a client that will not start is a no-op.
+  const sends = sendsFrom({ hostname: location.hostname, webdriver: navigator.webdriver });
+  let client;
+  try {
+    client = createEvents({
+      app: APP, version: self.ISOPIX_VERSION, player: () => playerId(storage), screen: () => t?.screen ?? 'draw', enabled,
+      maxRecords: MAX_QUEUE,
+      globals: { uuid: uuidV4, ...(sends ? {} : { fetch: undefined, navigator: {} }) },
+    });
+  } catch {
+    client = { track: () => false, clear: () => {}, flush: async () => {}, queued: () => ({ records: [], batches: [] }), session: null, form: null };
+  }
+  t = createTracker({ client, enabled, now });
+  t.track('app.open', {
+    first_run: firstRun, vw: innerWidth, vh: innerHeight, density: devicePixelRatio,
+    font_scale: (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16,
+    dark: matchMedia('(prefers-color-scheme: dark)').matches,
+    reduced_motion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+    lang: String(navigator.language || '').toLowerCase().split('-')[0],
+    input: lastPointer,
+    pwa: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
   });
 
   addEventListener('pageshow', (e) => { if (e.persisted) { closed = false; shownAt = now(); t.track('app.foreground', { away_ms: hiddenAt ? now() - hiddenAt : 0 }); } });
 
   return {
-    track: t.track, view: t.view, setting: t.setting, flush: t.flush, clear: t.clear,
-    session: t.session, queue: t.queue,
+    track: t.track, view: t.view, setting: t.setting, clear: t.clear,
+    session: client.session, form: client.form, queued: client.queued,
     get screen() { return t.screen; },
     control, shortcut, stroke,
     cells(fn) { cellsNow = fn; },
