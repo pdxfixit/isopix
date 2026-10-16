@@ -1,5 +1,5 @@
 // Usage counts (web/telemetry.js) and the Worker that keeps them
-// (worker/index.js): what a visit may carry, the device code's 90-day life,
+// (worker/index.js): what a visit may carry, the device code that never changes,
 // and the privacy note in Settings that must say so.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,19 +16,22 @@ const good = () => ({
   counts: { 'tool:pencil': 3, 'key:undo': 1 }, errors: ['TypeError app.js:120'],
 });
 
-test('the device code lasts 90 days, then a new one is made', () => {
+test('the device code is plain random, made once, and never changes', () => {
   const rand = (a) => a.fill(0xab);
   const first = T.deviceCode(null, 1000, rand);
   assert.equal(first.id, 'abababababab');
-  assert.equal(T.deviceCode(first, 1000 + 89 * DAY, () => assert.fail('kept')), first);
-  const next = T.deviceCode(first, 1000 + 90 * DAY, (a) => a.fill(0x12));
-  assert.equal(next.id, '121212121212');
-  assert.equal(next.since, 1000 + 90 * DAY);
-  // A code from the future, or a malformed one, is replaced.
-  assert.notEqual(T.deviceCode({ id: first.id, since: 5000 }, 1000, (a) => a.fill(1)).id, first.id);
-  assert.notEqual(T.deviceCode({ id: 'Bob', since: 1000 }, 1000, (a) => a.fill(1)).id, 'Bob');
-  assert.equal(T.ROTATE_MS, 90 * DAY);
-  assert.equal(KEEP_MS, 90 * DAY, 'D1 keeps a visit as long as a device code lives');
+  // Kept for good: a day, 90 days, ten years on (owner, 2026-10-16: "keep it simple").
+  for (const later of [1000 + DAY, 1000 + 90 * DAY, 1000 + 3650 * DAY]) {
+    assert.equal(T.deviceCode(first, later, () => assert.fail('a new code was made')), first);
+  }
+  // A code stored by an older release, with its date, stays as it is.
+  const old = { id: 'cdcdcdcdcdcd', since: 5000 };
+  assert.equal(T.deviceCode(old, 1000 + 400 * DAY, () => assert.fail('replaced')), old);
+  assert.equal(T.deviceCode(old, 1000, () => assert.fail('replaced')), old);
+  // Only a missing or malformed code is replaced, by a plain random one.
+  assert.deepEqual(T.deviceCode({ id: 'Bob' }, 1000, (a) => a.fill(0x12)), { id: '121212121212' });
+  assert.deepEqual(T.deviceCode('x', 1000, (a) => a.fill(0x12)), { id: '121212121212' });
+  assert.equal(KEEP_MS, 90 * DAY, 'D1 keeps a visit 90 days');
 });
 
 test('buckets', () => {
