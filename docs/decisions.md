@@ -114,6 +114,7 @@ are open to the owner's change (see [questions.md](questions.md)).
 | The palette's pick-any-color button shows an eyedropper; it opens the system color picker. | Owner: "change the color picker to be an eyedropper instead of a crosshairs". | 2026-10-15 |
 | Fill floods the cells as stored (recoloring a big cell whole); empty space fills at the active level, finer only beside finer detail, bounded by the visible area. Past 40,000 cells it fills with bigger cells instead (one level coarser at a time), so it stays fast and never refuses. | The owner: keep the cap; fill bigger cells rather than refuse. | 2026-10-12 |
 | Symmetry is applied through the exact 12-element lattice group around a vertex; face tags follow their rhombus. | Brief. | 2026-10-12 |
+| Pen mode (once a pen is used, only the pen draws and fingers move the view) is not built and is deferred with no date. A pen draws like a finger. | Owner: "this is \"perpetually\" deferred -- I don't have a pen/stylus." It needs a real pen to tune. | 2026-10-16 |
 | Stamps keep cells relative to an anchor vertex and scale with the active level. | Scaling by 2 about a vertex maps one level exactly onto the next. | 2026-10-12 *(default)* |
 | Bold edges are stored per lattice edge; refining splits each in two. Coarsening merges halves on the coarser line into one edge that remembers its halves, and hides edges inside a coarser cell; refining brings both back exactly, until the user paints that cell or draws a bold line in it. Hidden edges are saved in projects. | The owner approved "keep bold edges on coarsen, like cells". | 2026-10-12 |
 
@@ -161,3 +162,4 @@ are open to the owner's change (see [questions.md](questions.md)).
 | The bubble sits on the free paper between the top buttons, the bottom bars and the two rails (narrower on phones), beside or just above or below what it points at; in a sheet it is a footer stuck to the sheet's bottom, and the target scrolls into view. Esc stops a lesson when there is nothing else to close. | It must never cover the control a step asks for (`just look` checks). | 2026-10-15 *(default)* |
 
 The steps are in [lessons.md](lessons.md), approved as drafted (owner: "i also support the lesson plan").
+| Drawing prompts never interrupt a focused person: a prompt is only offered where the person is already choosing what to do next (the welcome card, New, Help), never as a pop-up over a drawing in progress. | Owner: "fine; but let's be careful not to interrupt a focused user". Where they are offered: *(default)*. | 2026-10-16 |

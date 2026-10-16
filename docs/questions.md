@@ -25,3 +25,25 @@ ambiguity: one clear question beats a wrong build.
 2. Deletes the card (keep the numbers going up; do not reuse one).
 3. Adds any work he approved to [TODO.md](../TODO.md) "Agents do".
 4. Commits all three together.
+
+## 12. Light direction for auto-shade
+
+Today auto-shade lights a cube from the upper left: the top face is lightest,
+the left face is the color picked, the right face is darkest. Each cell stores
+its shaded color, so a change applies to new strokes only. The owner finds this
+of little importance but is open to it if people want it.
+
+- **(a) Leave it as is.** Nothing to learn, nothing to clutter.
+- **(b) "Light from: Left / Right" in Settings → Drawing,** saved with each
+  drawing so one drawing stays consistent. Right swaps the left and right
+  tones. The palette's three-tone chip shows the result. S.
+- **(c) As (b), plus a Relight button on the selection bar** that re-shades
+  the selected cells. It works from the stored face tags; the base color can be
+  recovered from the tone except where a very light or very dark color was
+  clipped, so a few cells would shift slightly. M.
+
+Recommendation: (a) for now, and (b) if anyone asks for it. (b) is cheap and
+safe; (c) is the version that teaches light, but its clipping edge case is not
+worth building before anyone wants it.
+
+**The owner:**
