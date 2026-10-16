@@ -70,18 +70,26 @@ advice.
 
 Isopix also records **events**, one record per thing that happened, in the
 shape every app shares (the standard in pdxfixit/telemetry, Arrow-Rama
-backlog #151). `web/events.js` builds them with `track(event, details)` and
-queues them in memory and in localStorage (`isopix-events`, at most 1000,
-oldest dropped). **Nothing sends them yet:** the visit beacon above stays
-until the shared flarepress client and Worker (`POST /api/events`, to R2)
-take over. With the switch off nothing is recorded and the queue is emptied.
+backlog #151). `web/events.js` keeps only each event's listed keys and hands
+it to flarepress's shared client (`web/events-client.js`, vendored: never
+edit it here; update it with flarepress's `just events-vendor --client web
+--worker worker`, and `test/telemetry.test.mjs` fails on a hand edit). The
+client fills in the columns below, queues in memory and localStorage
+(`events:isopix:<session>`, at most 1000 records), and sends batches of JSON
+lines to `POST /api/events` every 60 s and when the page is hidden. The
+Worker (`worker/events-worker.js`, vendored) writes each batch as it came to
+the R2 bucket `isopix-telemetry` (binding `EVENTS`, `site/wrangler.toml`)
+under `v1/<day>/<batch>.jsonl`; the telemetry runner's job reads and empties
+it. It sends only from https://isopix.app and never from automated browsers,
+like the visit beacon above, which still runs alongside. With the switch off
+nothing is recorded and the queue is emptied.
 
 | Column | Isopix |
 |---|---|
 | `app`, `platform` | `isopix`, `web` |
 | `form` | `phone`, `tablet` or `desktop`, from the screen size and whether the main pointer is a finger |
 | `version` | `version.js` |
-| `player` | the device code above (`playerId()`, one function, for the id rework #150) |
+| `player` | the device code above (`playerId()` in `events.js`, one function, for the id rework #150) |
 | `session`, `seq` | random per page load; order within it from 0 |
 | `at`, `tz` | epoch ms; UTC offset in minutes |
 | `screen` | `draw`, or the open sheet: `settings`, `drawing`, `help` |

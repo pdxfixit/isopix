@@ -5,57 +5,72 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as E from '../web/events.js';
+import { createEvents } from '../web/events-client.js';
 
 const appJs = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
 const eventsJs = fs.readFileSync(new URL('../web/events.js', import.meta.url), 'utf8');
 const telemetryJs = fs.readFileSync(new URL('../web/telemetry.js', import.meta.url), 'utf8');
 
-// A stand-in for localStorage.
+// A stand-in for localStorage, with the key()/length the client lists entries by.
 function fakeStorage(init = {}) {
   const m = new Map(Object.entries(init));
-  return { m, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  return {
+    m, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k),
+    key: (i) => [...m.keys()][i] ?? null, get length() { return m.size; },
+  };
 }
-function tracker({ on = true, t0 = Date.UTC(2026, 9, 16, 12), storage = fakeStorage() } = {}) {
+// The real shared client (vendored from flarepress) on stand-in globals, under Isopix's tracker.
+function tracker({ on = true, t0 = Date.UTC(2026, 9, 16, 12), storage = fakeStorage(), sent = [] } = {}) {
   const state = { on, now: t0 };
-  const t = E.createTracker({ enabled: () => state.on, now: () => state.now, storage, form: 'phone', version: '1.2.80', setTimeout: () => 0 });
-  return { t, state, storage };
+  let n = 0;
+  const later = [];
+  let t = null;
+  const client = createEvents({
+    app: E.APP, version: '1.2.80', player: () => E.playerId(storage, state.now), screen: () => t.screen, enabled: () => state.on,
+    form: 'phone', maxRecords: E.MAX_QUEUE,
+    globals: {
+      window: {}, document: undefined, navigator: {}, storage, now: () => state.now,
+      uuid: () => `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`,
+      fetch: async (url, init) => { sent.push({ url, init }); return { status: 204 }; },
+      setInterval: () => 0, clearInterval: () => {},
+    },
+  });
+  t = E.createTracker({ client, enabled: () => state.on, now: () => state.now, later: (fn) => { later.push(fn); return later.length; }, cancel: () => {} });
+  const records = () => client.queued().records.map((l) => JSON.parse(l));
+  return { t, client, state, storage, records, sent, runLater: () => later.splice(0).forEach((fn) => fn()) };
 }
 
-test('a record has every column of the standard, in order', () => {
-  const { t } = tracker();
-  const r = t.track('app.open', { vw: 375, vh: 812, first_run: true });
+test('a record has every column of the standard, in order, and only listed keys', () => {
+  const { t, records } = tracker();
+  t.track('app.open', { vw: 375, vh: 812, first_run: true, name: 'My dragon' });
+  const [r] = records();
   assert.deepEqual(Object.keys(r), ['app', 'platform', 'form', 'version', 'player', 'session', 'seq', 'at', 'tz', 'event', 'screen', 'details']);
   assert.equal(r.app, 'isopix');
   assert.equal(r.platform, 'web');
   assert.equal(r.form, 'phone');
   assert.equal(r.version, '1.2.80');
   assert.match(r.player, /^[0-9a-f]{12}$/);
-  assert.match(r.session, /^[0-9a-f]{16}$/);
   assert.equal(r.at, Date.UTC(2026, 9, 16, 12));
-  assert.equal(r.tz, -new Date(r.at).getTimezoneOffset() || 0);
   assert.equal(r.screen, 'draw');
   assert.deepEqual(r.details, { vw: 375, vh: 812, first_run: true });
 });
 
 test('seq counts from 0 within a session; the player is the device code, one function', () => {
   const storage = fakeStorage();
-  const { t } = tracker({ storage });
-  const a = t.track('app.open'), b = t.track('screen.view', { from: 'draw' });
+  const { t, records } = tracker({ storage });
+  t.track('app.open'); t.track('dialog.open', { dialog: 'welcome' });
+  const [a, b] = records();
   assert.deepEqual([a.seq, b.seq], [0, 1]);
   assert.equal(a.player, b.player);
   assert.equal(JSON.parse(storage.getItem('isopix-usage-device')).id, a.player, 'the same code the visit beacon sends');
-  const other = tracker({ storage }).t.track('app.open');
-  assert.equal(other.player, a.player);
-  assert.notEqual(other.session, a.session, 'each page load is its own session');
-  assert.equal(other.seq, 0);
 });
 
 test('an event not in the list is not recorded, and a detail key not listed for it is dropped', () => {
-  const { t } = tracker();
-  assert.equal(t.track('made.up', { a: 1 }), null);
-  assert.equal(t.queue.items.length, 0);
-  const r = t.track('control.use', { control: 'undo', group: 'topleft', x: 120, y: 44, layout: 'rail' });
-  assert.deepEqual(r.details, { control: 'undo', group: 'topleft', layout: 'rail' }, 'no coordinates');
+  const { t, records } = tracker();
+  assert.equal(t.track('made.up', { a: 1 }), false);
+  assert.equal(records().length, 0);
+  t.track('control.use', { control: 'undo', group: 'topleft', x: 120, y: 44, layout: 'rail' });
+  assert.deepEqual(records()[0].details, { control: 'undo', group: 'topleft', layout: 'rail' }, 'no coordinates');
 });
 
 test('a detail is a number, a boolean or one of the app\'s own words, never text someone typed', () => {
@@ -71,64 +86,63 @@ test('a detail is a number, a boolean or one of the app\'s own words, never text
   assert.equal(E.cleanValue(false), false);
 });
 
-test('with the switch off nothing is recorded and the queue is emptied', () => {
+test('with the switch off nothing is recorded and the queue is emptied, stored copy too', () => {
   const storage = fakeStorage();
-  const { t, state } = tracker({ storage });
+  const { t, state, records } = tracker({ storage });
   t.track('app.open');
-  t.flush();
-  assert.ok(storage.getItem(E.QUEUE_KEY));
+  assert.ok([...storage.m.keys()].some((k) => k.startsWith('events:isopix:')));
   state.on = false;
-  assert.equal(t.track('screen.view', { from: 'draw' }), null);
-  assert.equal(t.queue.items.length, 0);
-  assert.equal(storage.getItem(E.QUEUE_KEY), null, 'the stored copy is gone too');
+  t.clear();
+  assert.equal(records().length, 0);
+  assert.ok(![...storage.m.keys()].some((k) => k.startsWith('events:isopix:')));
+  assert.equal(t.track('dialog.open', { dialog: 'welcome' }), false);
   t.setting('gray', false, true);
-  assert.equal(t.queue.items.length, 0);
+  assert.equal(records().length, 0);
 });
 
-test('the queue survives a reload and keeps at most MAX_QUEUE records, oldest dropped', () => {
-  const storage = fakeStorage();
-  const q = new E.Queue(storage, 'k', 3);
-  for (let i = 0; i < 5; i++) q.push({ event: 'app.open', seq: i });
-  q.save();
-  assert.deepEqual(new E.Queue(storage, 'k', 3).items.map((r) => r.seq), [2, 3, 4]);
-  assert.deepEqual(new E.Queue(fakeStorage({ k: 'not json' }), 'k').items, []);
-  assert.deepEqual(new E.Queue(fakeStorage({ k: '[1, null, {"event": "app.open"}]' }), 'k').items, [{ event: 'app.open' }]);
-  assert.equal(E.MAX_QUEUE, 1000);
+test('a batch goes to POST /api/events as JSON lines, with a batch id', async () => {
+  const { t, client, sent } = tracker();
+  t.track('app.open'); t.track('dialog.open', { dialog: 'welcome' });
+  await client.flush();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].url, '/api/events');
+  assert.match(sent[0].init.headers['x-batch'], /^[0-9a-f-]{36}$/);
+  assert.deepEqual(sent[0].init.body.trim().split('\n').map((l) => JSON.parse(l).event), ['app.open', 'dialog.open']);
+  assert.equal(client.queued().batches.length, 0, 'dropped after a 2xx');
+});
+
+test('it sends only from the live site, never from a test browser', () => {
+  assert.equal(E.sendsFrom({ hostname: 'isopix.app', webdriver: false }), true);
+  assert.equal(E.sendsFrom({ hostname: 'isopix.app', webdriver: true }), false);
+  assert.equal(E.sendsFrom({ hostname: 'localhost', webdriver: false }), false);
 });
 
 test('screen.view says where the person came from', () => {
-  const { t } = tracker();
-  t.view('settings');
-  t.view('settings');
-  t.view('draw');
-  const v = t.queue.items;
-  assert.deepEqual(v.map((r) => [r.event, r.screen, r.details.from]), [['screen.view', 'settings', 'draw'], ['screen.view', 'draw', 'settings']]);
+  const { t, records } = tracker();
+  t.view('settings'); t.view('settings'); t.view('draw');
+  assert.deepEqual(records().map((r) => [r.event, r.screen, r.details.from]), [['screen.view', 'settings', 'draw'], ['screen.view', 'draw', 'settings']]);
 });
 
-test('setting.change carries from and to; a slider\'s run folds into one record, a switch flipped twice is two; colors are never recorded', () => {
-  const { t, state } = tracker();
+test('setting.change carries from and to; a slider\'s run is one record, a switch flipped twice is two; colors are never recorded', () => {
+  const { t, state, records, runLater } = tracker();
   t.setting('gray', false, true);
   t.setting('gray', true, true);
   t.setting('gray', true, false);
   t.setting('traceOpacity', 0.3, 0.4);
   state.now += 200; t.setting('traceOpacity', 0.4, 0.5);
   state.now += 200; t.setting('traceOpacity', 0.5, 0.7);
-  state.now += E.SETTLE_MS + 1; t.setting('traceOpacity', 0.7, 0.2);
+  t.track('dialog.open', { dialog: 'welcome' }); // the slider's change is recorded before what came next
+  state.now += 200; t.setting('traceOpacity', 0.7, 0.2);
+  runLater();
   t.setting('color', '#3a86ff', '#ff006e');
   t.setting('symP', 0, 4);
-  assert.deepEqual(t.queue.items.map((r) => r.details), [
+  assert.deepEqual(records().map((r) => r.details), [
     { key: 'gray', from: false, to: true },
     { key: 'gray', from: true, to: false },
     { key: 'traceOpacity', from: 0.3, to: 0.7 },
+    { dialog: 'welcome' },
     { key: 'traceOpacity', from: 0.7, to: 0.2 },
   ]);
-});
-
-test('form: a phone, a tablet or a desktop, from the screen and the main pointer', () => {
-  assert.equal(E.formOf({ screenW: 390, screenH: 844, coarse: true }), 'phone');
-  assert.equal(E.formOf({ screenW: 844, screenH: 390, coarse: true }), 'phone', 'turned sideways, still a phone');
-  assert.equal(E.formOf({ screenW: 820, screenH: 1180, coarse: true }), 'tablet');
-  assert.equal(E.formOf({ screenW: 1440, screenH: 900, coarse: false }), 'desktop');
 });
 
 // A stand-in for an element: closest() over a chain of selectors it matches.
@@ -193,4 +207,11 @@ test('the hooks: the click, key and stroke listeners pass on to events, and ever
   // app.settings is written only in set(), at load, and when a lesson gives the person's settings back.
   const writes = [...appJs.matchAll(/app\.settings(?:\[[^\]]+\]|\.\w+)? = /g)].length;
   assert.equal(writes, 3, 'app.settings is written in set(), when settings move house, and when a lesson ends; a new write skips setting.change: use set()');
+});
+
+test('a UUID without crypto.randomUUID (plain http has none), so the client starts there too', () => {
+  const insecure = { getRandomValues: (a) => a.fill(0xab) };
+  assert.equal(E.uuidV4(insecure), 'abababab-abab-4bab-abab-abababababab');
+  assert.match(E.uuidV4(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.match(eventsJs, /globals: \{ uuid: uuidV4,/);
 });

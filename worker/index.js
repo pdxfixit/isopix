@@ -8,11 +8,18 @@
 // days. The IP address is never read. A visit sends its whole tally each time
 // the page is hidden, so the row is replaced, never added to. Every answer is
 // 204 unless the request is plainly wrong; a database error is swallowed.
+// POST /api/events: usage events in the shared standard (web/events.js),
+// written as they came to the R2 bucket `isopix-telemetry` (binding EVENTS)
+// by flarepress's shared route (events-worker.js, vendored): never parsed,
+// never the IP. The telemetry runner's job reads and empties the bucket.
 // Anything else goes to the static files (their 404).
 
 import { cleanVisit, ENDPOINT, HOST, MAX_BYTES, ROTATE_MS } from '../web/telemetry.js';
+import { handleEvents } from './events-worker.js';
 
 export const ORIGIN = `https://${HOST}`;
+export const EVENTS_PATH = '/api/events';
+export const EVENTS_OPTS = { bucket: 'EVENTS', origins: [`https://${HOST}`] };
 export const KEEP_MS = ROTATE_MS; // 90 days, the same as the device code's life
 // One visit in this many also deletes rows past KEEP_MS: nothing scheduled.
 export const SWEEP_EVERY = 50;
@@ -71,6 +78,11 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === ENDPOINT) return handleVisit(request, env, ctx);
+    if (url.pathname === EVENTS_PATH) {
+      // The deploy's own checks run headless Chrome on the live site: nothing of theirs is kept.
+      if (request.method === 'POST' && /HeadlessChrome/.test(request.headers.get('User-Agent') || '')) return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+      return handleEvents(request, env, EVENTS_OPTS);
+    }
     return env.ASSETS.fetch(request);
   },
 };
