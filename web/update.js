@@ -52,11 +52,16 @@ export function aboutVersion(app, json) {
   return sha ? `Version ${releaseOf(app)} (${sha})` : `Version ${releaseOf(app)}`;
 }
 
-// Where problems go: an email to support (Owner: "offer an email instead;
-// support@isopix.app"; no GitHub account needed, and it stays private). The
-// version in Settings → About links to its commit in the public repo.
+// Where problems go: an email to support (Owner: "offer an email instead"; no
+// GitHub account needed, and it stays private). The version in Settings →
+// About links to its commit in the public repo.
 export const REPO = 'https://github.com/pdxfixit/isopix';
-export const SUPPORT = 'support@isopix.app';
+// The address is never written out in a served file, so a spam harvester that
+// reads the page or its scripts finds none: it is kept reversed and
+// base64-encoded and built here (Owner, 2026-10-16: "consider protecting the
+// email address from scrapers"). test/no-plain-email.test.mjs holds the line.
+const SUPPORT_ENC = 'cHBhLnhpcG9zaUB0cm9wcHVz';
+export const SUPPORT = atob(SUPPORT_ENC).split('').reverse().join('');
 const hasSha = (json) => { const s = shaOf(json); return s && s !== 'dev' ? s : null; };
 // Settings → About's version links to the commit this copy was built from
 // (a dev copy, or a stamp without one, to the repo). Pure.

@@ -167,12 +167,13 @@ test('About names the release and the commit in parentheses, never the release t
 test('the version links to its commit, and a problem report opens a filled-in email to support', () => {
   const json = { version: 'v1.2.24', commit: 'e7bdc86f00' };
   assert.equal(REPO, 'https://github.com/pdxfixit/isopix');
-  assert.equal(SUPPORT, 'support@isopix.app');
+  const ADDR = ['support', '@', 'isopix.app'].join(''); // never a plain literal in a tracked file
+  assert.equal(SUPPORT, ADDR);
   assert.equal(versionURL(json), `${REPO}/commit/e7bdc86`);
   assert.equal(versionURL(null), REPO, 'a dev copy links to the repo');
   assert.equal(versionURL({ version: 'v1', commit: '<b>' }), REPO);
   const url = reportURL({ app: '1.2.24', json, ua: 'Mozilla/5.0 (iPhone)', screen: '390×844', installed: true });
-  assert.ok(url.startsWith('mailto:support@isopix.app?subject='));
+  assert.ok(url.startsWith(`mailto:${ADDR}?subject=`));
   assert.doesNotMatch(url, /\+/, 'spaces are %20: a mail app shows + literally');
   const params = new URLSearchParams(url.slice(url.indexOf('?') + 1));
   assert.equal(params.get('subject'), 'Isopix 1.2.24: ');
