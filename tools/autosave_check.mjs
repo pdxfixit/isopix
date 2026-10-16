@@ -26,7 +26,10 @@ let failed = 0;
 const check = (ok, what) => { console.log(`${ok ? '✅' : '❌'} ${what}`); if (!ok) failed++; };
 const go = async (url, ms = 2500) => { await send('Page.navigate', { url: 'about:blank' }); await sleep(200); await send('Page.navigate', { url }); await sleep(ms); };
 // Runs `body` with `db` open (the app's own IndexedDB) inside a promise: call res or rej.
-const idb = (body) => `new Promise((res, rej) => { const r = indexedDB.open('isopix', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv');
+// A throw inside an IndexedDB callback is caught by nothing, so a step that
+// breaks would wait forever: after 10 s it fails, saying so.
+const idb = (body) => `new Promise((res, rej) => { setTimeout(() => rej(new Error('an IndexedDB step did not finish in 10 s (a callback threw?)')), 10000);
+  const r = indexedDB.open('isopix', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv');
   r.onsuccess = () => { const db = r.result; ${body} }; r.onerror = rej; })`;
 
 // 1. A drawing with something in it takes a copy at its first autosave.
@@ -40,7 +43,7 @@ await evaluate(send, `(async () => { const c = document.querySelector('#stage');
   await new Promise((r) => setTimeout(r, 1500)); })()`);
 const cells = await evaluate(send, 'window.isopix.drawing.cells.size');
 const id = await evaluate(send, 'window.isopix.drawingId');
-const copies = await evaluate(send, idb(`const g = db.transaction('kv').objectStore('kv').get('copies:${id}'); g.onsuccess = () => res(g.result ? g.result.map((c) => c.project.cells.length) : null);`));
+const copies = await evaluate(send, idb(`const g = db.transaction('kv').objectStore('kv').get('copies:${id}'); g.onsuccess = () => res(g.result ? g.result.map((c) => Object.keys(c.project.picture.cells).length) : null);`));
 check(cells > 0 && Array.isArray(copies) && copies.length === 1 && copies[0] === cells, `a drawing with something in it took one copy at its autosave (${cells} cells, copies ${JSON.stringify(copies)})`);
 
 // 2. A damaged autosave opens the newest copy that loads, and says so.
@@ -48,8 +51,8 @@ await go(`${home}/version.json`, 300);
 await evaluate(send, idb(`const tx = db.transaction('kv', 'readwrite'); const st = tx.objectStore('kv');
   st.get('drawing:${id}').onsuccess = (e) => {
     const good = e.target.result;
-    st.put({ ...good, cells: [['not a key', 'nope']], name: 'Broken' }, 'drawing:${id}');
-    st.put([{ savedAt: Date.now() - 6 * 60000, project: { ...good, name: 'Rescued' } }], 'copies:${id}');
+    st.put({ ...good, picture: { ...good.picture, name: 'Broken', cells: { 'not a key': 'nope' } } }, 'drawing:${id}');
+    st.put([{ savedAt: Date.now() - 6 * 60000, project: { ...good, picture: { ...good.picture, name: 'Rescued' } } }], 'copies:${id}');
   };
   tx.oncomplete = () => res(true); tx.onerror = rej;`));
 await go(`${home}/`, 1200);
@@ -66,10 +69,11 @@ await evaluate(send, idb(`const tx = db.transaction('kv', 'readwrite'); const st
   tx.oncomplete = () => res(true); tx.onerror = rej;`));
 await go(`${home}/`, 1500);
 const m = await evaluate(send, idb(`const st = db.transaction('kv').objectStore('kv'); const a = window.isopix;
-  const l = st.get('drawings'), c = st.get('copies:' + a.drawingId), o = st.get('autosave');
-  o.onsuccess = () => res({ name: a.drawingName, cells: a.drawing.cells.size, list: (l.result || []).map((e) => e.name), copies: (c.result || []).map((x) => x.project.name), legacy: !!o.result });`));
+  const l = st.get('drawings'), c = st.get('copies:' + a.drawingId), o = st.get('autosave'), rec = st.get('drawing:' + a.drawingId);
+  rec.onsuccess = () => res({ name: a.drawingName, cells: a.drawing.cells.size, list: (l.result || []).map((e) => e.name), copies: (c.result || []).map((x) => x.project.picture?.name ?? x.project.name), converted: !!rec.result?.picture && (c.result || []).every((x) => x.project.picture), legacy: !!o.result });`));
 check(m.name === 'Before galleries' && m.cells === 1, `the drawing kept before opened (${m.name}, ${m.cells} cell)`);
 check(m.list.length === 1 && m.list[0] === 'Before galleries' && m.copies.includes('old copy'), `it moved into Drawings with its copy (${JSON.stringify(m.list)}, copies ${JSON.stringify(m.copies)})`);
 check(m.legacy, 'the old autosave key is left as it was');
+check(m.converted, 'it and its copies were rewritten in spec 1.0 (P.fromOldLayout, temporary)');
 check(!errors.length, errors.length ? `page errors: ${errors.join(' | ')}` : 'no page errors');
 process.exit(failed ? 1 : 0);

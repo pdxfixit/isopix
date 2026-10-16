@@ -33,19 +33,19 @@ test('too big for the address: the trace picture goes first, then the history, n
   const a = drawn();
   const steps = shrinkings(a);
   assert.deepEqual(steps.map((s) => s.dropped), [[], ['trace'], ['trace', 'history'], ['drawing']]);
-  assert.equal(steps[1].autosave.trace, undefined);
-  assert.deepEqual(steps[2].autosave.log, []);
-  assert.equal(steps[2].autosave.cells.length, 1, 'the cells always go');
-  assert.equal(a.trace.src.length > 0, true, 'the original is untouched');
+  assert.equal(steps[1].autosave.app.trace, undefined);
+  assert.deepEqual(steps[2].autosave.app.log, []);
+  assert.equal(Object.keys(steps[2].autosave.picture.cells).length, 1, 'the cells always go');
+  assert.equal(a.app.trace.src.length > 0, true, 'the original is untouched');
   // A huge trace picture (random bytes do not compress): it is left behind.
-  const big = { ...a, trace: { ...a.trace, src: Array.from({ length: 40000 }, () => Math.random().toString(36).slice(2)).join('') } };
+  const big = { ...a, app: { ...a.app, trace: { ...a.app.trace, src: Array.from({ length: 40000 }, () => Math.random().toString(36).slice(2)).join('') } } };
   const { url, dropped } = await moveURL({ from: 'isopix.pdxfixit.com', autosave: big, local: {} }, 100000);
   assert.ok(url.length <= 100000);
   assert.deepEqual(dropped, ['trace']);
   const got = arrival(await unpack(url.split('#move=')[1]));
   assert.deepEqual(got.dropped, ['trace']);
   assert.equal(got.savedFile, false);
-  assert.equal(got.autosave.cells.length, 1);
+  assert.equal(Object.keys(got.autosave.picture.cells).length, 1);
   assert.deepEqual(await moveURL({ from: 'x', autosave: a }, 10), { url: `${HOME}/`, dropped: ['drawing'] }, 'nothing fits: go anyway');
   // Past every shrinking the drawing goes to the downloads, and the arrival says so.
   const tight = await moveURL({ from: 'x', autosave: a, local: {} }, 200, true);

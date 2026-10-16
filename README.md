@@ -73,6 +73,13 @@ K lock, G gutters, H move, 0 fit the drawing, + and − zoom, Ctrl+Z undo, Shift
 Ctrl+S save, Ctrl+Shift+S save as a new file, Ctrl+O open,
 Esc clears the selection (and leaves Move), M Settings, D Drawing, ? Help.
 
+## File format
+
+A drawing is a JSON document anyone can read, write or draw without Isopix:
+[spec/README.md](spec/README.md) (the Isopix file format 1.0, public domain
+under CC0), with a JSON Schema, examples, and two small reference renderers
+that turn a file into SVG (`python3 spec/render-svg.py drawing.isopix.png`).
+
 ## Storage
 
 A browser keeps several drawings (Drawings, on the Drawing sheet; `web/gallery.js`).

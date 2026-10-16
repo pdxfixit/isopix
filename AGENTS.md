@@ -38,6 +38,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 | `worker/` | The isopix.app Worker: `POST /api/events` (usage events, [docs/telemetry.md](docs/telemetry.md)) into R2; every other path goes to the static files. |
 | `web/sw.js`, `web/version.js` | Service worker (network first) and its version stamp. |
 | `web/_headers` | Response headers for Cloudflare and `tools/serve.py` (CSP, no-cache for `sw.js`). |
+| `spec/` | The Isopix file format, spec 1.0, under CC0: the spec, a JSON Schema, examples, and reference renderers in Python and JavaScript (`test/spec.test.mjs` checks they draw what the app does). |
 | `test/` | `node --test` suites for the engine and app tables, plus `test/docs.test.mjs`: every recipe, look view, link and repo path the docs name must exist. |
 | `tools/` | `serve.py`, `look.mjs` + `chrome.mjs`, `export_check.mjs`, `perf.mjs`, `bump_version.py`, `make_icons.mjs`, `live_check.py`, `version_bumped.sh`, `deploy.sh` (the logic behind `deploy.just`). |
 | `justfile`, `deploy.just` | Recipes, in [the house style](docs/justfile-style.md). The justfile imports `deploy.just` (the deploy recipes). Change either with care: a broken deploy recipe blocks every release. |

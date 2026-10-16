@@ -20,18 +20,24 @@ export const MAX_URL = 1_000_000;
 // ---------- pure parts (test/move.test.mjs) ----------
 
 const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
-export const hasDrawing = (p) => isObj(p) && ((p.cells?.length || 0) + (p.edges?.length || 0) + (p.log?.length || 0)) > 0;
+// Either layout: spec 1.0 (`picture` and `app`) or the flat one saved before it.
+export const hasDrawing = (p) => isObj(p) && (isObj(p.picture)
+  ? Object.keys(p.picture.cells || {}).length + Object.keys(p.picture.edges || {}).length + (p.app?.log?.length || 0)
+  : (p.cells?.length || 0) + (p.edges?.length || 0) + (p.log?.length || 0)) > 0;
 
 // What to send, best first: everything; then without the trace picture; then
 // without the undo history too; at last only the settings.
 export function shrinkings(autosave) {
   if (!isObj(autosave)) return [{ autosave: null, dropped: [] }];
-  const noTrace = { ...autosave };
+  // Spec 1.0 keeps the trace and history under `app`; the flat layout saved before it, at the top.
+  const app = isObj(autosave.picture) ? (isObj(autosave.app) ? autosave.app : {}) : autosave;
+  const put = (a) => (isObj(autosave.picture) ? { ...autosave, app: a } : a);
+  const noTrace = { ...app };
   delete noTrace.trace;
   return [
     { autosave, dropped: [] },
-    { autosave: noTrace, dropped: ['trace'] },
-    { autosave: { ...noTrace, log: [], redo: [] }, dropped: ['trace', 'history'] },
+    { autosave: put(noTrace), dropped: ['trace'] },
+    { autosave: put({ ...noTrace, log: [], redo: [] }), dropped: ['trace', 'history'] },
     { autosave: null, dropped: ['drawing'] },
   ];
 }

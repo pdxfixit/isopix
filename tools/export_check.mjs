@@ -100,7 +100,7 @@ const result = await evaluate(`(async () => {
   out.projectPng = { size: pp.size, picture: ppBmp.width === bmp.width && ppBmp.height === bmp.height,
     same: JSON.stringify([...d3.cells].sort()) === JSON.stringify([...a.drawing.cells].sort()) && d3.undoStack.length === a.drawing.undoStack.length,
     sameNow: JSON.stringify([...backNow.cells].sort()) === JSON.stringify([...a.drawing.cells].sort()),
-    plainRefused: /no Isopix drawing inside/.test(plain), name: back.name };
+    plainRefused: /no Isopix drawing inside/.test(plain), name: back.picture?.name };
   out.projectPngBytes = Array.from(new Uint8Array(await pp.arrayBuffer()));
 
   // The .isopix file (Save with "Save as a picture" off): gzip, or plain JSON

@@ -31,19 +31,21 @@ test('stored copies that are not copies are dropped, never opened', () => {
 
 test('the autosave opens when it loads', () => {
   const seen = [];
-  const r = openFirst({ name: 'mine', savedAt: 9 }, [{ savedAt: 5, project: proj('old') }], (p) => seen.push(p.name));
+  const mine = { format: 'isopix', version: 1, picture: { name: 'mine', cells: {} }, app: { savedAt: 9 } };
+  const r = openFirst(mine, [{ savedAt: 5, project: proj('old') }], (p) => seen.push(p.picture?.name ?? p.name));
   assert.deepEqual(r, { from: 'autosave', savedAt: 9, error: null });
   assert.deepEqual(seen, ['mine']);
 });
 
 test('a damaged autosave falls back to the newest copy that loads, and says why', () => {
   // The real loader: a project with a bad cell is refused by project.js.
-  const good = (name) => ({ ...P.save(new Drawing()), name });
-  const broken = { ...good('broken'), cells: [['not a key', 'nope']] };
+  const good = (name) => P.save(new Drawing(), { name });
+  const broken = P.save(new Drawing(), { name: 'broken' }); broken.picture.cells = { 'not a key': 'nope' };
   assert.throws(() => P.load(broken), 'the shape check refuses it');
   const copies = [{ savedAt: 30, project: broken }, { savedAt: 20, project: good('copy') }, { savedAt: 10, project: good('older') }];
   let opened = null;
-  const r = openFirst({ ...broken, savedAt: 40 }, copies, (p) => { P.load(p); opened = p.name; });
+  broken.app.savedAt = 40;
+  const r = openFirst(broken, copies, (p) => { P.load(p); opened = p.picture.name; });
   assert.equal(r.from, 'copy');
   assert.equal(r.savedAt, 20);
   assert.equal(opened, 'copy');

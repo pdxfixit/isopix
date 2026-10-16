@@ -1,0 +1,14 @@
+{
+  "format": "isopix",
+  "version": 1,
+  "picture": {
+    "name": "Hello, by hand",
+    "cells": {
+      "1,0,0,1": "#3a86ff",
+      "1,0,0,0": "#e63946",
+      "2,2,0,1": "#ffbe0b",
+      "2,2,0,0": "#2a9d8f"
+    },
+    "edges": { "1,0,1,0": "#1d1e22" }
+  }
+}
