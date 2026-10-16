@@ -6,19 +6,22 @@
 // turns it off; it is on by default.
 //
 // Never sent: the drawing, any name, anything typed, the IP address (the
-// Worker never reads it). A device is a random code that changes every 90
-// days, so no device can be followed for longer (COPPA: a persistent
-// identifier used only to improve the app, named in the privacy note).
+// Worker never reads it). A device is one plain random code, made on the
+// device and never changed (owner, 2026-10-16: "do away with the cleverness
+// … keep it simple", Arrow-Rama #150). The telemetry runner removes it from
+// every kept copy a year on (COPPA: a persistent identifier used only to
+// improve the app, named in the privacy note, kept no longer than needed).
 //
-// The pure parts (buckets, the code's rotation, cleanVisit) are exported for
+// The pure parts (buckets, the device code, cleanVisit) are exported for
 // tests and for the Worker, which checks every visit with cleanVisit. Nothing
 // here touches the page until initUsage runs.
 
 export const ENDPOINT = '/api/visit';
 export const HOST = 'isopix.app';
-export const ROTATE_DAYS = 90;
 const DAY = 24 * 60 * 60 * 1000;
-export const ROTATE_MS = ROTATE_DAYS * DAY;
+// How long D1 keeps a visit (worker/index.js imports it as KEEP_MS). It no
+// longer has anything to do with the device code, which never changes.
+export const ROTATE_MS = 90 * DAY;
 export const DEVICE_KEY = 'isopix-usage-device';
 export const FIRST_KEY = 'isopix-usage-first';
 export const MAX_COUNTS = 200;
@@ -48,10 +51,12 @@ export function randomHex(n, rand = (a) => crypto.getRandomValues(a)) {
   return [...rand(new Uint8Array(Math.ceil(n / 2)))].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, n);
 }
 
-// The device's code: kept while it is under 90 days old, else a new one.
+// The device's code: the stored one, for good; a new random one only when
+// none is stored or it is malformed. A code an older release stored with its
+// date ({id, since}) is kept as it is. `now` is unused and kept for callers.
 export function deviceCode(stored, now, rand) {
-  if (stored && DEVICE_RE.test(stored.id) && Number.isFinite(stored.since) && stored.since <= now && now - stored.since < ROTATE_MS) return stored;
-  return { id: randomHex(12, rand), since: now };
+  if (stored && typeof stored === 'object' && DEVICE_RE.test(stored.id)) return stored;
+  return { id: randomHex(12, rand) };
 }
 
 // A count's name from what was used: lower case, safe characters only, or null.

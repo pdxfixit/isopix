@@ -11,7 +11,7 @@
 -- Kept 90 days (worker/index.js KEEP_MS); the harvest copies it to the Mac.
 CREATE TABLE IF NOT EXISTS visits (
   visit      TEXT PRIMARY KEY,  -- random, one per page load
-  device     TEXT NOT NULL,     -- random, changes every 90 days on the device
+  device     TEXT NOT NULL,     -- random, made on the device, never changes
   first_seen INTEGER NOT NULL,
   last_seen  INTEGER NOT NULL,
   day        TEXT NOT NULL,     -- UTC date of the first send, YYYY-MM-DD

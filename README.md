@@ -97,8 +97,8 @@ drawing never leaves the device.
 
 **Usage counts** (on by default; Settings → About → Send usage counts): which
 buttons, tools, keys and settings a visit used, how long it lasted and the
-kind of device, sent to the site's own Worker with a device code that changes
-every 90 days. Never the drawing, names, anything typed or the IP address.
+kind of device, sent to the site's own Worker with one random device code that
+never changes. Never the drawing, names, anything typed or the IP address.
 Detail: [docs/telemetry.md](docs/telemetry.md).
 
 ## Layout

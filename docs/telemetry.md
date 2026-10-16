@@ -17,8 +17,8 @@ how it works and what each field means.
    later send from the same visit replaces the row. It never reads the IP
    address. One visit in 50 also deletes rows older than 90 days.
 3. **The harvest** copies D1 and Cloudflare's daily stats into an archive
-   kept for good, except the device code: the runner removes it a year on. The telemetry runner (pdxfixit/telemetry) is the only
-   harvester (the owner, 2026-10-15): daily, in a cloud container, flarepress's
+   kept for good, except the device code: the runner removes it a year on.
+   The telemetry runner (pdxfixit/telemetry) is the only harvester (the owner, 2026-10-15): daily, in a cloud container, flarepress's
    `harvest.py` on this repo's `site/` (`site/harvest.conf` says what: the
    `visits` table, upserted by `visit`, and Cloudflare's stats). The runner's
    job stays off until it has the `isopix` database's id.
@@ -32,12 +32,12 @@ how it works and what each field means.
 | Field | What it is |
 |---|---|
 | `visit` | Random, one per page load. |
-| `device` | Random, made on the device and replaced every 90 days (`ROTATE_DAYS`). Linked to nothing else. |
+| `device` | One plain random code, made on the device and never changed. Linked to nothing else. The telemetry runner removes it from every kept copy a year on. |
 | `app` | The release (`version.js`). |
 | `width` | Screen width rounded down to 0, 400, 700, 1000, 1400 or 2000 px. |
 | `touch`, `pwa`, `dark`, `reduced` | Touch screen; opened as an installed app; prefers dark mode; asks for reduced motion. |
 | `lang` | The browser's language, two or three letters (`en`, not `en-US`). |
-| `since` | How long since this device first used Isopix: new, week, month, quarter, year, older. Kept on the device, so it outlives the device code. |
+| `since` | How long since this device first used Isopix: new, week, month, quarter, year, older. Kept on the device. |
 | `seconds` | How long the visit has lasted, up to a day. |
 | `cells` | The drawing's size: 0, 1-99, 100-999, 1k-10k, 10k+ cells. |
 | `longtasks` | Main-thread tasks over 50 ms (Chrome only): a sign of slowness. |
@@ -59,9 +59,12 @@ Isopix is used by kids. Under the FTC's COPPA rule a persistent identifier is
 personal information, but it may be collected without a parent's consent when
 it is used only to support the site's internal operations (here: deciding what
 to improve), the privacy notice says so, and it is kept no longer than needed.
-So the device code changes every 90 days, D1 keeps 90 days, the location stops
-at the country (in every app, the owner, 2026-10-16; a city or street counts as personal), and the note under the
-switch in Settings → About says all of it. `test/telemetry.test.mjs` fails when
+So the device code is one plain random code that never changes (the owner,
+2026-10-16: "do away with the cleverness … keep it simple"; a rotating code is
+still an identifier), D1 keeps 90 days, the telemetry runner removes the code
+from every kept copy a year on (its `ids` for this job), the location stops at
+the country (in every app, the owner, 2026-10-16; a city or street counts as
+personal), and the note under the switch in Settings → About says all of it. `test/telemetry.test.mjs` fails when
 the note stops saying any of it, or when the schema gains an IP, city, address,
 User-Agent or name column. This is the building agent's reading, not legal
 advice.
@@ -89,7 +92,7 @@ nothing is recorded and the queue is emptied.
 | `app`, `platform` | `isopix`, `web` |
 | `form` | `phone`, `tablet` or `desktop`, from the screen size and whether the main pointer is a finger |
 | `version` | `version.js` |
-| `player` | the device code above (`playerId()` in `events.js`, one function, for the id rework #150) |
+| `player` | the device code above (`playerId()` in `web/events.js`, which calls `deviceCode` in `web/telemetry.js`) |
 | `session`, `seq` | random per page load; order within it from 0 |
 | `at`, `tz` | epoch ms; UTC offset in minutes |
 | `screen` | `draw`, or the open sheet: `settings`, `drawing`, `help` |
