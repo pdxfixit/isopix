@@ -36,15 +36,28 @@ export function oklabToHex([L, a, b]) {
   return rgbToHex([r, g, bl].map((x) => toGamma(clamp01(x)) * 255));
 }
 
-// Shade a base color by cube face: T light, L mid (the base), R dark.
-// Very light bases move down so the top face can still be lighter.
-export function shade(hex, face) {
+// Shade a base color by cube face. Light from the left (the default): T
+// light, L mid (the base), R dark; from the right, L and R swap. Very light
+// bases move down so the top face can still be lighter.
+export const TONE = { T: 'light', L: 'mid', R: 'dark' };
+export const toneOf = (face, light = 'left') => (light === 'right' && face !== 'T' ? (face === 'L' ? 'dark' : 'mid') : TONE[face]);
+export function shade(hex, face, light = 'left') {
   if (!face) return hex;
   const [L0, a, b] = hexToOklab(hex);
   const top = Math.min(0.99, L0 + 0.12);
   const mid = top - 0.12;
-  const L = face === 'T' ? top : face === 'L' ? mid : Math.max(0.04, mid - 0.16);
+  const tone = toneOf(face, light);
+  const L = tone === 'light' ? top : tone === 'mid' ? mid : Math.max(0.04, mid - 0.16);
   return oklabToHex([L, a, b]);
+}
+// The base color a shaded cell was painted with, from its tone (Relight).
+// Exact unless shade() clipped it: a base lighter than L 0.87 (its mid was
+// moved down) or a dark tone held at L 0.04.
+export function baseOf(hex, face, light = 'left') {
+  if (!face) return hex;
+  const [L, a, b] = hexToOklab(hex);
+  const tone = toneOf(face, light);
+  return oklabToHex([tone === 'light' ? L - 0.12 : tone === 'dark' ? L + 0.16 : L, a, b]);
 }
 
 export function mixOklab(hexes) {

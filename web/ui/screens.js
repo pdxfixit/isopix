@@ -111,6 +111,7 @@ export function syncMenu() {
   document.body.classList.toggle('gray', s.gray);
   const dark = paperName(app.drawing.paper) === 'dark';
   $('#paper-flip').textContent = dark ? 'Paper: dark · switch to light' : 'Paper: light · switch to dark';
+  $('#light-flip').textContent = app.drawing.light === 'right' ? 'Light from the right · switch to left' : 'Light from the left · switch to right';
   updateChips();
 }
 
@@ -175,6 +176,13 @@ export function wireMenu() {
   $('#opt-hint-levels').addEventListener('change', (e) => { set('hintLevels', +e.target.value); requestRender(); });
   $('#opt-trace').addEventListener('input', (e) => { set('traceOpacity', +e.target.value); requestRender(); });
   $('#paper-flip').addEventListener('click', flipPaper);
+  // The light side is the drawing's, like its paper (engine/color.js shade).
+  $('#light-flip').addEventListener('click', () => {
+    app.drawing.light = app.drawing.light === 'right' ? 'left' : 'right';
+    buildPalette(); syncMenu(); scheduleSave();
+    toast(`Light from the ${app.drawing.light}: new strokes shade that way. Relight turns what is drawn.`);
+    emit('light', { side: app.drawing.light });
+  });
   $('#settings-help').addEventListener('click', openHelp);
   $('#help-top').addEventListener('click', openHelp);
   $('#help-body').addEventListener('click', (e) => {

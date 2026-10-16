@@ -147,12 +147,15 @@
     <button id="sel-done" class="btn" aria-label="Done: clear the selection" title="Done (Esc)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
     </button>
-    <button id="sel-more" class="btn" aria-expanded="false" aria-controls="sel-extra" aria-label="More selection actions: turn, flip, snap, save as stamp, erase" title="More">
+    <button id="sel-more" class="btn" aria-expanded="false" aria-controls="sel-extra" aria-label="More selection actions: turn, relight, flip, snap, save as stamp, erase" title="More">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
     </button>
     <div id="sel-extra" class="sel-extra">
       <button id="sel-turn" class="btn" aria-label="Turn the selection a sixth of a turn clockwise" title="Turn">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>
+      </button>
+      <button id="sel-relight" class="btn" aria-label="Relight: shade the selection for the drawing's light side" title="Relight">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
       </button>
       <button id="sel-flip" class="btn" aria-label="Flip the selection left to right" title="Flip">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M9 7 4 17h5Z"/><path d="m15 7 5 10h-5Z"/></svg>
@@ -249,7 +252,9 @@
           </fieldset>
           <div class="row"><button type="button" id="paper-flip" class="btn wide" aria-describedby="paper-note">Paper: light</button></div>
           <p class="note" id="paper-note">Each drawing keeps its own paper. The inks follow it; strokes keep their colors.</p>
-          <label class="row"><input type="checkbox" id="opt-shading"> Auto-shade cube faces (top light, left mid, right dark)</label>
+          <div class="row"><button type="button" id="light-flip" class="btn wide" aria-describedby="light-note">Light from the left</button></div>
+          <p class="note" id="light-note">Auto-shade lights cube faces from this side, for new strokes; Relight (on the selection bar) turns what is already drawn.</p>
+          <label class="row"><input type="checkbox" id="opt-shading"> Auto-shade cube faces (top light, the far side dark)</label>
           <label class="row" id="opt-save-png-row"><input type="checkbox" id="opt-save-png"> Save as a picture, with the drawing inside (off: an .isopix file)</label>
           <fieldset>
             <legend>Symmetry</legend>

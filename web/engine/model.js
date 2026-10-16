@@ -37,6 +37,7 @@ export class Drawing {
     this.dirty = new Set();
     this.dirtyOverflow = false;
     this.paper = 'light'; // each drawing keeps its own paper (engine/paper.js)
+    this.light = 'left'; // and the side auto-shade lights cube faces from (engine/color.js)
   }
 
   nextId() { return ++this.seq; }
@@ -45,6 +46,8 @@ export class Drawing {
     const id = this.nextId();
     const v = { c: spec.c, t: t ?? id, id };
     if (spec.f) v.f = spec.f;
+    if (spec.f && spec.s === 'r') v.s = 'r'; // shaded with the light on the right (engine/color.js)
+    if (spec.f && spec.b) v.b = spec.b; // the base color it was shaded from, so Relight is exact
     return v;
   }
   inherit(v) { return { ...v, id: this.nextId() }; }

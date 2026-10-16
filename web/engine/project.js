@@ -15,6 +15,7 @@ export function save(drawing, extra = {}) {
     version: VERSION,
     seq: drawing.seq,
     paper: drawing.paper === 'dark' ? 'dark' : 'light',
+    light: drawing.light === 'right' ? 'right' : 'left',
     cells: [...drawing.cells],
     edges: [...drawing.edges],
     hiddenEdges: [...drawing.hiddenEdges],
@@ -30,7 +31,8 @@ export function save(drawing, extra = {}) {
 const KEY_RE = /^[0-7],-?\d+,-?\d+,[01]$/;
 const EDGE_RE = /^[0-7],-?\d+,-?\d+,[012]$/;
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
-const okVal = (v) => v && typeof v === 'object' && COLOR_RE.test(v.c) && (!v.f || ['T', 'L', 'R'].includes(v.f));
+const okVal = (v) => v && typeof v === 'object' && COLOR_RE.test(v.c) && (!v.f || ['T', 'L', 'R'].includes(v.f))
+  && (v.b === undefined || COLOR_RE.test(v.b)) && (v.s === undefined || v.s === 'r');
 
 export function load(obj) {
   if (!obj || !FORMATS.includes(obj.format)) throw new Error('Not an Isopix project file');
@@ -38,6 +40,8 @@ export function load(obj) {
   const d = new Drawing();
   // Projects saved before papers existed had the light paper: they keep it.
   d.paper = obj.paper === 'dark' ? 'dark' : 'light';
+  // Projects saved before the light side existed were lit from the left.
+  d.light = obj.light === 'right' ? 'right' : 'left';
   for (const [k, v] of obj.cells || []) {
     if (!KEY_RE.test(k) || !okVal(v)) throw new Error(`Bad cell ${k}`);
     d.cells.set(k, v);

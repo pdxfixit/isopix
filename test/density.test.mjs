@@ -276,3 +276,52 @@ test('a turn moves a cell 60° clockwise on screen; a flip mirrors it left to ri
   const after = where(e);
   assert.ok(Math.abs(after.x + b2.x) < 1e-9 && Math.abs(after.y - b2.y) < 1e-9, 'mirrored across the vertical line through the pivot');
 });
+
+// Light direction (owner, card 12: "c").
+test('light from the right swaps the left and right tones; the top stays', async () => {
+  const { shade, baseOf } = await import('../web/engine/color.js');
+  const b = '#3a86ff';
+  assert.equal(shade(b, 'T', 'right'), shade(b, 'T', 'left'));
+  assert.equal(shade(b, 'L', 'right'), shade(b, 'R', 'left'));
+  assert.equal(shade(b, 'R', 'right'), shade(b, 'L', 'left'));
+  // Worked back from a tone (cells painted before they kept their base): close,
+  // not exact: 8-bit colors round, and a bright tone is clipped to the screen's colors.
+  // Relight only turns side faces (a top looks the same from either side).
+  for (const base of ['#3a86ff', '#e63946', '#5a9a3c', '#f4c430']) for (const f of ['L', 'R']) for (const side of ['left', 'right']) {
+    const [L1, a1, b1] = hexToOklab(baseOf(shade(base, f, side), f, side)), [L0, a0, b0] = hexToOklab(base);
+    assert.ok(Math.hypot(L1 - L0, a1 - a0, b1 - b0) < 0.04, `${base} ${f} ${side}: the base comes back close`);
+  }
+});
+
+test('Relight shades a cube for the other side, and back again exactly', async () => {
+  const { shade } = await import('../web/engine/color.js');
+  const d = new Drawing();
+  const A = { l: 2, p: 2, q: 2 };
+  const r = D.makeRegion(2, B.hexagon(A, 1).cells);
+  d.begin(); B.hexagon(A, 1).cells.forEach(({ cell, f }) => d.paint(cell, { c: shade('#3a86ff', f), f, b: '#3a86ff' })); d.commit();
+  const start = snapshot(d);
+  d.begin(); assert.equal(D.relightRegion(d, r, 'right'), 4, 'the four side cells; the two top cells stay'); d.commit();
+  for (const [, v] of d.cells) assert.equal(v.c, shade('#3a86ff', v.f, 'right'), `face ${v.f} lit from the right`);
+  d.begin(); D.relightRegion(d, r, 'left'); d.commit();
+  assert.equal(snapshot(d), start, 'and back');
+  assert.equal(d.checkInvariant(), null);
+});
+
+test('a file with a bad base color or light mark on a cell is refused', async () => {
+  const P = await import('../web/engine/project.js');
+  const d = new Drawing(); d.begin(); d.paint(L.mk(2, 0, 0, 1), { c: '#3a86ff', f: 'L', b: '#3a86ff', s: 'r' }); d.commit();
+  const good = JSON.parse(JSON.stringify(P.save(d)));
+  assert.equal(P.load(good).cells.size, 1);
+  for (const bad of [{ b: 'red' }, { s: 'x' }]) {
+    const f = JSON.parse(JSON.stringify(good)); Object.assign(f.cells[0][1], bad);
+    assert.throws(() => P.load(f), /Bad cell/);
+  }
+});
+
+test('a drawing keeps its light side in a file; older files open lit from the left', async () => {
+  const P = await import('../web/engine/project.js');
+  const d = new Drawing(); d.light = 'right';
+  assert.equal(P.load(JSON.parse(JSON.stringify(P.save(d)))).light, 'right');
+  const old = P.save(new Drawing()); delete old.light;
+  assert.equal(P.load(old).light, 'left');
+});

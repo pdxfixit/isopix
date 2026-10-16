@@ -6,7 +6,7 @@
 //
 // A region is {l, keys: Set<cellKey>}: lattice cells at the marquee level.
 import * as L from './lattice.js';
-import { mixOklab, nearest } from './color.js';
+import { mixOklab, nearest, shade, baseOf } from './color.js';
 import * as S from './symmetry.js';
 
 export function makeRegion(l, cells) {
@@ -285,6 +285,24 @@ export function transformRegion(drawing, r, center, g) {
   }
   for (const { e, v } of edges) for (const t of S.transformEdge(e, center, g)) drawing.setEdge(L.edgeKey(t), v);
   return makeRegion(r.l, regionCells(r).flatMap((c) => S.transformCell(c, center, g)));
+}
+
+// Relight: every shaded cell in the region shaded again for `light`, from
+// the base color its tone says it was painted with (color.js baseOf).
+export function relightRegion(drawing, r, light) {
+  splitBorder(drawing, r);
+  let n = 0;
+  for (const c of paintedIn(drawing, r)) {
+    const v = drawing.cells.get(L.cellKey(c));
+    if (!v.f || v.f === 'T') continue; // a top face looks the same from either side
+    const was = v.s === 'r' ? 'right' : 'left';
+    if (was === light) continue;
+    // The base color the cell keeps; a cell painted before it kept one: worked back from its tone.
+    const base = v.b || baseOf(v.c, v.f, was);
+    drawing.paint(c, { c: shade(base, v.f, light), f: v.f, s: light === 'right' ? 'r' : undefined, b: base }, 'replace');
+    n++;
+  }
+  return n;
 }
 
 // The pivot: the region-level vertex nearest the region's middle (a hexagon
