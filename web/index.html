@@ -44,6 +44,7 @@
   <link rel="modulepreload" href="palette.js">
   <link rel="modulepreload" href="render.js">
   <link rel="modulepreload" href="sheets.js">
+  <link rel="modulepreload" href="prompts.js">
   <link rel="modulepreload" href="sillynames.js">
   <link rel="modulepreload" href="stampbook.js">
   <link rel="modulepreload" href="stamps.js">
@@ -324,6 +325,17 @@
         <button type="button" role="menuitem" data-act="copy">Make a copy</button>
         <button type="button" role="menuitem" data-act="save">Save to a file</button>
         <button type="button" role="menuitem" data-act="delete" class="danger-item">Delete</button>
+      </div>
+      <!-- Ideas only when asked (owner: "be careful not to interrupt a focused user"; web/prompts.js). -->
+      <div class="idea">
+        <button type="button" id="idea-show" class="link-btn" aria-expanded="false" aria-controls="idea-box"><span aria-hidden="true">💡</span> Need an idea?</button>
+        <div id="idea-box" class="idea-box" hidden>
+          <p class="idea-text">Try drawing <strong id="idea-text"></strong></p>
+          <div class="row">
+            <button type="button" id="idea-roll" class="btn" aria-label="Another idea"><span aria-hidden="true">🎲</span></button>
+            <button type="button" id="idea-draw" class="btn wide">Draw this</button>
+          </div>
+        </div>
       </div>
       <h3 class="sheet-group-title this-drawing">This drawing</h3>
       <div class="name-field">

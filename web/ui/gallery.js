@@ -9,6 +9,7 @@ import * as P from '../engine/project.js';
 import * as store from '../storage.js';
 import { ago, unsavedToFile } from '../sheets.js';
 import { sillyName } from '../sillynames.js';
+import { nextIdea, nameFor } from '../prompts.js';
 import { $, app, flushSave, newDrawing, requestRender, scheduleSave, toast } from '../app.js';
 import { buildPalette, computeLevel } from './controls.js';
 import { afterChange } from './tools.js';
@@ -289,7 +290,27 @@ async function askDelete(id) {
   d.showModal();
 }
 
+// Need an idea? One idea at a time, only when asked; Draw this starts a new
+// drawing named after it (web/prompts.js).
+let idea = null;
+function showIdea(next = true) {
+  if (next || !idea) idea = nextIdea(Math.random, idea);
+  $('#idea-text').textContent = idea;
+}
 export function wireGallery() {
+  $('#idea-show').addEventListener('click', () => {
+    const box = $('#idea-box'), open = box.hidden;
+    box.hidden = !open;
+    $('#idea-show').setAttribute('aria-expanded', String(open));
+    if (open) showIdea(!idea);
+  });
+  $('#idea-roll').addEventListener('click', () => showIdea());
+  $('#idea-draw').addEventListener('click', async () => {
+    const name = nameFor(idea);
+    await galleryNew();
+    setName(name); $('#drawing-name').value = app.drawingName; scheduleSave();
+    toast(`Let's draw ${idea}!`);
+  });
   $('#card-menu').addEventListener('click', async (ev) => {
     const b = ev.target.closest('[data-act]');
     if (!b) return;

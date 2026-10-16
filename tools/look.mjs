@@ -106,6 +106,16 @@ const VIEWS = {
     if (!a.gallery.some((e) => e.id === first)) throw new Error('New dropped the drawing it left');
     ${q('#drawing-open')} ${nap} const n = document.querySelectorAll('#gallery .drawing-card').length;
     if (n !== 2) throw new Error('Drawings shows ' + n + ' cards, not 2');` },
+  // Need an idea? opens only when asked; 🎲 shows another; Draw this starts a new drawing named after it.
+  idea: { fresh: true, js: `{ ${DRAW} } ${SETTLE} const a = window.isopix, first = a.drawingId; ${q('#drawing-open')} ${nap}
+    if (!document.querySelector('#idea-box').hidden) throw new Error('the idea showed without being asked');
+    ${q('#idea-show')} ${nap} const t = () => document.querySelector('#idea-text').textContent, one = t();
+    if (!one) throw new Error('no idea shown'); ${q('#idea-roll')} if (t() === one) throw new Error('🎲 showed the same idea');
+    const idea = t(); ${q('#idea-draw')} ${SETTLE}
+    if (a.drawingId === first || a.drawing.cells.size) throw new Error('Draw this did not start a new drawing');
+    if (a.drawingName.toLowerCase() !== idea.replace(/ \\(.*\\)$/, '').toLowerCase()) throw new Error('the new drawing is named ' + a.drawingName + ', not after ' + idea);
+    if (!a.gallery.some((e) => e.id === first)) throw new Error('the drawing it left is gone');
+    ${q('#drawing-open')} ${nap} ${q('#idea-show')}` },
   // Three drawings, one with a long name: it shrinks to 12 px at most, then ends in an ellipsis.
   gallery: { fresh: true, js: GALLERY },
   'gallery-menu': { fresh: true, js: `${GALLERY} document.querySelectorAll('#gallery .card-more')[1].click(); ${nap}
@@ -178,7 +188,8 @@ VIEWS.taps = { js: `{ ${DRAW} } const a = window.isopix, drawn = a.drawing.cells
   touch('pointerup', 21, 150, 300); touch('pointerup', 22, 210, 300);
   if (a.drawing.cells.size !== drawn) throw new Error('a slow two-finger hold undid');` };
 // Turn six times gives the drawing back exactly; Flip changes it (the selection bar's More open).
-VIEWS.selturn = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')} ${nap}
+VIEWS.selturn = { js: `window.isopix.settings.brush = 'triangle'; // a lone-triangle stroke: no turn leaves it as it was
+  ${VIEWS.select.js} ${nap} ${q('#sel-more')} ${nap}
   const a = window.isopix, snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort());
   const start = snap(); if (!a.drawing.cells.size) throw new Error('nothing drawn to turn');
   ${q('#sel-turn')} ${nap} if (snap() === start) throw new Error('Turn changed nothing');

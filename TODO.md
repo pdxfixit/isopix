@@ -5,7 +5,6 @@
 Approved work, in order. Delete a line in the commit that finishes it.
 
 1. Save the time-lapse as a video, without adding clutter: the owner floated offering the download only after the replay has played ("maybe the download is only available after watching? idk, don't want to clutter the screen"). Show him two or three placements before building it.
-2. Drawing prompts ("draw a …") for kids, built on the lessons code. Never interrupt a focused person (docs/decisions.md, Lessons).
 
 Offered, not yet approved (ask the owner first):
 
