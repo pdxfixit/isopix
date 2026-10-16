@@ -12,6 +12,7 @@ import { chooseNotch, computeLevel, fitView, toggleLock } from './controls.js';
 import { applyCells, applyEdges, brushAt, closePopover, commit, doFill, eraseEdgesNear, marqueeRegion, openPopover, preview, previewEnd, previewStart, previewTo, redo, reportSkips, setMoveMode, setTool, stampItemsAt, undo, updateCursor, updateSelbar } from './tools.js';
 import { openDrawing, openHelp, openSettings, syncMenu } from './screens.js';
 import { openProject, saveFile } from './files.js';
+import { barMode, setBar } from './video.js';
 
 // ---------- pointer input ----------
 const pointers = new Map();
@@ -94,6 +95,8 @@ function tapUp() {
 
 export function onDown(e) {
   if (app.replaying) { stopReplay(); return; }
+  // Done playing or Video ready: drawing again puts the bar away (not while a video is being made).
+  if (barMode() === 'ended' || barMode() === 'ready') setBar(null);
   closePopover();
   try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or already gone */ }
   const [x, y] = local(e);

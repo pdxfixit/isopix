@@ -11,6 +11,7 @@ import { $, app, emit, flipPaper, readDone, requestRender, scheduleSave, set, st
 import { buildPalette } from './controls.js';
 import { updateModeChip, updateSelbar } from './tools.js';
 import { galleryNew, renderGallery, wireGallery } from './gallery.js';
+import { makeVideo, canRecord } from './video.js';
 import { openMoved, openProject, openTrace, saveFile, savePicture, saveVector, savesPng, updateFileUI } from './files.js';
 
 // ---------- help ----------
@@ -122,6 +123,7 @@ export function openDrawing() {
   $('#drawing-name').value = app.drawingName;
   updateSavedLine();
   renderGallery();
+  $('#file-video').hidden = !canRecord() || !app.drawing.undoStack.length;
   openSheet('#drawing');
 }
 export function updateSavedLine() {
@@ -210,6 +212,8 @@ export function wireMenu() {
   $('#file-png').addEventListener('click', savePicture);
   $('#file-svg').addEventListener('click', saveVector);
   $('#file-replay').addEventListener('click', () => { $('#drawing').close(); startReplay(); });
+  // Save it as a video, without watching first (web/ui/video.js).
+  $('#file-video').addEventListener('click', () => { $('#drawing').close(); makeVideo(); });
   $('#save-note-save').addEventListener('click', async () => { if (await saveFile()) $('#save-note').hidden = true; });
   $('#save-note-close').addEventListener('click', () => { $('#save-note').hidden = true; });
   $('#move-open').addEventListener('click', openMoved);

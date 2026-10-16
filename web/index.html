@@ -52,6 +52,7 @@
   <link rel="modulepreload" href="events.js">
   <link rel="modulepreload" href="events-client.js">
   <link rel="modulepreload" href="update.js">
+  <link rel="modulepreload" href="video.js">
   <link rel="modulepreload" href="ui/controls.js">
   <link rel="modulepreload" href="ui/files.js">
   <link rel="modulepreload" href="ui/gallery.js">
@@ -59,6 +60,7 @@
   <link rel="modulepreload" href="ui/screens.js">
   <link rel="modulepreload" href="ui/stamps.js">
   <link rel="modulepreload" href="ui/tools.js">
+  <link rel="modulepreload" href="ui/video.js">
   <link rel="modulepreload" href="welcome.js">
   <link rel="modulepreload" href="tour.js">
   <link rel="modulepreload" href="lessons.js">
@@ -230,9 +232,15 @@
     </span>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <div id="replay-bar" class="replay-bar" hidden>
-    <span>Replaying</span>
-    <button id="replay-stop" class="btn wide" aria-label="Stop replay">Stop</button>
+  <!-- Replaying · Stop; then Done playing · Watch again · Save video · ✕ (web/ui/video.js setBar). It wraps rather than run off a narrow screen. -->
+  <div id="replay-bar" class="replay-bar" hidden role="status">
+    <span id="replay-say">Replaying</span>
+    <span class="replay-buttons">
+      <button id="replay-stop" class="btn" aria-label="Stop replay">Stop</button>
+      <button id="replay-again" class="btn quiet" aria-label="Watch again" hidden><span aria-hidden="true">↻ <span class="wide-only">Watch again</span><span class="narrow-only">Again</span></span></button>
+      <button id="replay-video" class="btn" hidden>Save video</button>
+      <button id="replay-close" class="btn quiet" aria-label="Close" hidden>✕</button>
+    </span>
   </div>
 
   <dialog id="settings" aria-labelledby="settings-title">
@@ -358,6 +366,7 @@
         <button type="button" id="file-svg" class="link-btn">Sharp picture (SVG)</button>
       </section>
       <button type="button" id="file-replay" class="btn wide watch"><span aria-hidden="true">▶</span> Watch it being drawn</button>
+      <button type="button" id="file-video" class="link-btn" hidden>Save it as a video</button>
       <p class="note" id="autosave-status" aria-live="polite"></p>
       <p class="note" id="file-status" aria-live="polite"></p>
     </form>

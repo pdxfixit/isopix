@@ -24,6 +24,7 @@ import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLoc
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
 import { loadMine, saveMine, wireStamps } from './ui/stamps.js';
+import { setBar, isMaking, cancelVideo, videoButton } from './ui/video.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
 import { hasContent, leaveDrawing, openDrawing, openSettings, setName, showFold, startDrawing, syncMenu, updateSavedLine, watchDialogs, wireMenu } from './ui/screens.js';
 import { isopixFile, loadProjectObject, markChanged, placeTrace, pngBlob, pngCanvas, projectData, projectFromFile, projectPng, svgBlob, takeMovedDrawing, takeMovedSettings, updateFileUI } from './ui/files.js';
@@ -312,7 +313,7 @@ export function flushSave() { savePending = true; return saveNow(); }
 // Not now: mid-stroke or drag, a density preview, a replay, picking the
 // symmetry center, the open rail, or the menu or a picker open.
 export function isBusy() {
-  return !!gesture || !!preview || !!app.replaying || app.pickCenter || !!app.tour?.active()
+  return !!gesture || !!preview || !!app.replaying || isMaking() || app.pickCenter || !!app.tour?.active()
     || !!document.querySelector('dialog[open]') || !$('#popover').hidden || $('#levels').classList.contains('open')
     || $('#handle').classList.contains('dragging');
 }
@@ -341,14 +342,15 @@ export function startReplay() {
   const it = P.replay(log);
   const first = it.next().value;
   app.replaying = { drawing: first, it };
-  $('#replay-bar').hidden = false;
+  setBar('playing');
   updateSelbar();
   const step = Math.max(16, Math.min(250, 8000 / log.length));
   const tick = () => {
     if (!app.replaying) return;
     const n = app.replaying.it.next();
     requestRender();
-    if (n.done) { setTimeout(stopReplay, 800); return; }
+    // The end: the drawing as it is, and the bar offers Watch again and Save video.
+    if (n.done) { setTimeout(() => { stopReplay(); setBar('ended'); }, 800); return; }
     app.replaying.timer = setTimeout(tick, step);
   };
   app.replaying.timer = setTimeout(tick, 300);
@@ -359,7 +361,7 @@ export function stopReplay() {
   if (!app.replaying) return;
   clearTimeout(app.replaying.timer);
   app.replaying = null;
-  $('#replay-bar').hidden = true;
+  setBar(null);
   updateSelbar();
   requestRender();
 }
@@ -389,7 +391,10 @@ function wire() {
   $('#mode-chip').addEventListener('click', cycleMode);
   $('#protect-close').addEventListener('click', () => { $('#protect-note').hidden = true; });
   $('#lock').addEventListener('click', toggleLock);
-  $('#replay-stop').addEventListener('click', stopReplay);
+  $('#replay-stop').addEventListener('click', () => (isMaking() ? cancelVideo() : stopReplay()));
+  $('#replay-again').addEventListener('click', startReplay);
+  $('#replay-video').addEventListener('click', videoButton);
+  $('#replay-close').addEventListener('click', () => setBar(null));
 
   $('#sel-finer').addEventListener('click', () => setDensity(selDensity() + 1));
   $('#sel-coarser').addEventListener('click', () => setDensity(selDensity() - 1));
