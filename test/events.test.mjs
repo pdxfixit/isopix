@@ -6,8 +6,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as E from '../web/events.js';
 import { createEvents } from '../web/events-client.js';
+import { appSource } from './appsource.mjs';
 
-const appJs = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+const appJs = appSource; // web/app.js and web/ui/*.js
 const eventsJs = fs.readFileSync(new URL('../web/events.js', import.meta.url), 'utf8');
 
 // A stand-in for localStorage, with the key()/length the client lists entries by.

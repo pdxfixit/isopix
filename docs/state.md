@@ -82,6 +82,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-16: `web/app.js` was split into `web/ui/` (controls, tools, input, screens, files). Each ui module loads before app.js has made `app`, so a top-level line in one that uses it throws and the app never starts; the split nearly shipped three such lines. `test/uisplit.test.mjs` fails on any (proven red with one put back). The tests that read the app's source read all of it through `test/appsource.mjs`.
 - 2026-10-16: the support address was plain text in `web/index.html` and `web/update.js`, there for any spam harvester to read. It is built from an encoded constant now, and `test/no-plain-email.test.mjs` fails on a plain address in any tracked file (proven red on the old `web/update.js` and `web/index.html`).
 - 2026-10-16: `.githooks/pre-push` runs `bump_version.py --check`, so a stamp a rebase made stale is refused before the push (proven on `7aa9b90`, stamped 1.2.69 but commit 70, red in CI). `just version` also refuses a shallow clone and a stamp that goes down (a shallow cloud clone stamped `dee1a7d` 1.2.2), and `tools/cloud_setup.sh` fetches the full history.
 - 2026-10-16: the Settings note says the code never changes and is removed after a year, and `test/telemetry.test.mjs` fails if it says "changes every" again or the Privacy policy links (About, Help) go missing.

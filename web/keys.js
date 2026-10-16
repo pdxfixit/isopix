@@ -1,4 +1,4 @@
-// The keyboard table: the app binds keys from it (app.js onKey) and the Help
+// The keyboard table: the app binds keys from it (onKey in ui/input.js) and the Help
 // sheet lists them from it (help.js), so the two cannot drift. Pure data.
 //
 // keys: what to press, as the Help sheet shows it. `match` is how a
