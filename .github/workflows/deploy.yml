@@ -18,6 +18,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read  # deploy-check reads this commit's test run with gh
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -31,6 +32,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       FLAREPRESS: ${{ github.workspace }}/.flarepress
       CHROME: /usr/bin/google-chrome
+      # gh signed in as this run, so deploy-check reads the test run at 1,000 calls an hour;
+      # unsigned it shared the runner IP's 60, ran out, and waited 20 minutes for a green run (2026-10-16).
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
         with:
