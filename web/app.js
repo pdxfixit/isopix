@@ -415,11 +415,13 @@ function wire() {
     commit();
   });
   // Turn and Flip: what is in the selection, exactly, about its middle vertex (engine/density.js).
+  // A flip is relit in the same step, so a mirrored wall is shaded like the rest of the drawing.
   const turnSelection = (g, what) => {
     const sel = app.selection;
     if (!sel) return;
     app.drawing.begin(what);
     sel.region = D.transformRegion(app.drawing, sel.region, D.pivotOf(sel.region), g);
+    if (g.m) D.relightRegion(app.drawing, sel.region, app.drawing.light);
     commit();
     updateSelbar();
     requestRender();

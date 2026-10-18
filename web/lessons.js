@@ -140,7 +140,7 @@ export const LESSONS = [
       { id: 'crisp', show: true, target: '#sel-mode',
         say: 'Crisp keeps the color most cells have; Blend mixes them, and Snap moves a blend to the nearest palette color. Erase empties the selection.',
         covers: ['Crisp / Blend', 'Snap', 'Erase selection'] },
-      { id: 'turn', target: ['#sel-turn', '#sel-more'], say: 'Tap Turn (on a phone, under More): it turns a sixth of a turn. Flip mirrors it; Relight shades it for the drawing\'s light side.',
+      { id: 'turn', target: ['#sel-turn', '#sel-more'], say: 'Tap Turn (on a phone, under More): it turns a sixth of a turn. Flip mirrors it and keeps the shading right; Relight shades it for the drawing\'s light side.',
         done: ev('turn'), covers: ['Turn', 'Flip', 'Relight', 'More'] },
       { id: 'done', target: '#sel-done',
         say: { touch: 'Tap Done to finish.', mouse: 'Click Done (or press Esc) to finish.', pen: 'Tap Done to finish.' },
