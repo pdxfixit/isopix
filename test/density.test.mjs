@@ -307,6 +307,19 @@ test('Relight shades a cube for the other side, and back again exactly', async (
   assert.equal(d.checkInvariant(), null);
 });
 
+test('a flipped cube is lit from the other side, and Relight lights it back', async () => {
+  const { shade } = await import('../web/engine/color.js');
+  const d = new Drawing();
+  const A = { l: 2, p: 2, q: 2 };
+  const r = D.makeRegion(2, B.hexagon(A, 1).cells);
+  d.begin(); B.hexagon(A, 1).cells.forEach(({ cell, f }) => d.paint(cell, { c: shade('#3a86ff', f), f, b: '#3a86ff' })); d.commit();
+  d.begin(); const reg = D.transformRegion(d, r, D.pivotOf(r), D.FLIP); d.commit();
+  for (const [, v] of d.cells) assert.equal(v.c, shade('#3a86ff', v.f, 'right'), `a mirror: face ${v.f} lit from the right`);
+  d.begin(); assert.equal(D.relightRegion(d, reg, 'left'), 4, 'Relight turns the four side cells'); d.commit();
+  for (const [, v] of d.cells) assert.equal(v.c, shade('#3a86ff', v.f, 'left'), `face ${v.f} lit from the left again`);
+  assert.equal(d.checkInvariant(), null);
+});
+
 test('a file with a bad base color or light mark on a cell is refused', async () => {
   const P = await import('../web/engine/project.js');
   const d = new Drawing(); d.begin(); d.paint(L.mk(2, 0, 0, 1), { c: '#3a86ff', f: 'L', b: '#3a86ff', s: 'r' }); d.commit();
