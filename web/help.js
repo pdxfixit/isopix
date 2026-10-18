@@ -128,7 +128,7 @@ export const SECTIONS = [
       { name: 'More', from: '#sel-more', says: 'On a phone: Snap, Save as stamp and Erase.' },
       { name: 'Turn', from: '#sel-turn', says: 'Turns what is in the selection a sixth of a turn clockwise, exactly on the grid; six turns bring it back. A hexagon selection turns in place.' },
       { name: 'Relight', from: '#sel-relight', says: 'Shades the auto-shaded faces in the selection again for the drawing\'s light side.' },
-      { name: 'Flip', from: '#sel-flip', says: 'Flips what is in the selection left to right, like a mirror. A wall the other way: place it, select it, Flip, then Relight to shade it like the rest.' },
+      { name: 'Flip', from: '#sel-flip', says: 'Flips what is in the selection left to right, like a mirror, and shades it again for the drawing\'s light side: place a wall, select it and Flip for a wall the other way.' },
       { name: 'Snap', from: '#sel-snap', text: 'Snap', says: 'With Blend, moves the average to the nearest palette color.' },
       { name: 'Save as stamp', from: '#sel-stamp', says: 'Turns the selection into a stamp: it goes in Stamps → Mine, ready in every drawing.' },
       { name: 'Erase selection', from: '#sel-erase', says: 'Empties everything inside the selection.' },
