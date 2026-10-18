@@ -125,7 +125,7 @@ export const SECTIONS = [
       { name: 'Finer', from: '#sel-finer', says: 'Splits every cell into four. Nothing is lost, and detail merged before comes back.' },
       { name: 'Crisp / Blend', from: '#sel-mode', text: 'Aa', says: 'How merging picks a color. Crisp: the color most of the four cells have. Blend: the average.' },
       { name: 'Done', from: '#sel-done', says: 'Clears the selection.' },
-      { name: 'More', from: '#sel-more', says: 'On a phone: Snap, Save as stamp and Erase.' },
+      { name: 'More', from: '#sel-more', says: 'On a phone: Turn, Relight, Flip, Snap, Save as stamp and Erase.' },
       { name: 'Turn', from: '#sel-turn', says: 'Turns what is in the selection a sixth of a turn clockwise, exactly on the grid; six turns bring it back. A hexagon selection turns in place.' },
       { name: 'Relight', from: '#sel-relight', says: 'Shades the auto-shaded faces in the selection again for the drawing\'s light side.' },
       { name: 'Flip', from: '#sel-flip', says: 'Flips what is in the selection left to right, like a mirror, and shades it again for the drawing\'s light side: place a wall, select it and Flip for a wall the other way.' },

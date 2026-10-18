@@ -104,6 +104,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-18: `test/help.test.mjs` fails when Help's More line leaves out a button under More: it named only Snap, Save as stamp and Erase, so Help sent nobody on a phone to Turn, Relight or Flip (proven red on the old line).
 - 2026-10-18: `just look stamp-flip` (in CI via `--all`) places the starter Wall, selects it and flips it, and fails unless the flipped side faces are lit from the drawing's side and one Undo takes the flip back; `test/density.test.mjs` checks the same in the engine. Flip had dropped each cell's light side and base color, so a flipped wall stayed lit from the wrong side and Relight said it was already right (both proven red on the old code).
 - 2026-10-16: `tools/autosave_check.mjs`'s IndexedDB helper fails after 10 s instead of waiting forever: a throw inside an IndexedDB callback (a field renamed by spec 1.0) hung the check silently until a timeout killed it.
 - 2026-10-16: `just install-check` runs in CI: Chrome's own installability check (service worker, manifest, icons) and the iPhone and iPad home-screen tags, so a change that stops Isopix installing fails the build (it found the missing iOS tags).
