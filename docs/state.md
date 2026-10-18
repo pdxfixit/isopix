@@ -35,7 +35,7 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Two- and three-finger taps** (2026-10-16): undo and redo (`engine/gesture.js` multiTap, `test/gesture.test.mjs`, `just look taps` with synthesized touches). Not tuned on a real phone: the 150 ms / 300 ms / 12 px limits are guesses.
 
-**Turn and Flip** (2026-10-16): a selection turns a sixth of a turn clockwise or flips left to right, exactly (`D.transformRegion`, `test/density.test.mjs`: six turns and two flips give the drawing back; `just look selturn`).
+**Turn and Flip** (2026-10-16): a selection turns a sixth of a turn clockwise or flips left to right, exactly (`D.transformRegion`, `test/density.test.mjs`: six turns and two flips give the drawing back; `just look selturn`). A flipped shaded face is lit from the other side and marked so, so Relight lights it back: a starter Wall placed, flipped and relit runs the other way, shaded like the rest of the drawing (`just look stamp-flip`).
 
 **Starter stamps** (2026-10-16): the Stamp brush opens the Stamps drawer, Starter (Cube, Stairs, House, Tree, Wall, Pyramid, Flower, Star) and Mine; own stamps are kept per browser across drawings (`web/stampbook.js`, `web/ui/stamps.js`, art by `tools/make_stamps.mjs`). Checked: `test/stampbook.test.mjs` (every stamp places at every level), `just look stamps stamps-mine`.
 
@@ -104,6 +104,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-18: `just look stamp-flip` (in CI via `--all`) places the starter Wall, selects it, flips it and relights it, and fails unless the flipped side faces are marked lit from the right and Relight turns them back; `test/density.test.mjs` checks the same in the engine. Flip had dropped each cell's light side and base color, so a flipped wall stayed lit from the wrong side and Relight said it was already right (both proven red on the old code).
 - 2026-10-16: `tools/autosave_check.mjs`'s IndexedDB helper fails after 10 s instead of waiting forever: a throw inside an IndexedDB callback (a field renamed by spec 1.0) hung the check silently until a timeout killed it.
 - 2026-10-16: `just install-check` runs in CI: Chrome's own installability check (service worker, manifest, icons) and the iPhone and iPad home-screen tags, so a change that stops Isopix installing fails the build (it found the missing iOS tags).
 - 2026-10-16: `test/imports.test.mjs` fails when a module in `web/` imports a name its target does not export: that is a SyntaxError at page load, so nothing starts, and no other test saw it (Ctrl+O still imported the removed ask-first code; proven red on it).

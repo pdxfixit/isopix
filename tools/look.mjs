@@ -223,6 +223,23 @@ VIEWS.stamps = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')}
   const n = window.isopix.drawing.cells.size;
   if (n !== 88) throw new Error('a tap placed ' + n + ' cells, not 88 (the House)');
   ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}` };
+// A wall the other way: place the Wall, select it, Flip, Relight. Flipped, it is lit from the
+// right; Relight lights its side faces from the left again, like the rest of the drawing.
+VIEWS['stamp-flip'] = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
+  [...document.querySelectorAll('#stamps-grid .stamp-tile')].find((t) => t.textContent === 'Wall').click(); ${nap}
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
+  const a = window.isopix, sides = () => [...a.drawing.cells.values()].filter((v) => v.f && v.f !== 'T');
+  const n = a.drawing.cells.size; if (!n) throw new Error('the Wall did not place');
+  ${q('[data-tool="select"]')} ${nap}
+  const c2 = document.querySelector('#stage');
+  const f = (type, x, y) => c2.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 2, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
+  f('pointerdown', innerWidth * 0.5, innerHeight * 0.45); f('pointermove', innerWidth * 0.5 + 400, innerHeight * 0.45); f('pointerup', innerWidth * 0.5 + 400, innerHeight * 0.45); ${nap}
+  if (!a.selection) throw new Error('no selection');
+  ${q('#sel-more')} ${nap} ${q('#sel-flip')} ${nap}
+  if (a.drawing.cells.size !== n) throw new Error('Flip kept ' + a.drawing.cells.size + ' of ' + n + ' cells: the selection missed part of the Wall');
+  if (!sides().length || sides().some((v) => v.s !== 'r')) throw new Error('a flipped side face is not marked lit from the right');
+  ${q('#sel-relight')} ${nap}
+  if (sides().some((v) => v.s === 'r')) throw new Error('Relight left a side face lit from the right');` };
 // A stamp of one's own goes in Mine and stays there in a new drawing.
 VIEWS['stamps-mine'] = { fresh: true, js: `${VIEWS.select.js} ${nap} ${q('#sel-stamp')} ${nap}
   ${q('#drawing-open')} ${q('#file-new')} await new Promise((r) => setTimeout(r, 1100));
