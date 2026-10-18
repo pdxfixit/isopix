@@ -16,6 +16,10 @@ installed copies fetch fresh files and drop the old cache after the deploy.
     python3 tools/bump_version.py --staged  the same for the commit being made, when
                                             web/version.js is staged (the
                                             pre-commit hook)
+    python3 tools/bump_version.py --restamp when HEAD set web/version.js, make its
+                                            PATCH HEAD's own commit count (just
+                                            land runs it after each pick: a
+                                            landing on a newer main moves the count)
 """
 import re
 import subprocess
@@ -88,6 +92,27 @@ def check():
     print(f"✅ web/version.js {stamp}: PATCH is the commit count ({want})")
 
 
+def restamped(stamp, count):
+    """The stamp with PATCH set to count, or None when it already is (or is not semver). Pure."""
+    m = SEMVER.match(stamp)
+    if not m or int(m.group(3)) == count:
+        return None
+    return f"{m.group(1)}.{m.group(2)}.{count}"
+
+
+def restamp():
+    if "web/version.js" not in git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").split("\n"):
+        return  # this commit is not a release
+    if shallow():
+        sys.exit("🛑 this clone is shallow, so the commit count is wrong: run 'git fetch --unshallow'")
+    text = FILE.read_text()
+    m = stamp_of(text)
+    new = restamped(m.group(1), commits())
+    if new:
+        FILE.write_text(text.replace(m.group(0), f"self.ISOPIX_VERSION = '{new}';"))
+        print(f"🏷️  {m.group(1)} -> {new}  (web/version.js: this commit is commit {commits()} on main)")
+
+
 def staged_problem(stamp, head_count, parents=()):
     """Why a staged stamp is wrong for the next commit, or None. Pure.
     head_count: commits behind the one being made (for a merge, both sides).
@@ -125,6 +150,8 @@ def main():
         return check()
     if "--staged" in args:
         return staged()
+    if "--restamp" in args:
+        return restamp()
     text = FILE.read_text()
     m = stamp_of(text)
     old = m.group(1)

@@ -60,13 +60,13 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here (The owner, 2026-10-15: "move towards a GHA focused deploy, so an agent / ide isn't in the mix"). **It deploys every push to `main` that changes `web/`, `worker/` or `site/`** (the owner, 2026-10-15: "autodeploy like noodlepads"); Actions → deploy → Run workflow runs it by hand. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
 
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
-2. **Commit to `main`** by explicit path, then **`git push`**, and read the CI run until it is green.
+2. **Commit on your branch** (your own worktree) by explicit path, then **`just land`** there, and read the CI run until it is green. It is flarepress's shared tool (`land.conf`): pull `main`, cherry-pick, restamp `web/version.js`, test, push.
 3. **The deploy** is GitHub's: it runs `deploy-check` (on `main`, `web/` and `site/` committed, files present, `just test` and **GitHub's CI run for that commit green**), gate, stamp, push, then `deploy-verify` (live version, 200s, service-worker cache header, `version.js` equal to the commit's, `just look` on the live site). Agents never run `just --yes deploy`; the owner may, from his Mac. **`just deploy-plan`** (wrangler's dry run, sending nothing) is fine anywhere.
 4. **Look at the live site:** `just live` (status, cache headers, etag, versions, ✅/⚠️). A red deploy run after its push step means the new version is already live: fix forward, or the owner runs `just rollback` (prints the steps; `--yes` runs them).
 
 Rules:
 
-- **Push after every commit to `main`; every one that changes `web/` is deployed by GitHub**, then `just live`. Never deploy with failing tests (`deploy-check` refuses), and bump `web/version.js` with each release that changes `web/` (CI fails without it).
+- **Land every commit with `just land`; every one that changes `web/` is deployed by GitHub**, then `just live`. Never deploy with failing tests (`deploy-check` refuses), and bump `web/version.js` with each release that changes `web/` (CI fails without it).
 - **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go. Isopix's first publish, at isopix.pdxfixit.com, was approved on 2026-10-13 for release 1.0.1; the move to isopix.app, on 2026-10-15 (its first deploy there may need `FIRST_PUBLISH=1`).
 - **Never delete or edit a DNS record without the owner's approval.** If the domain will not attach, show him the exact record (see the doc).
 - Only `web/` is uploaded, configured by `site/`, so both must be committed (`ALLOW_DIRTY=1` overrides on the Mac, and stamps the version `-dirty`).
@@ -96,7 +96,7 @@ Rules:
 - **Respect `prefers-reduced-motion`.**
 - **Fresh clone: `just setup` first.** It turns on the pre-commit hook (`.githooks/pre-commit` runs `just test`, about 3 s, and checks a staged `web/version.js` carries this commit's number; `.githooks/pre-push` checks the stamp again, since a rebase moves the commit count) and sets the PDXfixIT author. Never skip the hook; fix what it reports.
 - **No personal names.** Never write the owner's or his family's names in any file or commit message; `test/names.test.mjs` fails on them, and on any commit not authored by PDXfixIT.
-- **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Push after every commit to `main` (see Ship).
+- **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Land every finished commit with `just land` (see Ship).
 - **Agents are agents.** Call subagents "agents", never people.
 - **Tooling friction gets fixed:** an obvious, non-breaking improvement to a tool or doc you used goes in the same session, as its own commit.
 - **When the owner decides something,** record it in docs/decisions.md in the same commit; a replaced rule is deleted, not annotated.
