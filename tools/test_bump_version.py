@@ -19,6 +19,14 @@ class Bumped(unittest.TestCase):
         self.assertEqual(bv.bumped(bv.bumped("1.0.3", "patch", 5), "patch", 5), "1.0.6")
 
 
+class Restamped(unittest.TestCase):
+    def test_a_landing_on_a_newer_main_moves_patch_to_the_commit_count(self):
+        self.assertEqual(bv.restamped("1.2.69", 72), "1.2.72")
+
+    def test_a_stamp_already_right_is_left(self):
+        self.assertIsNone(bv.restamped("1.2.72", 72))
+
+
 class Staged(unittest.TestCase):
     def test_the_stamp_matches_the_commit_being_made(self):
         self.assertIsNone(bv.staged_problem("1.2.19", 18))

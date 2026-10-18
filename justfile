@@ -27,6 +27,22 @@ test:
     node --test test/*.test.mjs
     python3 -m unittest discover -s tools -p 'test_*.py'
 
+# Lands through flarepress's shared tool (tools/land.sh in the flarepress checkout beside this one,
+# else $FLAREPRESS, else a clone in ~/.cache); land.conf here says what it runs.
+# 🛬 Land commits on main: pull main from GitHub, cherry-pick, restamp web/version.js, test, push (GitHub deploys): just land [--wait] [<sha>…]; no sha: this branch's
+[positional-arguments]
+land *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    fp=${FLAREPRESS:-$(cd "$(git rev-parse --git-common-dir)/../.." && pwd)/flarepress}
+    [ -e "$fp/tools/land.sh" ] || fp=${XDG_CACHE_HOME:-$HOME/.cache}/flarepress
+    [ -e "$fp/tools/land.sh" ] || git clone -q https://github.com/pdxfixit/flarepress "$fp"
+    exec bash "$fp/tools/land.sh" "$@"
+
+# 🛬 Finish a landing that stopped on a conflict, once it is resolved in its worktree: just land-continue <worktree>
+land-continue worktree:
+    @just land --continue {{worktree}}
+
 #   just look                     the drawing screen at 320, 375, 700, 900 and 1100 px
 #   just look drawn select selmore rail settings drawing-sheet brushes   several views (just look --help lists them all)
 #   just look --all --light       every view, as CI runs it
