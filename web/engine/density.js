@@ -272,8 +272,9 @@ export function eraseRegion(drawing, r) {
 // Turn what is inside the selection by a lattice symmetry g ({k: sixths of a
 // turn, m: mirror first}; engine/symmetry.js) about a vertex `center` at the
 // region's level: erased, then painted turned, exactly; face tags and bold
-// edges follow. Cells landing outside paint over what is there, as any paint
-// does. Returns the turned region.
+// edges follow. A mirror swaps the side a shaded face was lit from, so Relight
+// can light it back. Cells landing outside paint over what is there, as any
+// paint does. Returns the turned region.
 export function transformRegion(drawing, r, center, g) {
   splitBorder(drawing, r);
   const cells = paintedIn(drawing, r).map((c) => ({ c, v: drawing.cells.get(L.cellKey(c)) }));
@@ -281,7 +282,9 @@ export function transformRegion(drawing, r, center, g) {
   eraseRegion(drawing, r);
   for (const { c, v } of cells) {
     const f = S.transformFace(v.f, g);
-    for (const t of S.transformCell(c, center, g)) drawing.paint(t, f ? { c: v.c, f } : { c: v.c }, 'replace');
+    const lit = (v.s === 'r') !== (g.m && f !== 'T') ? 'r' : undefined;
+    const spec = f ? { c: v.c, f, s: lit, b: v.b } : { c: v.c };
+    for (const t of S.transformCell(c, center, g)) drawing.paint(t, spec, 'replace');
   }
   for (const { e, v } of edges) for (const t of S.transformEdge(e, center, g)) drawing.setEdge(L.edgeKey(t), v);
   return makeRegion(r.l, regionCells(r).flatMap((c) => S.transformCell(c, center, g)));
