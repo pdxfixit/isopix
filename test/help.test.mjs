@@ -87,3 +87,16 @@ test('each Help section folds, closed unless opened before, its head naming the 
   assert.match(helpHTML(() => '', new Set(), new Set(['basics'])), /aria-controls="lesson-basics">.*?<span class="set-head-chip lesson-chip">✓ done<\/span>/, 'a lesson done shows ✓');
   assert.match(sheet, /data-lesson="basics"/, 'each lesson has its Start button');
 });
+
+// More's line once named only three of the six buttons it holds, so Help sent nobody to Flip.
+test("More's Help line names every button under More", () => {
+  const extra = html.slice(html.indexOf('id="sel-extra"'), html.indexOf('</div>', html.indexOf('id="sel-extra"')));
+  const ids = [...extra.matchAll(/<button id="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(ids.length >= 6, `found ${ids.length} buttons under More`);
+  const more = items.find((it) => it.from === '#sel-more');
+  for (const id of ids) {
+    const it = items.find((x) => x.from === `#${id}`);
+    assert.ok(it, `#${id} has no Help line`);
+    assert.ok(more.says.includes(it.name.replace(/ selection$/, '')), `More's Help line does not name ${it.name}`);
+  }
+});
