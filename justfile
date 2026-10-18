@@ -90,7 +90,7 @@ prove test +files:
 perf *args:
     @node tools/perf.mjs "$@"
 
-# 🔎 The live site against this checkout: 200s (3 retries) and main's web/version.js, with an hour's grace for a deploy in flight (CI runs it daily)
+# 🔎 Is the live site up: /, the manifest and sw.js answer 200 (3 retries, 20 s apart; CI runs it daily)
 live-check *args:
     @python3 tools/live_check.py {{args}}
 
