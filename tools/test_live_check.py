@@ -7,33 +7,17 @@ GOOD = {"/": 200, "/manifest.webmanifest": 200, "/sw.js": 200}
 
 
 class Decide(unittest.TestCase):
-    def test_live_equals_main(self):
-        ok, lines, notice = lc.decide(GOOD, "1.0.4", "1.0.4", 10 * 86400)
+    def test_every_page_200_passes(self):
+        ok, lines = lc.decide(GOOD)
         self.assertTrue(ok)
-        self.assertIsNone(notice)
+        self.assertEqual(lines, ["✅ / 200", "✅ /manifest.webmanifest 200", "✅ /sw.js 200"])
 
-    def test_behind_by_ten_minutes_passes_with_a_notice(self):
-        ok, lines, notice = lc.decide(GOOD, "1.0.3", "1.0.4", 10 * 60)
-        self.assertTrue(ok)
-        self.assertIn("deploy in flight, live is behind main by 10 min", notice)
-
-    def test_behind_by_two_hours_fails_naming_both_and_the_age(self):
-        ok, lines, notice = lc.decide(GOOD, "1.0.3", "1.0.4", 2 * 3600)
+    def test_site_down_or_broken_fails(self):
+        ok, lines = lc.decide({**GOOD, "/": 0})
         self.assertFalse(ok)
-        bad = [l for l in lines if l.startswith("❌")][0]
-        self.assertIn("1.0.3", bad)
-        self.assertIn("1.0.4", bad)
-        self.assertIn("120 min", bad)
-
-    def test_site_down_fails_even_when_versions_match(self):
-        ok, lines, _ = lc.decide({**GOOD, "/": 0}, "x", "x", 0)
+        self.assertIn("❌ / answered 0", lines[0])
+        ok, _ = lc.decide({**GOOD, "/sw.js": 503})
         self.assertFalse(ok)
-        ok, _, _ = lc.decide({**GOOD, "/sw.js": 503}, "x", "y", 60)  # the grace never covers a broken site
-        self.assertFalse(ok)
-
-    def test_stamp_reads_version_js(self):
-        self.assertEqual(lc.stamp("self.ISOPIX_VERSION = '1.0.4';"), "1.0.4")
-        self.assertIsNone(lc.stamp("<html>not found</html>"))
 
 
 class Retries(unittest.TestCase):
@@ -56,7 +40,7 @@ class Retries(unittest.TestCase):
         sleeps = []
         out = lc.check_pages(lambda p: (0, ""), sleeps.append)
         self.assertEqual(sleeps, [20, 20, 20])
-        ok, _, _ = lc.decide(out, "x", "x", 0)
+        ok, _ = lc.decide(out)
         self.assertFalse(ok)
 
 

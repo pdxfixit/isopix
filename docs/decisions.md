@@ -62,7 +62,8 @@ are open to the owner's change (see [questions.md](questions.md)).
 
 | Rule | Why | Since |
 |---|---|---|
-| The daily live check (`live.yml`, `tools/live_check.py`) fails when `/`, the manifest or `sw.js` is not 200 after 3 retries 20 s apart. When live `version.js` differs from main's, it passes with a notice if main's `web/version.js` changed under an hour ago (a deploy in flight), and fails after that, naming both versions and the age. | The owner: fewer failure emails, but a down site is never excused. | 2026-10-12 |
+| The daily live check (`live.yml`, `tools/live_check.py`) fails when `/`, the manifest or `sw.js` is not 200 after 3 retries 20 s apart. | The owner: fewer failure emails, but a down site is never excused. | 2026-10-12 |
+| The daily live check does not compare the live `version.js` with main's (the hour's grace for a deploy in flight went with it); it checks only that the site is up and working. | Owner: "they don't need to do that. CI will push on main merge." `deploy.yml` deploys every push to `main` that changes `web/`, `worker/` or `site/`, and a failed deploy is already a red run. | 2026-10-18 |
 | Actions and flarepress float on their rolling major tags (`@v7`, `@v1`) and run on Node 24; no secrets, `contents: read`. | GitHub deprecated Node 20 actions. Owner, 2026-10-16: "all should use a rolling tag ... I prefer to fail fast". | 2026-10-16 |
 
 ## Drawing, Settings and the top bar

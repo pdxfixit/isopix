@@ -71,6 +71,6 @@ Every agent session, cloud or Mac: deploys are GitHub's (or the owner's own
    deployed**, the commit, and that it needs the deploy workflow (Actions →
    deploy → Run workflow) or the owner's `just --yes deploy`. Say the same in
    your final report.
-4. Expect the daily live check (`live.yml`) to fail once main's
-   `web/version.js` has been ahead of the live site for over an hour. That
-   failure is the reminder, not a new problem.
+4. A deploy that did not happen or failed shows as a red or missing
+   `deploy` run for your push; the daily live check (`live.yml`) checks only
+   that the site is up, not which version it serves.
