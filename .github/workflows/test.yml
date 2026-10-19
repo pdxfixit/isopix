@@ -38,9 +38,9 @@ jobs:
       - name: Width check (just look)
         run: just look --all --light --out shots/look
       # A landscape phone with the browser bars showing: the side rails must clear
-      # the bottom row. Not --all: the update bar still covers the rails there.
+      # the bottom row, and the update bar must keep between the rails and under the handle.
       - name: Short landscape check (just look)
-        run: just look draw drawn clean fold fold-open select brushes --light --widths 568,844 --height 320 --out shots/short
+        run: just look --all --light --widths 568,844 --height 320 --out shots/short
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v7
