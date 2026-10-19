@@ -42,7 +42,7 @@ async function load(id) {
 // A new, empty drawing with a new id. It joins the list at its first save.
 function fresh() {
   app.drawing = newDrawing();
-  app.selection = null; app.lastDensity = null; app.trace = null;
+  app.selection = null; app.lastDensity = null; app.scaled = new WeakMap(); app.trace = null;
   setName(sillyName(Math.random, app.drawingName));
   app.file = NO_FILE();
   app.drawingId = G.newId();

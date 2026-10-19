@@ -5,8 +5,8 @@
 // own dev server on a free port, so agents never fight over the shared
 // Browser pane. For each width and view it loads the page, opens the view,
 // runs any extra JS, then reports sideways scroll, console errors, CSP blocks,
-// controls under 44 px tall or wide and controls that overlap, and saves a
-// screenshot. Exits 1 when a check fails.
+// controls under 44 px tall or wide, controls that overlap or are cut off by
+// the side of the screen, and saves a screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
 //   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first feedback-gate feedback name-roll loading loading-slow replay
@@ -211,11 +211,11 @@ VIEWS.selturn = { js: `window.isopix.settings.brush = 'triangle'; // a lone-tria
   for (let i = 0; i < 5; i++) { ${q('#sel-turn')} } ${nap}
   if (snap() !== start) throw new Error('six turns did not give the drawing back');
   ${q('#sel-flip')} ${nap} if (snap() === start) throw new Error('Flip changed nothing');` };
-// Stamp in the brush picker opens Stamps; the eleven starter tiles; House, then a tap places it.
+// Stamp in the brush picker opens Stamps; the fifteen starter tiles; House, then a tap places it.
 VIEWS.stamps = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
   if (!document.querySelector('#stamps').open) throw new Error('Stamp did not open Stamps');
   const tiles = [...document.querySelectorAll('#stamps-grid .stamp-tile')];
-  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Tree,Wall,Pyramid,Flower,Star,Cat,Bunny,Duck') throw new Error('the starter tiles are ' + tiles.map((t) => t.textContent));
+  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Tree,Wall,Pyramid,Flower,Star,Cat,Bunny,Duck,Fox,Snake,Frog,Pig') throw new Error('the starter tiles are ' + tiles.map((t) => t.textContent));
   if (tiles.some((t) => !t.querySelector('img').src.startsWith('data:image/'))) throw new Error('a tile has no picture');
   tiles[2].click(); ${nap}
   if (document.querySelector('#stamps').open || window.isopix.settings.brush !== 'stamp') throw new Error('picking House did not close Stamps and pick the Stamp brush');
@@ -240,6 +240,31 @@ VIEWS['stamp-flip'] = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#opt
   if (!sides().length || sides().some((v) => v.s === 'r')) throw new Error('Flip left a side face lit from the right');
   const flipped = JSON.stringify([...a.drawing.cells].sort());
   ${q('#undo')} ${nap} if (JSON.stringify([...a.drawing.cells].sort()) === flipped || a.drawing.cells.size !== n) throw new Error('one Undo did not take the flip back');` };
+// Bigger and Smaller (owner, card 14): a Cat placed, selected and made twice as big;
+// Smaller gives the placed Cat back exactly; Undo, Undo and Redo move the marquee with it.
+VIEWS['stamp-bigger'] = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
+  [...document.querySelectorAll('#stamps-grid .stamp-tile')].find((t) => t.textContent === 'Cat').click(); ${nap}
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.55')} ${nap}
+  const a = window.isopix, snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort());
+  const placed = snap(); if (!a.drawing.cells.size) throw new Error('the Cat did not place');
+  a.settings.marquee = 'hexagon'; ${q('[data-tool="select"]')} ${nap}
+  const c2 = document.querySelector('#stage');
+  const f = (type, x, y) => c2.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 2, pointerType: 'mouse', isPrimary: true, bubbles: true, button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
+  f('pointerdown', innerWidth * 0.5, innerHeight * 0.55); f('pointermove', innerWidth * 0.5 + 500, innerHeight * 0.55); f('pointerup', innerWidth * 0.5 + 500, innerHeight * 0.55); ${nap}
+  if (!a.selection) throw new Error('no selection');
+  if (a.drawing.cells.size !== [...a.drawing.cells.keys()].filter((k) => a.selection.region.keys.has(k)).length) throw new Error('the selection missed part of the Cat');
+  const l0 = a.selection.region.l;
+  ${q('#sel-more')} ${nap} ${q('#sel-bigger')} ${nap}
+  const big = snap();
+  if (big === placed || a.selection.region.l !== l0 - 1) throw new Error('Bigger did not grow the Cat and its marquee');
+  ${q('#sel-smaller')} ${nap}
+  if (snap() !== placed || a.selection.region.l !== l0) throw new Error('Smaller did not give the placed Cat back exactly');
+  ${q('#undo')} ${nap}
+  if (snap() !== big || a.selection.region.l !== l0 - 1) throw new Error('Undo did not bring back the big Cat and its marquee');
+  ${q('#undo')} ${nap}
+  if (snap() !== placed || a.selection.region.l !== l0) throw new Error('a second Undo did not bring back the placed Cat and its marquee');
+  ${q('#redo')} ${nap}
+  if (snap() !== big || a.selection.region.l !== l0 - 1) throw new Error('Redo did not grow the Cat and its marquee again');` };
 // A stamp of one's own goes in Mine and stays there in a new drawing.
 // Palettes (owner, 2026-10-18): a preset is copied into Mine on the first
 // eyedropper pick, a second pick keeps the first, Mine is stored; ⋯ takes a
@@ -559,7 +584,7 @@ const MEASURE = (width) => `(() => {
     return s.visibility !== 'hidden' && Number(s.opacity) > 0 && s.pointerEvents !== 'none';
   };
   const name = (el) => el.id ? '#' + el.id : JSON.stringify(el.getAttribute('aria-label') || el.textContent.trim().slice(0, 24) || el.className);
-  const small = [], boxes = [];
+  const small = [], boxes = [], cut = [];
   let checked = 0;
   const scope = [...document.querySelectorAll('dialog[open]')].at(-1) || document;
   for (const el of scope.querySelectorAll('button, [role="button"], [role="slider"], select, input[type="range"], input[type="checkbox"], input[type="radio"], label.swatch')) {
@@ -580,6 +605,11 @@ const MEASURE = (width) => `(() => {
       v = { left: Math.max(v.left, c.left), top: Math.max(v.top, c.top), right: Math.min(v.right, c.right), bottom: Math.min(v.bottom, c.bottom) };
     }
     if (v.right - v.left > 2 && v.bottom - v.top > 2) boxes.push([box, v]);
+    // Cut off by the side of the screen (a row of buttons wider than a phone: the page does not
+    // scroll, so they are lost). Its own box, since the page clips it; a row that scrolls is fine.
+    let rolls = false;
+    for (let e = box.parentElement; e && !rolls; e = e.parentElement) rolls = /auto|scroll/.test(getComputedStyle(e).overflowX);
+    if (!rolls && (r.left < -1 || r.right > innerWidth + 1)) cut.push(name(box) + ' (' + Math.round(r.left) + '–' + Math.round(r.right) + 'px)');
   }
   // A control pinned with position: sticky (the palette's add-color and auto-shade)
   // is meant to cover what scrolls under it in the same scroll box.
@@ -629,7 +659,7 @@ const MEASURE = (width) => `(() => {
   return {
     sideways: Math.max(document.documentElement.scrollWidth, innerWidth) > ${width},
     scrollWidth: Math.max(document.documentElement.scrollWidth, innerWidth),
-    small, overlaps, checked, topGap, headClear,
+    small, overlaps, checked, topGap, headClear, cut,
     dialogSideways: [...document.querySelectorAll('dialog[open]')].filter((d) => d.scrollWidth > d.clientWidth).map((d) => '#' + d.id),
   };
 })()`;
@@ -674,6 +704,7 @@ for (const screen of opts.screens) {
     for (const d of m.dialogSideways) row.extra.push(`${d} scrolls sideways`);
     for (const o of m.overlaps) row.extra.push(`overlap: ${o}`);
     for (const h of m.headClear) row.extra.push(`${h.dialog} header: buttons end ${h.gap}px above the line under it (need 4)`);
+    for (const c of m.cut) row.extra.push(`cut off by the side of the screen: ${c}`);
     if (m.topGap !== null) row.extra.push(`top bar: the left cluster ends ${m.topGap}px from the right one (need 8)`);
     if (!m.checked) row.extra.push('no buttons found: the page did not render');
     row.ok = !m.sideways && !row.errors.length && !row.csp.length && !m.small.length && !row.extra.length;

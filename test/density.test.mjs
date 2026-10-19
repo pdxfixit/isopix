@@ -277,6 +277,76 @@ test('a turn moves a cell 60° clockwise on screen; a flip mirrors it left to ri
   assert.ok(Math.abs(after.x + b2.x) < 1e-9 && Math.abs(after.y - b2.y) < 1e-9, 'mirrored across the vertical line through the pivot');
 });
 
+// Bigger and Smaller (owner, card 14: "yes, do A").
+const box = (d) => {
+  const ws = [...d.cells.keys()].flatMap((k) => L.cellWorldVerts(L.parseKey(k)));
+  const xs = ws.map((w) => w.x), ys = ws.map((w) => w.y);
+  return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+};
+const cube = (l) => {
+  // A cube (hexagon of faces) at level l, one finer cell, a cell lit from the right and a bold edge.
+  const d = new Drawing(), A = { l, p: 4, q: 4 };
+  d.begin();
+  B.hexagon(A, 1).cells.forEach(({ cell, f }) => d.paint(cell, { c: '#3a86ff', f }));
+  d.paint(L.children(L.mk(l, 4, 4, 1))[0], { c: '#e63946' });
+  d.paint(L.mk(l, 3, 4, 0), { c: '#123456', f: 'R', s: 'r', b: '#3a86ff' });
+  d.setEdge(L.edgeKey({ l, p: 4, q: 4, d: 0 }), { c: '#000000', t: 1 });
+  d.commit();
+  return { d, r: D.makeRegion(l, B.hexagon(A, 2).cells) };
+};
+const full = (d) => JSON.stringify([[...d.cells].map(([k, v]) => [k, v.c, v.f || null, v.s || null, v.b || null]).sort(), [...d.edges.keys()].sort()]);
+
+test('Bigger then Smaller gives back the exact drawing and selection; one undo each', () => {
+  const { d, r } = cube(3);
+  const start = full(d);
+  d.begin(); const big = D.scaleRegion(d, r, 1); d.commit();
+  assert.equal(big.l, 2, 'the selection moves a level coarser');
+  assert.equal(big.keys.size, r.keys.size);
+  assert.equal(d.checkInvariant(), null);
+  assert.notEqual(full(d), start);
+  assert.ok([...d.cells.values()].some((v) => v.s === 'r' && v.b === '#3a86ff'), 'the lit side and base color move with the cell');
+  assert.ok(d.edges.has(L.edgeKey({ l: 2, p: 4, q: 4, d: 0 })) === false && d.edges.size === 1, 'the bold edge moves too');
+  d.begin(); const back = D.scaleRegion(d, big, -1); d.commit();
+  assert.equal(full(d), start, 'Smaller undoes Bigger exactly');
+  assert.deepEqual([...back.keys].sort(), [...r.keys].sort());
+  d.undo(); d.undo();
+  assert.equal(full(d), start);
+});
+
+test('Bigger twice then Smaller twice, and Smaller then Bigger, land exactly where they began', () => {
+  const { d, r } = cube(3);
+  const start = full(d);
+  let reg = r;
+  for (const dir of [1, 1, -1, -1, -1, 1]) {
+    d.begin(); reg = D.scaleRegion(d, reg, dir); d.commit();
+    assert.equal(d.checkInvariant(), null);
+  }
+  assert.equal(full(d), start);
+  assert.deepEqual([...reg.keys].sort(), [...r.keys].sort());
+});
+
+test('Bigger doubles the picture about the middle of its bottom, which stays put', () => {
+  const { d, r } = cube(3);
+  const a = box(d);
+  d.begin(); D.scaleRegion(d, r, 1); d.commit();
+  const b = box(d);
+  const near2 = (x, y) => Math.abs(x - y) < 1e-9;
+  assert.ok(near2(b.x1 - b.x0, 2 * (a.x1 - a.x0)) && near2(b.y1 - b.y0, 2 * (a.y1 - a.y0)), 'twice as wide and tall');
+  assert.ok(near2(b.y1, a.y1), 'the bottom stays where it was');
+  assert.ok(Math.abs((b.x0 + b.x1) / 2 - (a.x0 + a.x1) / 2) <= L.edgeLen(2), 'and the middle within one new edge');
+});
+
+test('Smaller coarsens the finest detail first; neither goes past the ends', () => {
+  const l = L.MAX_LEVEL - 1;
+  const { d, r } = cube(l); // its finer cell is at the finest level
+  d.begin(); const small = D.scaleRegion(d, r, -1, { mode: 'crisp' }); d.commit();
+  assert.equal(small.l, L.MAX_LEVEL);
+  assert.equal(d.checkInvariant(), null);
+  assert.ok([...d.cells.keys()].every((k) => L.parseKey(k).l <= L.MAX_LEVEL));
+  assert.equal(D.scaleRegion(d, small, -1), null, 'nothing is smaller than the finest level');
+  assert.equal(D.scaleRegion(new Drawing(), D.makeRegion(0, [L.mk(0, 0, 0, 1)]), 1), null, 'nothing is bigger than level 0');
+});
+
 // Light direction (owner, card 12: "c").
 test('light from the right swaps the left and right tones; the top stays', async () => {
   const { shade, baseOf } = await import('../web/engine/color.js');
