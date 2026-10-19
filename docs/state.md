@@ -186,7 +186,7 @@ Before that:
 
 Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); the owner chose the gallery and two-finger-tap undo, and on 2026-10-16 added the app.js split, starter stamps, rotate and flip, the time-lapse video and drawing prompts; pen mode is deferred ([TODO.md](../TODO.md)).
 
-**Live** (checked 2026-10-19 with `just live`): `v1.0.1-116-g9281de5`, release 1.2.117 (palettes), deployed by GitHub on push.
+**Live** (checked 2026-10-19 with `just live`): `v1.0.1-157-g61c1246`, release 1.2.156 (stamp sizing, floor or wall, Spin), deployed by the deploy workflow run by hand ([run 39332641429](https://github.com/pdxfixit/isopix/actions/runs/39332641429)) after Spin's push deploy timed out waiting 20 minutes for CI (the wait is 40 minutes since `61c1246`).
 
 **First GitHub deploy** (2026-10-15): release 1.2.50 (`9bcc304`, the build stamp at 11 px, the strip's height) is live at https://isopix.app, deployed by GitHub ([run 38708715250](https://github.com/pdxfixit/isopix/actions/runs/38708715250)), with everything on `main` since 1.2.20, the usage counts included. The run went red after the upload: flarepress's verify read `version.js` 3 s after the push and got the old copy ("live version.js differs"); a minute later it served 1.2.50. That check needs a retry like the daily live check has; flarepress is the owner's, outside this repo.
 
