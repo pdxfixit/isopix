@@ -317,6 +317,35 @@ VIEWS['stamp-bigger'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')}
   if (snap() !== placed || a.selection.region.l !== l0) throw new Error('a second Undo did not bring back the placed Cat and its marquee');
   ${q('#redo')} ${nap}
   if (snap() !== big || a.selection.region.l !== l0 - 1) throw new Error('Redo did not grow the Cat and its marquee again');` };
+// A placed stamp stays live to be sized (owner, 2026-10-19, docs/spec-stamp-size-turn.md):
+// a Cat placed shows the stamp bar at 1× and the handle on screen; + twice makes it 3×,
+// nine times the cells, still one undo step; the handle dragged two sizes in gives the
+// Cat back exactly; the next tap places a Cat at that size and ends the first one's sizing;
+// Undo takes the second away whole. Ends with the second Cat live at 2×.
+VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}
+  const a = window.isopix, n = a.drawing.cells.size;
+  const snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort()), placed = snap();
+  const bar = document.querySelector('#stampbar'), h = document.querySelector('#stamp-handle'), size = () => document.querySelector('#stamp-size').textContent;
+  if (n !== 111 || bar.hidden || size() !== '1×') throw new Error('placing the Cat (' + n + ' cells) did not show the stamp bar at 1× (' + size() + ')');
+  const hr = h.getBoundingClientRect();
+  if (h.hidden || hr.left < 0 || hr.right > innerWidth || hr.top < 0 || hr.bottom > innerHeight) throw new Error('the size handle is hidden or off the screen');
+  ${q('#stamp-bigger')} ${nap} ${q('#stamp-bigger')} ${nap}
+  if (a.drawing.cells.size !== 9 * n || size() !== '3×' || a.drawing.undoStack.length !== 1) throw new Error('+ twice gave ' + a.drawing.cells.size + ' cells at ' + size() + ' in ' + a.drawing.undoStack.length + ' undo steps, not ' + 9 * n + ' at 3× in 1');
+  // The handle dragged back two corner-lengths toward the stamp, from wherever it sits.
+  const v = a.live, dx = -2 * v.u[0] * a.view.zoom, dy = -2 * v.u[1] * a.view.zoom;
+  const fh = (type, x, y) => h.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 3, pointerType: 'touch', isPrimary: true, bubbles: true, buttons: type === 'pointerup' ? 0 : 1 }));
+  const h0 = h.getBoundingClientRect(), x0 = h0.x + 22, y0 = h0.y + 22;
+  fh('pointerdown', x0, y0); fh('pointermove', x0 + dx / 2, y0 + dy / 2); fh('pointermove', x0 + dx, y0 + dy); fh('pointerup', x0 + dx, y0 + dy); ${nap}
+  if (snap() !== placed || size() !== '1×' || a.drawing.undoStack.length !== 1) throw new Error('dragging the handle two sizes in did not give the Cat back exactly (' + size() + ')');
+  ${q('#stamp-bigger')} ${nap}
+  ${TAP('innerWidth * 0.25', 'innerHeight * 0.3')} ${nap}
+  if (a.drawing.undoStack.length !== 2) throw new Error('the next tap did not place a second Cat');
+  if (a.live.A === v.A || size() !== '2×') throw new Error('the second Cat is not the live one, at 2×');
+  const both = snap(); ${q('#undo')} ${nap}
+  if (a.drawing.undoStack.length !== 1 || !bar.hidden) throw new Error('Undo did not take the second Cat away whole, or left the stamp bar up');
+  ${q('#redo')} ${nap} if (snap() !== both) throw new Error('Redo did not bring the second Cat back');
+  ${TAP('innerWidth * 0.6', 'innerHeight * 0.4')} ${nap}` };
 // A stamp of one's own goes in Mine and stays there in a new drawing.
 // Palettes (owner, 2026-10-18): a preset is copied into Mine on the first
 // eyedropper pick, a second pick keeps the first, Mine is stored; ⋯ takes a

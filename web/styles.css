@@ -204,6 +204,11 @@ body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left
   font-size: 12px; color: var(--ink); white-space: nowrap;
 }
 .handle.dragging .handle-track { display: flex; }
+/* The live stamp's size handle (web/ui/livestamp.js): the same knob, on the stamp's top corner, with its own icon. */
+.stamp-handle { cursor: nesw-resize; margin: -22px 0 0 -22px; }
+.stamp-handle::after { content: none; }
+.stamp-handle svg { position: absolute; inset: 0; margin: auto; width: 22px; height: 22px; fill: none; stroke: var(--accent-ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.stampbar #stamp-size { min-width: 52px; color: var(--ink); }
 .handle-track .tick { display: flex; align-items: center; gap: 6px; opacity: 0.5; }
 .handle-track .tick.on { opacity: 1; font-weight: 800; color: var(--accent); }
 .handle-track .tick.off { text-decoration: line-through; opacity: 0.25; }

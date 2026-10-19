@@ -108,7 +108,7 @@ export class Renderer {
   }
 
   // s: {drawing, view, level, opts: {gutters, hint, hintLevels}, theme: {bg, line, accent},
-  //     overlay: {region, ghost: [cells], symmetry: {mode, center}, trace: {img, rect, opacity}}}
+  //     overlay: {region, ghost: [cells], live: {x0, y0, x1, y1}, symmetry: {mode, center}, trace: {img, rect, opacity}}}
   draw(s) {
     const { ctx, dpr } = this;
     const v = s.view;
@@ -268,6 +268,19 @@ export class Renderer {
         path.moveTo(...vs[0]); path.lineTo(...vs[1]); path.lineTo(...vs[2]); path.closePath();
       })) ctx.stroke(path);
       ctx.globalAlpha = 1;
+    }
+    // The stamp just placed, while it can be sized: a dashed box around it, a little out.
+    if (o.live) {
+      const [x0, y0] = [(o.live.x0 - t.ox) * t.zoom - 6, (o.live.y0 - t.oy) * t.zoom - 6];
+      const [x1, y1] = [(o.live.x1 - t.ox) * t.zoom + 6, (o.live.y1 - t.oy) * t.zoom + 6];
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = s.theme.bg;
+      ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = s.theme.accent;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+      ctx.setLineDash([]);
     }
     if (o.region) {
       const paths = chunked(regionBoundary(o.region), (path, [a, b]) => { path.moveTo(...P(o.region.l, ...a)); path.lineTo(...P(o.region.l, ...b)); });

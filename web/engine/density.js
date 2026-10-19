@@ -397,6 +397,35 @@ export function extractStamp(drawing, r, anchor) {
   return { base: r.l, cells, edges };
 }
 
+// A stamp k times as big (k a whole number), about its anchor, at the same
+// levels: exact on the lattice. An up cell (corners (p, q), (p+1, q), (p, q+1))
+// becomes the side-k triangle from (kp, kq), tiled by the up cells (kp+i, kq+j)
+// with i+j < k and the down cells with i+j < k-1; a down cell becomes the
+// side-k triangle across from it, tiled the other way round. k² cells each;
+// an edge becomes k edges along its line.
+export function scaleStamp(stamp, k) {
+  if (!(Number.isInteger(k) && k >= 1)) throw new Error(`a stamp scales by a whole number, not ${k}`);
+  if (k === 1) return stamp;
+  const cells = [];
+  for (const [dl, dp, dq, u, c, f] of stamp.cells) {
+    for (let i = 0; i < k; i++) {
+      for (let j = 0; j < k; j++) {
+        // In the scaled triangle: an up cell's (i, j) under its hypotenuse, a down cell's over it.
+        if (u ? i + j <= k - 1 : i + j >= k - 1) cells.push([dl, k * dp + i, k * dq + j, u, c, f]);
+        if (u ? i + j <= k - 2 : i + j >= k) cells.push([dl, k * dp + i, k * dq + j, 1 - u, c, f]);
+      }
+    }
+  }
+  const edges = [];
+  for (const [dl, dp, dq, d, c] of stamp.edges || []) {
+    const [ep, eq] = L.DIRS[d];
+    for (let t = 0; t < k; t++) edges.push([dl, k * dp + t * ep, k * dq + t * eq, d, c]);
+  }
+  return { ...stamp, cells, edges };
+}
+// How many cells a stamp has, so the app can cap how big it grows.
+export const stampSize = (stamp) => stamp.cells.length;
+
 // Place a stamp with its anchor at vertex A (level A.l). Cells that would be
 // finer than the finest level are skipped.
 export function placeStamp(stamp, A) {

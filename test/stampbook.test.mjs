@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import * as SB from '../web/stampbook.js';
 import { pack, unpack } from '../web/stamppack.js';
-import { placeStamp } from '../web/engine/density.js';
+import { placeStamp, scaleStamp } from '../web/engine/density.js';
 import { Drawing } from '../web/engine/model.js';
 import * as L from '../web/engine/lattice.js';
 
@@ -47,6 +47,46 @@ test('every starter stamp places at every level and keeps the one-cell-or-childr
     }
     assert.ok(s.stamp.cells.every(([, , , , c, f]) => /^#[0-9a-f]{6}$/i.test(c) && (f === null || ['T', 'L', 'R'].includes(f))), `${s.name}: colors and faces`);
   }
+});
+
+// Sizing a placed stamp (docs/spec-stamp-size-turn.md): whole multiples are exact.
+test('a stamp scaled by k has k² cells for each one, none twice, each the color of the cell it lies in', () => {
+  const A = { l: 3, p: 0, q: 0 }, o = L.vertexWorld(3, 0, 0);
+  for (const s of SB.STARTER) {
+    const at1 = new Map(placeStamp(s.stamp, A).cells.map(({ cell, c, f }) => [L.cellKey(cell), `${c}${f || ''}`]));
+    for (const k of [2, 3, 4]) {
+      const { cells } = placeStamp(scaleStamp(s.stamp, k), A);
+      assert.equal(cells.length, k * k * s.stamp.cells.length, `${s.name} at ${k}x`);
+      assert.equal(new Set(cells.map(({ cell }) => L.cellKey(cell))).size, cells.length, `${s.name} at ${k}x: no cell twice`);
+      for (const { cell, c, f } of cells) {
+        // Shrunk back by k about the anchor, the cell's middle lies in the 1x cell it came from.
+        const w = L.centroid(cell), back = L.hitTest(3, o.x + (w.x - o.x) / k, o.y + (w.y - o.y) / k);
+        assert.equal(at1.get(L.cellKey(back)), `${c}${f || ''}`, `${s.name} at ${k}x: ${L.cellKey(cell)}`);
+      }
+    }
+  }
+});
+
+test('a stamp at 2x is the stamp one level coarser, and at 1x it is itself', () => {
+  for (const s of SB.STARTER) {
+    assert.equal(scaleStamp(s.stamp, 1), s.stamp);
+    const coarse = new Map(placeStamp(s.stamp, { l: 2, p: 3, q: -2 }).cells.map(({ cell, c }) => [L.cellKey(cell), c]));
+    const fine = placeStamp(scaleStamp(s.stamp, 2), { l: 3, p: 6, q: -4 }).cells;
+    assert.equal(fine.length, 4 * coarse.size, s.name);
+    for (const { cell, c } of fine) assert.equal(coarse.get(L.cellKey(L.parent(cell))), c, `${s.name}: ${L.cellKey(cell)}`);
+  }
+  assert.throws(() => scaleStamp(SB.STARTER[0].stamp, 1.5), /whole number/);
+  assert.throws(() => scaleStamp(SB.STARTER[0].stamp, 0), /whole number/);
+});
+
+test('a stamp\'s bold edges scale with it, k edges along each one\'s line', () => {
+  const stamp = { base: 0, cells: [], edges: [[0, 1, 2, 0, '#000000'], [0, 0, 0, 1, '#111111'], [1, -1, 3, 2, '#222222']] };
+  const { edges } = scaleStamp(stamp, 3);
+  assert.deepEqual(edges, [
+    [0, 3, 6, 0, '#000000'], [0, 4, 6, 0, '#000000'], [0, 5, 6, 0, '#000000'],
+    [0, 0, 0, 1, '#111111'], [0, 0, 1, 1, '#111111'], [0, 0, 2, 1, '#111111'],
+    [1, -3, 9, 2, '#222222'], [1, -4, 10, 2, '#222222'], [1, -5, 11, 2, '#222222'],
+  ]);
 });
 
 const mk = (name, n) => ({ name, stamp: { base: 0, cells: [[0, n, 0, 1, '#ff0000', null]], edges: [] } });

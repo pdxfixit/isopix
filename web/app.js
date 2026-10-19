@@ -25,6 +25,7 @@ import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, openColor
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, scaleSelection, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
 import { loadMine, saveMine } from './ui/stamps.js';
+import { liveBox, updateStampbar, wireLiveStamp } from './ui/livestamp.js';
 import { loadPalettes, savePalettes, wirePalettes } from './ui/palettes.js';
 import { setBar, isMaking, cancelVideo, videoButton } from './ui/video.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
@@ -84,6 +85,8 @@ export const app = {
   stamps: [],
   palettes: [], // Mine: this browser's own palettes (web/palettes.js)
   stampChoice: { from: 'starter', id: 'cube' }, // the stamp the Stamp brush places (web/stampbook.js chosen)
+  stampSize: 1,  // how many times its own size the Stamp brush places it (web/ui/livestamp.js); not remembered
+  live: null,    // the stamp just placed, while it can still be sized (web/ui/livestamp.js)
   ghost: null,
   crosshair: null,
   trace: null,
@@ -104,7 +107,7 @@ export const app = {
   gallery: [],           // this browser's drawings: [{id, name, savedAt, thumb}], newest first
   strokeSkips: new Map(), // cells Keep fine detail skipped in the stroke under way
   skipFlash: null,        // skipped cells hatched for a moment after a stroke
-  session: { told: false, storageTold: false, copyAt: 0 }, // the skip and storage notices show once a session
+  session: { told: false, storageTold: false, copyAt: 0, stampTold: false }, // the skip, storage and stamp-handle notices show once a session
 };
 window.isopix = app; // for debugging and the look tool
 
@@ -162,12 +165,14 @@ function render() {
       // change (which looks the same when lossless) shows its new cell size.
       regionCells: app.selection ? D.paintedIn(app.drawing, app.selection.region).slice(0, 6000) : null,
       ghost: app.ghost,
+      live: liveBox(),
       skip: app.ghostSkip || app.skipFlash,
       crosshair: app.crosshair,
       symmetry: { mode: s.symmetry, center: symCenter() },
       trace: app.trace && { ...app.trace, opacity: s.traceOpacity },
     },
   });
+  updateStampbar();
   placeUpdateBar();
   updateZoomUI();
 }
@@ -175,7 +180,7 @@ function render() {
 // The protect notice stacks above it when both show. The density handle
 // keeps above them, so it is placed after them, each time they move.
 function placeUpdateBar() {
-  const tops = [$('.bottom > .palette'), $('.bottom > .tools'), $('#selbar')]
+  const tops = [$('.bottom > .palette'), $('.bottom > .tools'), $('#selbar'), $('#stampbar')]
     .map((el) => el.getBoundingClientRect()).filter((r) => r.height).map((r) => r.top);
   let top = Math.min(...tops);
   for (const bar of [$('#update-bar'), $('#protect-note'), $('#save-note'), $('#move-note')]) {
@@ -192,8 +197,8 @@ let updateBarH = 60;
 // True while a selection is open and the update bar would not fit above it
 // with the handle (a short screen): the bar waits for Done, as it does mid-stroke.
 function updateBarCrowded() {
-  const sel = $('#selbar').getBoundingClientRect();
-  return !!sel.height && !barFits({ selTop: sel.top, barH: updateBarH, handle: !$('#handle').hidden });
+  const sel = [$('#selbar'), $('#stampbar')].map((el) => el.getBoundingClientRect()).find((r) => r.height);
+  return !!sel && !barFits({ selTop: sel.top, barH: updateBarH, handle: !$('#handle').hidden || !$('#stamp-handle').hidden });
 }
 app.updateBarCrowded = updateBarCrowded; // for tools/look.mjs
 // One synchronous frame, for tools/perf.mjs (requestAnimationFrame is throttled in hidden tabs).
@@ -496,6 +501,7 @@ function wire() {
   });
   wireMenu();
   wirePalettes();
+  wireLiveStamp();
 }
 
 async function boot() {

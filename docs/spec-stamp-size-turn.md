@@ -1,8 +1,9 @@
 # Spec: stamps you size by dragging, and turn
 
-**Status:** draft, 2026-10-19. Nothing is built. Three choices wait on the owner
-([questions.md](questions.md), card 16). When he answers, his choices go in
-[decisions.md](decisions.md) and this file becomes the build plan.
+**Status:** the build plan. The owner chose B, both turns with planes first,
+and H1 (2026-10-19; [decisions.md](decisions.md), "A placed stamp stays
+live"). Step 1, size, is built (release with `web/ui/livestamp.js`); steps 2 and 3
+are in [TODO.md](../TODO.md).
 
 **The ask.** Owner, 2026-10-19: "it really does seem like shapes need to be
 rotateable, kind of like drawing a face/plane... it'd be fun if we had really
@@ -158,8 +159,9 @@ top of B if the owner wants it, once B's rules exist.
   the handle later.
 - **Limits:** the largest size is where the stamp would pass about 20,000
   cells (the 111-cell Cat stops at 13×, the 618-cell Flower of Life at 5×); the stepper's + then greys out.
-- **Help and keys:** `[` and `]` step the size and `R` spins (in
-  `web/keys.js`), and each new button gets its line in `web/help.js`.
+- **Help and keys:** `,` and `.` step the size (`[` and `]` already change the
+  grid size), `R` will spin (in `web/keys.js`), and each new button gets its
+  line in `web/help.js`.
 - **Phones:** the stamp bar fits 320 px in the selection bar's place; the
   handle is a 44 px target placed outside the outline, so at a small size it
   does not hide the stamp.

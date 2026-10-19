@@ -45,6 +45,11 @@ LAN gets the app, but not the install.
 - **Brush shapes** (the button at the end of the tool row): triangle, rhombus
   (a cube face), hexagon (a little cube), trapezoid (half a hexagon), big
   triangle, drag a face, drag a cube, and stamp.
+- **Stamp**: pick one in the Stamps drawer, then tap (or press and slide to
+  aim). The stamp just placed stays outlined with a round handle: drag it out
+  for bigger, in for smaller, in whole steps (2×, 3×…), or use − and + on the
+  stamp bar (`,` and `.` on a keyboard). The next stamps keep that size; the
+  next tap, another tool or Undo finishes it.
 - **Line**: drag; it locks to the three grid directions. Styles: Strip (a strip
   of cells) and Edge (a bold line on the grid lines).
 - **Fill**: fills at the current grid size, only what you can see.
@@ -125,7 +130,7 @@ don't put names or contact details in it: nobody can write back.
 
 | Path | What it holds |
 |---|---|
-| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, rendering, wiring) and `ui/` (controls, tools, input, sheets, files), `render.js` (Canvas 2D), `storage.js`, `gallery.js` (the list of drawings, pure), `stampbook.js` (starter and own stamps, pure), `palettes.js` (preset and own palettes, pure) and `stamps.js` (the starter art, packed by `stamppack.js`, made by `tools/make_stamps.mjs`), `autosave.js` (autosave copies, pure), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `feedback.js` (Feedback's grown-up check and request, pure; its dialogs are `ui/feedback.js`), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
+| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, rendering, wiring) and `ui/` (controls, tools, input, sheets, files, the live stamp), `render.js` (Canvas 2D), `storage.js`, `gallery.js` (the list of drawings, pure), `stampbook.js` (starter and own stamps, pure), `palettes.js` (preset and own palettes, pure) and `stamps.js` (the starter art, packed by `stamppack.js`, made by `tools/make_stamps.mjs`), `autosave.js` (autosave copies, pure), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `feedback.js` (Feedback's grown-up check and request, pure; its dialogs are `ui/feedback.js`), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2, and `POST /api/feedback` into the shared feedback bucket, both through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
 | `test/` | `node --test` suites for the engine. |
@@ -148,7 +153,8 @@ recorded with reasons in [docs/decisions.md](docs/decisions.md):
 - Paint behind keeps every painted cell, at any level.
 - Fill is bounded by the visible area; past 40,000 cells it uses bigger cells.
 - Stamps scale with the grid level (exactly: a 2× scale about a vertex maps one
-  level onto the next).
+  level onto the next), and by any whole number at one level (a cell becomes k²
+  cells), so every size is exact.
 - Bold edges are kept hidden on coarsen, like cells.
 - Each drawing keeps its own paper (light or dark); the inks follow it.
 - Limited palette starts with black, gray and white, and "+" adds a color

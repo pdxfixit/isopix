@@ -141,6 +141,16 @@ export const SECTIONS = [
     ],
   },
   {
+    title: 'Stamp bar',
+    intro: 'Shows under a stamp you just placed, until you draw something else.',
+    items: [
+      { name: 'Size handle', from: '#stamp-handle', says: 'The round knob on the stamp\'s corner: drag it out to make the stamp bigger, in to make it smaller, in whole steps (2×, 3×…). Each size is drawn from the stamp itself, so nothing is lost.' },
+      { name: 'Smaller', from: '#stamp-smaller', says: 'The stamp one size smaller, down to its own size (1×).' },
+      { name: 'Bigger', from: '#stamp-bigger', says: 'The stamp one size bigger. The next stamps you place come out this size too.' },
+      { name: 'Done', from: '#stamp-done', says: 'Keeps the stamp as it is. Placing another stamp, drawing or Undo does the same.' },
+    ],
+  },
+  {
     title: 'Colors',
     items: [
       { name: 'Swatch', text: '●', says: 'Tap a color. With the Eraser on, picking a color switches to the Pencil. The two small tones show auto-shade.' },
