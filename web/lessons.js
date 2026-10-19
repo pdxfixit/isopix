@@ -154,7 +154,7 @@ export const LESSONS = [
     steps: [
       DRAW_SOMETHING,
       { id: 'starter', show: true, setup: { tool: 'pencil', brush: 'stamp' }, target: '#options',
-        say: 'Stamp opens Stamps: Starter has a cube, stairs, a house, a tree and more; Mine keeps the ones you make, in every drawing. Tap one, then the grid. Next, make one of your own.',
+        say: 'Stamp opens Stamps: tap a section (Shapes, Animals and more) to open it; Mine keeps the ones you make, in every drawing. Tap one, then the grid. Next, make one of your own.',
         covers: ['Starter stamps', 'My stamps'] },
       { id: 'select', setup: { marquee: 'hexagon' }, target: '[data-tool="select"]', say: 'Pick Select and drag around it.',
         done: ev('select'), covers: [] },
