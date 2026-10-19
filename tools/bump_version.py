@@ -3,7 +3,7 @@
 
 The stamp is semver, MAJOR.MINOR.PATCH, and PATCH is the number of commits in
 the tree once the release is committed: `git rev-list --count HEAD` + 1, since
-the bump goes in the same commit as the change. It only ever goes up. The
+the bump goes in the same commit as the change (in a merge, both sides' count + 1). It only ever goes up. The
 service worker imports version.js, so a new stamp gives it a new cache name:
 installed copies fetch fresh files and drop the old cache after the deploy.
 
@@ -66,6 +66,16 @@ def goes_down(old, new):
         return None
     return (f"{new} is below {old}: the commit count looks wrong. "
             f"In a shallow clone run 'git fetch --unshallow' first.")
+
+
+def merging():
+    return subprocess.run(["git", "-C", str(ROOT), "rev-parse", "-q", "--verify", "MERGE_HEAD"], capture_output=True).returncode == 0
+
+
+def behind():
+    """Commits behind the one about to be made: HEAD's, or in a merge both sides'
+    (a merge of main brings main's commits into the count)."""
+    return int(git("rev-list", "--count", "HEAD", "MERGE_HEAD")) if merging() else commits()
 
 
 def shallow():
@@ -132,10 +142,9 @@ def staged():
     if subprocess.run(["git", "-C", str(ROOT), "diff", "--cached", "--quiet", "--", "web/version.js"]).returncode == 0:
         return  # version.js is not in this commit
     stamp = stamp_of(git("show", ":web/version.js")).group(1)
-    merging = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "-q", "--verify", "MERGE_HEAD"], capture_output=True).returncode == 0
-    if merging:
+    if merging():
         parents = tuple(stamp_of(git("show", f"{r}:web/version.js")).group(1) for r in ("HEAD", "MERGE_HEAD"))
-        problem = staged_problem(stamp, int(git("rev-list", "--count", "HEAD", "MERGE_HEAD")), parents)
+        problem = staged_problem(stamp, behind(), parents)
     else:
         if shallow():
             sys.exit("🛑 this clone is shallow, so the commit count is wrong: run 'git fetch --unshallow', then 'just version'")
@@ -163,7 +172,7 @@ def main():
         sys.exit(f"❌ unknown part {part!r}: patch, minor or major")
     if shallow():
         sys.exit("🛑 this clone is shallow, so its commit count is wrong: run 'git fetch --unshallow', then 'just version'")
-    new = bumped(old, part, commits())
+    new = bumped(old, part, behind())
     problem = goes_down(old, new)
     if problem:
         sys.exit(f"🛑 {problem}")
