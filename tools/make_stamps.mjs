@@ -10,7 +10,7 @@
 //   node tools/make_stamps.mjs              writes web/stamps.js
 //   node tools/make_stamps.mjs --check      fails if web/stamps.js is not what this makes
 //   node tools/make_stamps.mjs --svg FILE   also writes every stamp side by side as SVG
-//     [--group ID]                          only one group's (vehicles, letters, …)
+//     [--group ID] [--wide]                 only one group's (vehicles, letters, …); twice as far apart
 import fs from 'node:fs';
 import path from 'node:path';
 import * as L from '../web/engine/lattice.js';
@@ -63,10 +63,26 @@ function flat(pick, r = 6) {
   const cells = new Map();
   for (const cell of L.cellsInBox(LV, -r, r, -r, r)) {
     const color = pick(cell);
-    if (color) cells.set(L.cellKey(cell), { cell, c: color, f: null });
+    // A color, or [base color, face tag] for a shaded face.
+    if (Array.isArray(color)) cells.set(L.cellKey(cell), { cell, c: shade(color[0], color[1]), f: color[1] });
+    else if (color) cells.set(L.cellKey(cell), { cell, c: color, f: null });
   }
   return cells;
 }
+// Sacred geometry: points around the anchor in edges (x right, y down), and
+// the six lattice directions, for circles laid out on the hexagonal grid.
+const O = () => L.vertexWorld(LV, 0, 0), E = () => L.edgeLen(LV);
+const rel = (cell) => { const { x, y } = L.centroid(cell), o = O(); return { x: (x - o.x) / E(), y: (y - o.y) / E() }; };
+const DIRS = [0, 1, 2, 3, 4, 5].map((k) => [Math.cos(Math.PI / 6 + (k * Math.PI) / 3), Math.sin(Math.PI / 6 + (k * Math.PI) / 3)]);
+const ringOf = (n, d) => (n === 0 ? [[0, 0]] : DIRS.map(([x, y]) => [x * d, y * d]));
+// How many of the circles (centers, radius r) hold the cell's center.
+const cover = (cell, centers, r) => { const { x, y } = rel(cell); return centers.filter(([cx, cy]) => Math.hypot(x - cx, y - cy) < r).length; };
+// The Flower of Life's 19 centers: the middle, six around it at d, and twelve
+// more: six at 2d along the same lines and six between them.
+const flowerCenters = (d) => [[0, 0], ...ringOf(1, d), ...ringOf(1, 2 * d),
+  ...DIRS.map(([x, y], k) => [d * (x + DIRS[(k + 1) % 6][0]), d * (y + DIRS[(k + 1) % 6][1])])];
+const triangle = (R, a0) => [0, 1, 2].map((k) => [R * Math.cos(a0 + (k * 2 * Math.PI) / 3), R * Math.sin(a0 + (k * 2 * Math.PI) / 3)]);
+const angleOf = ({ x, y }) => ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 // A flat round face: eyes, a smile, and hair along the top if given.
 function face2(skin, hair) {
   const o = L.vertexWorld(LV, 0, 0), s1 = L.edgeLen(LV);
@@ -92,6 +108,7 @@ const patch = (side, at, [a0, a1], [z0, z1], color) => face(
 const BLUE = '#3a86ff', TEAL = '#2a9d8f', YELLOW = '#f4c430', RED = '#e63946', GREEN = '#5a9a3c',
   BROWN = '#8b5a2b', STONE = '#9aa0a6', SAND = '#e9b949', PINK = '#ff5d8f', SKY = '#8ecae6', ORANGE = '#f4a020', INK = '#2b2d42', WHITE = '#f1ece4', TAN = '#c9a27e',
   FOX = '#e8641b', LIME = '#8bc34a', HOG = '#ff9eb5', DOG = '#b07040', MUZZLE = '#e3c29b',
+  GOLD = '#d4a017', PALEGOLD = '#f6d77a', INDIGO = '#3f37c9', VIOLET = '#7b2cbf', ROSE = '#e85d75',
   SKIN = '#f1c27d', RAIN = '#b8c4d0', MOON = '#f4e3a1', PLANET = '#c77dff',
   PINE = '#2e7d32', CLOUD = '#e3eaf2', PURPLE = '#8e5bd6', NAVY = '#1d3557', CREAM = '#fff3d6', FROSTING = '#f8c8dc';
 
@@ -423,6 +440,62 @@ const SHAPES = [
     const poly = [[0.5, -6.5], [3.2, -6.5], [1.6, -3.2], [3.6, -3.2], [-0.8, 1.6], [0.6, -1.4], [-1.3, -1.4]].map(([x, y]) => [o.x + 1.7 * x * s1, o.y + 1.7 * (y - 1.6) * s1]);
     return flat((cell) => { const { x, y } = L.centroid(cell); return inside(poly, x, y) ? YELLOW : null; }, 16);
   } },
+  // Sacred geometry.
+  { id: 'seed', name: 'Seed of Life', group: 'sacred', cells: () => flat((cell) => {
+    // Seven circles; cells covered an odd number of times light, even dark, so the petals show.
+    const n = cover(cell, [[0, 0], ...ringOf(1, 3.6)], 3.6);
+    return n ? (n % 2 ? PALEGOLD : GOLD) : null;
+  }, 12) },
+  { id: 'flower-of-life', name: 'Flower of Life', group: 'sacred', cells: () => flat((cell) => {
+    const { x, y } = rel(cell), r = Math.hypot(x, y);
+    if (r > 9.8) return null;
+    if (r > 9) return GOLD; // the ring around it
+    const n = cover(cell, flowerCenters(3), 3);
+    return n ? (n % 2 ? PALEGOLD : INDIGO) : null;
+  }, 14) },
+  { id: 'fruit-of-life', name: 'Fruit of Life', group: 'sacred', cells: () => flat((cell) => {
+    const centers = [[0, 0], ...ringOf(1, 3.6), ...ringOf(1, 7.2)];
+    const n = cover(cell, centers, 1.5);
+    if (!n) return null;
+    const { x, y } = rel(cell);
+    return Math.hypot(x, y) < 1.5 ? VIOLET : GOLD;
+  }, 12) },
+  // A star tetrahedron: two triangles, faceted light and dark like a solid.
+  { id: 'merkaba', name: 'Merkaba', group: 'sacred', cells: () => flat((cell) => {
+    const p = rel(cell), R = 9 / Math.sqrt(3);
+    const a = inside(triangle(R, 0), p.x, p.y), b = inside(triangle(R, Math.PI), p.x, p.y);
+    if (!a && !b) return null;
+    const w = Math.floor(((angleOf(p) + 30) % 360) / 60); // six wedges, each round a point
+    return [[GOLD, 'T'], [GOLD, 'R'], [GOLD, 'L'], [GOLD, 'T'], [GOLD, 'R'], [GOLD, 'L']][w];
+  }, 9) },
+  { id: 'mandala', name: 'Mandala', group: 'sacred', cells: () => flat((cell) => {
+    const d = hexDistOf(cell), a = angleOf(rel(cell)) % 60;
+    if (d <= 1) return GOLD;
+    if (d === 2) return VIOLET;
+    if (d === 3) return Math.abs(a - 30) < 16 ? ROSE : null;
+    if (d === 4) return GOLD;
+    if (d === 5) return a < 10 || a > 50 ? TEAL : null;
+    if (d === 6) return Math.abs(a - 30) < 8 ? VIOLET : null;
+    return null;
+  }, 8) },
+  // Pascal's triangle mod 2 on the lattice's own triangles: a cell is in when its row and column share no bit.
+  { id: 'sierpinski', name: 'Sierpinski', group: 'sacred', cells: () => {
+    const cells = new Map(), N = 16;
+    for (let p = 0; p < N; p++) for (let q = 0; p + q < N; q++) {
+      if (p & q) continue;
+      const cell = L.mk(LV, p, q, 1);
+      cells.set(L.cellKey(cell), { cell, c: GOLD, f: null });
+    }
+    return cells;
+  } },
+  // A cube inside a six-point star inside a hexagon: every line on the lattice.
+  { id: 'star-cube', name: 'Star cube', group: 'sacred', cells: () => flat((cell) => {
+    const d = hexDistOf(cell), p = rel(cell), R = 9 / Math.sqrt(3);
+    if (d > 6) return null;
+    if (d === 6) return GOLD;
+    if (d <= 3) { const t = angleOf(p); return t >= 210 && t < 330 ? [VIOLET, 'T'] : t >= 90 && t < 210 ? [VIOLET, 'L'] : [VIOLET, 'R']; }
+    return inside(triangle(R, 0), p.x, p.y) || inside(triangle(R, Math.PI), p.x, p.y) ? INDIGO : null;
+  }, 8) },
 ];
 
 // Letters and numbers: a 5×7 pixel font, each pixel a little block on the lit
@@ -473,7 +546,7 @@ function stampOf(cells) {
 
 // The drawer's sections, in order; each starter stamp names its group.
 const GROUPS = [
-  { id: 'shapes', name: 'Shapes' }, { id: 'buildings', name: 'Buildings' }, { id: 'nature', name: 'Nature' },
+  { id: 'shapes', name: 'Shapes' }, { id: 'sacred', name: 'Sacred geometry' }, { id: 'buildings', name: 'Buildings' }, { id: 'nature', name: 'Nature' },
   { id: 'weather', name: 'Weather' }, { id: 'animals', name: 'Animals' }, { id: 'people', name: 'People' },
   { id: 'vehicles', name: 'Vehicles' }, { id: 'space', name: 'Space' }, { id: 'food', name: 'Food' },
   { id: 'letters', name: 'Letters', small: true }, { id: 'numbers', name: 'Numbers', small: true },
@@ -514,8 +587,8 @@ const i = process.argv.indexOf('--svg'), only = process.argv.indexOf('--group');
 if (i > 0) {
   const d = new Drawing();
   out.filter((s) => only < 0 || s.group === process.argv[only + 1]).forEach((s, k) => {
-    const c = k % 4, r = Math.floor(k / 4); // four to a row: right is (-1, 2), down (1, 0)
-    const { cells } = placeStamp(s.stamp, { l: 2, p: 8 - 7 * c + 12 * r, q: 4 + 14 * c });
+    const c = k % 4, r = Math.floor(k / 4), w = process.argv.includes('--wide') ? 2 : 1; // four to a row: right is (-1, 2), down (1, 0)
+    const { cells } = placeStamp(s.stamp, { l: 2, p: 8 * w - 7 * w * c + 12 * w * r, q: 4 * w + 14 * w * c });
     d.begin(); for (const { cell, c, f } of cells) d.paint(cell, { c, f }); d.commit();
   });
   fs.writeFileSync(process.argv[i + 1], toSVG(d, { background: '#f7f5f0' }));
