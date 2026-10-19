@@ -25,3 +25,18 @@ ambiguity: one clear question beats a wrong build.
 2. Deletes the card (keep the numbers going up; do not reuse one).
 3. Adds any work he approved to [TODO.md](../TODO.md) "Agents do".
 4. Commits all three together.
+
+## 15. A search box in Stamps?
+
+Now: 86 starter stamps in eleven folding sections, plus Mine. A search box on
+top would filter every stamp by name. Asked 2026-10-19; the owner: "maybe.
+size is a huge consideration".
+
+- **A. Not yet** (recommended): sections are enough at this count; revisit
+  past about 150 stamps. Costs nothing.
+- **B. A search box now**: a text field and a filter over names, about 1 KB
+  of code; little use to a child who cannot read yet.
+
+A, because the sections hold 86 comfortably and the owner weighs size.
+
+**The owner:**

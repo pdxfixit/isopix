@@ -18,6 +18,7 @@ import { shade } from '../web/engine/color.js';
 import { Drawing } from '../web/engine/model.js';
 import { placeStamp } from '../web/engine/density.js';
 import { toSVG } from '../web/engine/svg.js';
+import { pack, unpack } from '../web/stamppack.js';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const U = 2;
@@ -66,6 +67,18 @@ function flat(pick, r = 6) {
   }
   return cells;
 }
+// A flat round face: eyes, a smile, and hair along the top if given.
+function face2(skin, hair) {
+  const o = L.vertexWorld(LV, 0, 0), s1 = L.edgeLen(LV);
+  return flat((cell) => {
+    const { x, y } = L.centroid(cell), dx = (x - o.x) / s1, dy = (y - o.y) / s1, r = Math.hypot(dx, dy);
+    if (r > 4.1) return null;
+    if (hair && dy < -2.4) return hair;
+    if (Math.abs(Math.abs(dx) - 1.3) < 0.5 && Math.abs(dy + 0.9) < 0.6) return INK; // eyes
+    if (r > 1.9 && r < 2.9 && dy > 1 && Math.abs(dx) < 2.3) return INK; // the smile
+    return skin;
+  });
+}
 const hexDistOf = (cell) => Math.max(...L.cellVerts(cell).map(([p, q]) => L.hexDist(p, q)));
 
 // Boxes and side patches in half units, for small features (ears, eyes, a beak).
@@ -79,12 +92,13 @@ const patch = (side, at, [a0, a1], [z0, z1], color) => face(
 const BLUE = '#3a86ff', TEAL = '#2a9d8f', YELLOW = '#f4c430', RED = '#e63946', GREEN = '#5a9a3c',
   BROWN = '#8b5a2b', STONE = '#9aa0a6', SAND = '#e9b949', PINK = '#ff5d8f', SKY = '#8ecae6', ORANGE = '#f4a020', INK = '#2b2d42', WHITE = '#f1ece4', TAN = '#c9a27e',
   FOX = '#e8641b', LIME = '#8bc34a', HOG = '#ff9eb5', DOG = '#b07040', MUZZLE = '#e3c29b',
+  SKIN = '#f1c27d', RAIN = '#b8c4d0', MOON = '#f4e3a1', PLANET = '#c77dff',
   PINE = '#2e7d32', CLOUD = '#e3eaf2', PURPLE = '#8e5bd6', NAVY = '#1d3557', CREAM = '#fff3d6', FROSTING = '#f8c8dc';
 
 const SHAPES = [
   { id: 'cube', name: 'Cube', group: 'shapes', cells: () => paint(box([0, 0, 0], [1, 1, 1], BLUE)) },
   { id: 'stairs', name: 'Stairs', group: 'shapes', cells: () => paint([...box([0, 0, 0], [3, 1, 1], TEAL), ...box([0, 0, 1], [2, 1, 1], TEAL), ...box([0, 0, 2], [1, 1, 1], TEAL)]) },
-  { id: 'house', name: 'House', group: 'shapes', cells: () => paint([
+  { id: 'house', name: 'House', group: 'buildings', cells: () => paint([
     ...box([0, 0, 0], [2, 2, 1.5], YELLOW),
     face([[2, 0, 1.5], [2, 2, 1.5], [2, 1, 2.5]], RED, 'R'),
     face([[0, 1, 2.5], [2, 1, 2.5], [2, 2, 1.5], [0, 2, 1.5]], RED, 'L'),
@@ -92,7 +106,7 @@ const SHAPES = [
     face([[2, 0.5, 0.5], [2, 1, 0.5], [2, 1, 1], [2, 0.5, 1]], SKY, 'R'),
   ]) },
   { id: 'tree', name: 'Tree', group: 'nature', cells: () => paint([...box([0.5, 0.5, 0], [0.5, 0.5, 1], BROWN), ...box([0, 0, 1], [1.5, 1.5, 1.5], GREEN), ...box([0.5, 0.5, 2.5], [0.5, 0.5, 0.5], GREEN)]) },
-  { id: 'wall', name: 'Wall', group: 'shapes', cells: () => paint([...box([0, 0, 0], [3, 0.5, 1.5], STONE), ...[0, 1, 2].flatMap((x) => box([x, 0, 1.5], [0.5, 0.5, 0.5], STONE)), ...box([2.5, 0, 1.5], [0.5, 0.5, 0.5], STONE)]) },
+  { id: 'wall', name: 'Wall', group: 'buildings', cells: () => paint([...box([0, 0, 0], [3, 0.5, 1.5], STONE), ...[0, 1, 2].flatMap((x) => box([x, 0, 1.5], [0.5, 0.5, 0.5], STONE)), ...box([2.5, 0, 1.5], [0.5, 0.5, 0.5], STONE)]) },
   { id: 'pyramid', name: 'Pyramid', group: 'shapes', cells: () => paint([
     face([[0, 2, 0], [2, 2, 0], [1, 1, 1.5]], SAND, 'L'),
     face([[2, 0, 0], [2, 2, 0], [1, 1, 1.5]], SAND, 'R'),
@@ -210,7 +224,7 @@ const SHAPES = [
     patch('L', 3, [4, 5], [4, 5], INK),
   ]) },
   // Nature.
-  { id: 'sun', name: 'Sun', group: 'nature', cells: () => flat((cell) => {
+  { id: 'sun', name: 'Sun', group: 'weather', cells: () => flat((cell) => {
     const d = hexDistOf(cell);
     if (d <= 2) return YELLOW;
     if (d > 4) return null;
@@ -219,7 +233,7 @@ const SHAPES = [
     const a = ((Math.atan2(y - o.y, x - o.x) * 180) / Math.PI + 360) % 60;
     return a < 12 || a > 48 ? ORANGE : null;
   }) },
-  { id: 'cloud', name: 'Cloud', group: 'nature', cells: () => paint([
+  { id: 'cloud', name: 'Cloud', group: 'weather', cells: () => paint([
     ...hbox([0, 0, 0], [8, 4, 2], CLOUD), ...hbox([1, 0, 2], [3, 4, 2], CLOUD), ...hbox([4, 0, 2], [3, 4, 3], CLOUD),
   ]) },
   { id: 'rock', name: 'Rock', group: 'nature', cells: () => paint([
@@ -239,7 +253,7 @@ const SHAPES = [
     patch('L', 4, [1, 2], [1, 2], RED), patch('L', 4, [4, 5], [0, 1], RED), patch('R', 6, [1, 2], [1, 2], RED), // berries
   ]) },
   // Flat bands of the hexagon around the anchor, upper half only.
-  { id: 'rainbow', name: 'Rainbow', group: 'nature', cells: () => flat((cell) => {
+  { id: 'rainbow', name: 'Rainbow', group: 'weather', cells: () => flat((cell) => {
     const { y } = L.centroid(cell), o = L.vertexWorld(LV, 0, 0);
     if (y > o.y) return null;
     return [null, null, null, PURPLE, BLUE, GREEN, YELLOW, ORANGE, RED][hexDistOf(cell)] || null;
@@ -324,6 +338,91 @@ const SHAPES = [
     ...hbox([1, 1, 0], [1, 1, 2], ORANGE), ...hbox([0, 0, 2], [3, 3, 4], ORANGE),
     ...hbox([1, 1, 6], [1, 1, 2], GREEN), ...hbox([0, 1, 7], [1, 1, 1], GREEN), ...hbox([2, 1, 7], [1, 1, 1], GREEN),
   ]) },
+  // Buildings (House and Wall above).
+  { id: 'castle', name: 'Castle', group: 'buildings', cells: () => paint([
+    ...hbox([0, 0, 0], [2, 3, 7], STONE),
+    ...hbox([2, 0, 0], [4, 3, 5], STONE), ...hbox([2, 0, 5], [1, 3, 1], STONE), ...hbox([4, 0, 5], [1, 3, 1], STONE),
+    ...hbox([6, 0, 0], [2, 3, 7], STONE),
+    patch('L', 3, [3, 5], [0, 3], BROWN), // the gate
+    patch('L', 3, [0, 1], [4, 5], INK), patch('L', 3, [6, 7], [4, 5], INK),
+    ...hbox([7, 1, 7], [1, 1, 3], BROWN), patch('L', 2, [8, 10], [8, 10], RED), // a flag
+  ]) },
+  { id: 'tower', name: 'Tower', group: 'buildings', cells: () => paint([
+    ...hbox([0, 0, 0], [3, 3, 9], STONE), ...hbox([0, 0, 9], [3, 3, 1], RED), ...hbox([1, 1, 10], [1, 1, 2], RED),
+    patch('L', 3, [1, 2], [0, 2], BROWN), patch('L', 3, [1, 2], [6, 7], INK), patch('R', 3, [1, 2], [6, 7], INK),
+  ]) },
+  { id: 'bridge', name: 'Bridge', group: 'buildings', cells: () => paint([
+    ...hbox([0, 0, 0], [2, 3, 3], STONE), ...hbox([8, 0, 0], [2, 3, 3], STONE),
+    ...hbox([0, 0, 3], [10, 3, 1], BROWN),
+    ...[0, 3, 6, 9].flatMap((x) => hbox([x, 2, 4], [1, 1, 1], BROWN)), // railing posts
+  ]) },
+  // People.
+  { id: 'smiley', name: 'Smiley', group: 'people', cells: () => face2(YELLOW) },
+  { id: 'kid', name: 'Kid', group: 'people', cells: () => face2(SKIN, BROWN) },
+  { id: 'person', name: 'Person', group: 'people', cells: () => paint([
+    ...hbox([0, 0, 0], [1, 2, 3], NAVY), ...hbox([2, 0, 0], [1, 2, 3], NAVY),
+    ...hbox([-1, 0, 3], [1, 2, 4], SKIN), ...hbox([0, 0, 3], [3, 2, 4], RED), ...hbox([3, 0, 3], [1, 2, 4], SKIN),
+    ...hbox([0, 0, 7], [3, 2, 3], SKIN), ...hbox([0, 0, 10], [3, 2, 1], BROWN),
+    patch('L', 2, [0, 1], [8, 9], INK), patch('L', 2, [2, 3], [8, 9], INK),
+  ]) },
+  // Space (the Rocket is in Vehicles).
+  { id: 'planet', name: 'Planet', group: 'space', cells: () => paint([
+    ...hbox([-1, -1, 3], [7, 1, 1], SAND), ...hbox([-1, 0, 3], [1, 5, 1], SAND), // the ring behind
+    ...hbox([1, 1, 0], [3, 3, 1], PLANET), ...hbox([0, 0, 1], [5, 5, 5], PLANET), ...hbox([1, 1, 6], [3, 3, 1], PLANET),
+    ...hbox([-1, 5, 3], [7, 1, 1], SAND), ...hbox([5, 0, 3], [1, 5, 1], SAND), // and in front
+  ]) },
+  { id: 'moon', name: 'Moon', group: 'space', cells: () => {
+    const o = L.vertexWorld(LV, 0, 0), s1 = L.edgeLen(LV);
+    return flat((cell) => {
+      const { x, y } = L.centroid(cell);
+      return Math.hypot(x - o.x, y - o.y) < 4.2 * s1 && Math.hypot(x - o.x - 2 * s1, y - o.y + 1 * s1) > 3.4 * s1 ? '#f2d16b' : null;
+    }, 8);
+  } },
+  // Little six-point stars (two triangles of side 3 edges, so their points are vertices), scattered.
+  { id: 'stars', name: 'Stars', group: 'space', cells: () => {
+    const R = Math.sqrt(3) * L.edgeLen(LV);
+    const tri = (cx, cy, a0) => [0, 1, 2].map((k) => [cx + R * Math.cos(a0 + (k * 2 * Math.PI) / 3), cy + R * Math.sin(a0 + (k * 2 * Math.PI) / 3)]);
+    const stars = [[0, 0, YELLOW], [-6, 4, ORANGE], [-3, -4, YELLOW], [-10, 2, YELLOW]].map(([p, q, c]) => {
+      const { x, y } = L.vertexWorld(LV, p, q);
+      return { a: tri(x, y, 0), b: tri(x, y, Math.PI), c };
+    });
+    return flat((cell) => {
+      const { x, y } = L.centroid(cell);
+      return stars.find((st) => inside(st.a, x, y) || inside(st.b, x, y))?.c || null;
+    }, 12);
+  } },
+  { id: 'ufo', name: 'UFO', group: 'space', cells: () => paint([
+    ...hbox([1, 1, 0], [5, 5, 1], STONE), ...hbox([0, 0, 1], [7, 7, 1], STONE), ...hbox([2, 2, 2], [3, 3, 2], SKY),
+    patch('L', 7, [1, 2], [1, 2], YELLOW), patch('L', 7, [3, 4], [1, 2], YELLOW), patch('L', 7, [5, 6], [1, 2], YELLOW),
+    patch('R', 7, [1, 2], [1, 2], YELLOW), patch('R', 7, [3, 4], [1, 2], YELLOW), patch('R', 7, [5, 6], [1, 2], YELLOW),
+  ]) },
+  // Weather (Sun, Cloud and Rainbow above).
+  { id: 'raincloud', name: 'Rain cloud', group: 'weather', cells: () => paint([
+    ...[[1, 1], [4, 2], [2, 3], [5, 0]].flatMap(([x, y]) => [...hbox([x, y, -3], [1, 1, 1], BLUE), ...hbox([x + 1, y, -6], [1, 1, 1], BLUE)]),
+    ...hbox([0, 0, 0], [7, 4, 2], RAIN), ...hbox([1, 0, 2], [3, 4, 2], RAIN), ...hbox([4, 1, 2], [2, 3, 1], RAIN),
+  ]) },
+  // Six arms along the lattice's three line families through the anchor, each with a pair of branches.
+  { id: 'snowflake', name: 'Snowflake', group: 'weather', cells: () => {
+    const on = ([p, q], [ap, aq], k) => (k === 0 ? q === aq : k === 1 ? p === ap : p + q === ap + aq);
+    const edgeOn = (cell, A, k) => L.cellVerts(cell).filter((v) => on(v, A, k)).length >= 2;
+    const arms = [[3, 0], [-3, 0], [0, 3], [0, -3], [3, -3], [-3, 3]];
+    return flat((cell) => {
+      const d = hexDistOf(cell);
+      if (d <= 4 && [0, 1, 2].some((k) => edgeOn(cell, [0, 0], k))) return SKY;
+      for (const A of arms) {
+        const k0 = A[1] === 0 ? 0 : A[0] === 0 ? 1 : 2; // the arm's own family
+        const near = Math.max(...L.cellVerts(cell).map(([p, q]) => L.hexDist(p - A[0], q - A[1])));
+        if (near <= 1 && [0, 1, 2].some((k) => k !== k0 && edgeOn(cell, A, k))) return SKY;
+      }
+      return null;
+    }, 7);
+  } },
+  // A flat bolt, in edges from the anchor (x right, y down); its slants come out stair-stepped.
+  { id: 'lightning', name: 'Lightning', group: 'weather', cells: () => {
+    const o = L.vertexWorld(LV, 0, 0), s1 = L.edgeLen(LV);
+    const poly = [[0.5, -6.5], [3.2, -6.5], [1.6, -3.2], [3.6, -3.2], [-0.8, 1.6], [0.6, -1.4], [-1.3, -1.4]].map(([x, y]) => [o.x + 1.7 * x * s1, o.y + 1.7 * (y - 1.6) * s1]);
+    return flat((cell) => { const { x, y } = L.centroid(cell); return inside(poly, x, y) ? YELLOW : null; }, 16);
+  } },
 ];
 
 // Letters and numbers: a 5×7 pixel font, each pixel a little block on the lit
@@ -350,12 +449,13 @@ const FONT = {
   8: '.###.|#...#|#...#|.###.|#...#|#...#|.###.', 9: '.###.|#...#|#...#|.####|....#|...#.|.##..',
 };
 const RAINBOW = [RED, ORANGE, YELLOW, GREEN, TEAL, BLUE, PURPLE, PINK];
-const glyph = (ch, color) => () => {
-  const rows = FONT[ch].split('|'), px = [];
-  rows.forEach((row, r) => [...row].forEach((on, c) => { if (on === '#') px.push([c, 6 - r]); }));
+const pixels = (bits, color) => () => {
+  const rows = bits.split('|'), px = [];
+  rows.forEach((row, r) => [...row].forEach((on, c) => { if (on === '#') px.push([c, rows.length - 1 - r]); }));
   px.sort((a, b) => a[0] - b[0] || a[1] - b[1]); // back to front: left to right, bottom to top
   return paint(px.flatMap(([c, z]) => hbox([c, 0, z], [1, 1, 1], color)));
 };
+const glyph = (ch, color) => pixels(FONT[ch], color);
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', DIGITS = '0123456789';
 SHAPES.push(
   ...[...LETTERS].map((ch, i) => ({ id: `letter-${ch.toLowerCase()}`, name: ch, group: 'letters', cells: glyph(ch, RAINBOW[i % RAINBOW.length]) })),
@@ -373,21 +473,33 @@ function stampOf(cells) {
 
 // The drawer's sections, in order; each starter stamp names its group.
 const GROUPS = [
-  { id: 'shapes', name: 'Shapes' }, { id: 'nature', name: 'Nature' }, { id: 'animals', name: 'Animals' },
-  { id: 'vehicles', name: 'Vehicles' }, { id: 'food', name: 'Food' }, { id: 'letters', name: 'Letters' }, { id: 'numbers', name: 'Numbers' },
+  { id: 'shapes', name: 'Shapes' }, { id: 'buildings', name: 'Buildings' }, { id: 'nature', name: 'Nature' },
+  { id: 'weather', name: 'Weather' }, { id: 'animals', name: 'Animals' }, { id: 'people', name: 'People' },
+  { id: 'vehicles', name: 'Vehicles' }, { id: 'space', name: 'Space' }, { id: 'food', name: 'Food' },
+  { id: 'letters', name: 'Letters', small: true }, { id: 'numbers', name: 'Numbers', small: true },
 ];
 const out = GROUPS.flatMap((g) => SHAPES.filter((s) => s.group === g.id))
   .map((s) => ({ id: s.id, name: s.name, group: s.group, stamp: stampOf(s.cells()) }));
 if (out.length !== SHAPES.length) throw new Error('a shape has no group in GROUPS');
+// Packed for web/stamps.js (web/stamppack.js); unpacking must give every cell back.
+const sorted = (cells) => JSON.stringify(cells.map((c) => JSON.stringify(c)).sort());
+const packed = out.map(({ stamp, ...s }) => {
+  const p = pack(stamp);
+  if (sorted(unpack(p).cells) !== sorted(stamp.cells)) throw new Error(`${s.name} does not unpack to its cells`);
+  return { ...s, ...p };
+});
 const js = `// The starter stamps: the owner's eight (Cube, Stairs, House, Tree, Wall,
 // Pyramid, Flower, Star), then animals, nature, vehicles, food, letters and
 // numbers, in the drawer's groups.
 // Made by tools/make_stamps.mjs from 3D shapes on the lattice; edit that, not
 // this. Each is a stamp like one saved from a selection: cells
-// [dl, dp, dq, u, color, face] around its anchor vertex. GROUPS are the
-// Stamps drawer's sections, in order; each stamp names its group.
+// [dl, dp, dq, u, color, face] around its anchor vertex, packed by
+// web/stamppack.js (web/stampbook.js unpacks them). GROUPS are the Stamps
+// drawer's sections, in order; each stamp names its group.
 export const GROUPS = ${JSON.stringify(GROUPS)};
-export const STARTER = ${JSON.stringify(out)};
+export const PACKED = [
+${packed.map((s) => '  ' + JSON.stringify(s)).join(',\n')},
+];
 `;
 const file = path.join(ROOT, 'web/stamps.js');
 if (process.argv.includes('--check')) {
