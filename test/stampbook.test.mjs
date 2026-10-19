@@ -14,8 +14,12 @@ test('the starter stamps, group by group: the eight the owner picked, the animal
   const by = Object.fromEntries(SB.GROUPS.map((g) => [g.name, SB.STARTER.filter((s) => s.group === g.id).map((s) => s.name)]));
   assert.deepEqual(by, {
     Shapes: ['Cube', 'Stairs', 'House', 'Wall', 'Pyramid', 'Star'],
-    Nature: ['Tree', 'Flower'],
+    Nature: ['Tree', 'Flower', 'Sun', 'Cloud', 'Rock', 'Mushroom', 'Pine tree', 'Bush', 'Rainbow'],
     Animals: ['Cat', 'Bunny', 'Duck', 'Fox', 'Snake', 'Frog', 'Pig', 'Dog', 'Fish', 'Bird'],
+    Vehicles: ['Car', 'Truck', 'Train', 'Boat', 'Rocket', 'Plane'],
+    Food: ['Apple', 'Cake', 'Ice cream', 'Cupcake', 'Pizza', 'Carrot'],
+    Letters: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
+    Numbers: [...'0123456789'],
   });
   assert.equal(new Set(SB.STARTER.map((s) => s.id)).size, SB.STARTER.length, 'ids are unique');
 });
