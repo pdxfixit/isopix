@@ -78,8 +78,15 @@ test('a failed send keeps its id for the retry; a sent one makes the next messag
   assert.equal(await sender.send('three'), 'failed');
 });
 
-test('About has Feedback right beside the version, with its label and a Help line', () => {
-  assert.match(html, /<p class="version"><a id="version-label"[^>]*><\/a><button type="button" id="feedback-open" class="btn feedback-open" aria-haspopup="dialog" aria-label="Feedback[^"]*"/);
+test('About has one row of plain links (Privacy policy, Send feedback, Show the welcome again), then the version', () => {
+  // Owner, 2026-10-19: "one row of links, but allow wrapping on the phone gracefully"
+  const row = html.match(/<nav class="about-links"[^>]*>([\s\S]*?)<\/nav>\s*<p class="version"><a id="version-label"[^>]*><\/a><\/p>/);
+  assert.ok(row, 'the links, then the version alone');
+  const links = [...row[1].matchAll(/<(a|button) [^>]*id="([^"]+)"[^>]*class="link-btn"[^>]*>([^<]+)</g)].map((m) => [m[2], m[3]]);
+  assert.deepEqual(links, [['privacy-link', 'Privacy policy'], ['feedback-open', 'Send feedback'], ['welcome-again', 'Show the welcome again']]);
+  assert.match(row[1], /id="feedback-open" class="link-btn" aria-haspopup="dialog"/);
+  assert.doesNotMatch(html, /feedback-open" class="btn|💌<\/span> Feedback/, 'no bordered or emoji button among the links');
+  assert.match(read('../web/styles.css'), /\.about-links \{ display: flex; flex-wrap: wrap; justify-content: center;/);
   assert.match(read('../web/help.js'), /from: '#feedback-open'/);
 });
 

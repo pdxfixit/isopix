@@ -281,7 +281,9 @@ dialog#drawing .menu { padding-bottom: 12px; }
 .set-about { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
 /* A quiet button that reads as a link (owner: Show the welcome again "should be less dominating"); still 44 px tall. */
 .link-btn { display: block; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.link-btn.about-foot { margin: 14px auto -10px; color: var(--muted); font-weight: 500; }
+/* About's links: one row, wrapping to centered lines on a phone (owner, 2026-10-19) */
+.about-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 18px; margin: 10px 0 -6px; }
+.about-links .link-btn { margin: 0; color: var(--muted); font-weight: 500; }
 a.link-btn { display: flex; align-items: center; justify-content: center; width: max-content; }
 .link-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .set-about .btn + .btn { margin-top: 8px; }
@@ -397,8 +399,6 @@ dialog.small-dialog::backdrop { background: rgba(0, 0, 0, 0.42); }
 .small-dialog .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 /* Feedback (web/ui/feedback.js): the button beside the version, the grown-up check and the box.
    Both dialogs are small-dialogs: centered on every width, never a bottom sheet (owner: "centered, modalish, esc exits"). */
-.version { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; }
-.btn.feedback-open { gap: 6px; padding: 0 14px; min-height: 44px; font-size: 15px; }
 .small-dialog .gate-wrong { margin: -4px 0 0; color: #c92a2a; font-weight: 600; }
 @media (prefers-color-scheme: dark) { .small-dialog .gate-wrong { color: #ff8787; } }
 dialog.feedback { width: min(480px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }

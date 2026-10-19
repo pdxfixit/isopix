@@ -316,10 +316,9 @@
       </section>
       <section class="set-about" aria-label="About Isopix">
         <label class="row"><input type="checkbox" id="opt-usage"> Share play data</label>
-        <a id="privacy-link" class="link-btn about-foot" href="https://privacy.pdxfixit.com/isopix/" target="_blank" rel="noopener">Privacy policy</a>
-        <button type="button" id="welcome-again" class="link-btn about-foot">Show the welcome again</button>
-        <!-- Feedback beside the version (owner, 2026-10-19), behind a grown-up check (web/ui/feedback.js). -->
-        <p class="version"><a id="version-label" target="_blank" rel="noopener" title="The code this copy was built from, on GitHub"></a><button type="button" id="feedback-open" class="btn feedback-open" aria-haspopup="dialog" aria-label="Feedback: send an idea or a problem" title="Send feedback"><span aria-hidden="true">💌</span> Feedback</button></p>
+        <!-- One row of links that wraps on a phone (owner, 2026-10-19); Feedback is behind a grown-up check (web/ui/feedback.js). -->
+        <nav class="about-links" aria-label="More about Isopix"><a id="privacy-link" class="link-btn" href="https://privacy.pdxfixit.com/isopix/" target="_blank" rel="noopener">Privacy policy</a><button type="button" id="feedback-open" class="link-btn" aria-haspopup="dialog" title="Send an idea or a problem">Send feedback</button><button type="button" id="welcome-again" class="link-btn">Show the welcome again</button></nav>
+        <p class="version"><a id="version-label" target="_blank" rel="noopener" title="The code this copy was built from, on GitHub"></a></p>
       </section>
     </form>
   </dialog>
