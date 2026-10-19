@@ -117,7 +117,7 @@ export function cleanDetails(event, details = {}) {
 // Which toolbar or cluster holds a control (`closest` on the element).
 export const GROUPS = [
   ['.topleft', 'topleft'], ['.topright', 'topright'], ['#levels', 'levels'], ['#zoom', 'zoom'],
-  ['#palette', 'palette'], ['.tools', 'tools'], ['#selbar', 'selbar'], ['#popover', 'popover'],
+  ['#palette', 'palette'], ['#colors-fold', 'palette'], ['#show-tools', 'zoom'], ['.tools', 'tools'], ['#selbar', 'selbar'], ['#popover', 'popover'],
   ['#replay-bar', 'replay'], ['#tour', 'lesson'], ['#update-bar', 'update'], ['#protect-note', 'note'],
   ['#save-note', 'note'], ['#move-note', 'note'], ['dialog', null],
 ];

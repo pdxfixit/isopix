@@ -56,8 +56,8 @@ export const LESSONS = [
         say: { touch: 'Two fingers move the paper and pinch to zoom. The rail on the left zooms too, and its hand moves the paper. Try one.', mouse: 'Scroll to move the paper; Ctrl+scroll (or a trackpad pinch) zooms. The rail on the left does both. Try one.', pen: 'Use the rail on the left: + and − zoom, the hand moves the paper. Try one.' },
         done: ev('view'), covers: ['Zoom in', 'Zoom slider', 'Zoom out', 'Move'] },
       { id: 'fit', target: '#fit-view',
-        say: { touch: 'Lost your drawing? Tap ⌖ to bring it back.', mouse: 'Lost your drawing? Click ⌖ (or press 0) to bring it back.', pen: 'Lost your drawing? Tap ⌖ to bring it back.' },
-        done: ev('fit'), covers: ['Fit drawing'] },
+        say: { touch: 'Lost your drawing? Tap ⌖ to bring it back. (The eye under it hides the controls; Show tools brings them back.)', mouse: 'Lost your drawing? Click ⌖ (or press 0) to bring it back. (The eye under it, or T, hides the controls.)', pen: 'Lost your drawing? Tap ⌖ to bring it back. (The eye under it hides the controls; Show tools brings them back.)' },
+        done: ev('fit'), covers: ['Fit drawing', 'Hide the controls', 'Show tools'] },
     ],
   },
   {
@@ -222,6 +222,7 @@ export const NOT_TAUGHT = {
   Help: 'the lessons live in it',
   Feedback: 'it is for grown-ups, behind a sum; Help explains it',
   'Change a palette': 'it needs a palette of one\'s own first; Help explains it',
+  'Colors button': 'it shows only with Display → Fold the colors on, which lessons turn off; Help explains it',
 };
 // The Help sections the drift test checks (Words, Gestures and Keys explain, they are not controls).
 export const TAUGHT_SECTIONS = ['Tools', 'Brush shapes', 'Line styles and selection shapes', 'Top buttons', 'Drawing sheet', 'Grid size', 'Zoom and move', 'Selection bar', 'Colors'];

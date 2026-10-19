@@ -10,9 +10,10 @@ const base = { protect: 'protect', symmetry: 'off', gutters: true, hint: 'faint'
 test('section chips show the current value in a few words', () => {
   assert.equal(S.chipText('set-drawing', base, 'light'), 'Keep · light paper');
   assert.equal(S.chipText('set-drawing', { ...base, protect: 'replace', symmetry: 'rot6' }, 'dark'), 'Replace · dark paper · symmetry');
-  assert.equal(S.chipText('set-grid', base), 'hints faint');
-  assert.equal(S.chipText('set-grid', { ...base, hint: 'off' }), 'hints off');
-  assert.equal(S.chipText('set-grid', { ...base, gutters: false }), 'gutters off');
+  assert.equal(S.chipText('set-display', base), 'hints faint');
+  assert.equal(S.chipText('set-display', { ...base, hint: 'off' }), 'hints off');
+  assert.equal(S.chipText('set-display', { ...base, gutters: false }), 'gutters off');
+  assert.equal(S.chipText('set-display', { ...base, foldColors: true }), 'colors folded · hints faint');
   assert.equal(S.chipText('set-selection', base), 'handle');
   assert.equal(S.chipText('set-selection', { ...base, densityHandle: false }), 'buttons only');
   assert.equal(S.chipText('set-learning', base), 'off');
@@ -22,14 +23,19 @@ test('section chips show the current value in a few words', () => {
 test('folded sections: all start closed until opened, then stay open until closed; junk reads as nothing', () => {
   const none = S.rememberedOpen(null);
   for (const id of S.SECTION_IDS) assert.equal(S.startsOpen(id, none), false, `${id} starts closed`);
-  const back = S.rememberedOpen(S.rememberOpen(new Set(['set-grid', 'set-drawing'])));
+  const back = S.rememberedOpen(S.rememberOpen(new Set(['set-display', 'set-drawing'])));
   assert.equal(S.startsOpen('set-drawing', back), true);
-  assert.equal(S.startsOpen('set-grid', back), true);
+  assert.equal(S.startsOpen('set-display', back), true);
   assert.equal(S.startsOpen('set-learning', back), false);
   assert.equal(S.startsOpen('set-drawing', S.rememberedOpen('["!set-drawing"]')), false, 'the old "folded Drawing" entry');
   assert.equal(S.rememberOpen(new Set(['help-tools', 'gone']), ['help-tools', 'help-words']), '["help-tools"]', 'any list of sections');
   assert.equal(S.rememberedOpen('{oops').size, 0);
-  assert.equal(S.rememberedOpen('[1,"set-grid"]').has('set-grid'), true);
+  assert.equal(S.rememberedOpen('[1,"set-display"]').has('set-display'), true);
+});
+
+test('Grid became Display: a device that kept Grid open keeps Display open', () => {
+  assert.equal(S.startsOpen('set-display', S.rememberedOpen('["set-grid"]')), true);
+  assert.ok(!S.SECTION_IDS.includes('set-grid'));
 });
 
 test('drawing names and file names', () => {

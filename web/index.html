@@ -140,7 +140,14 @@
     <button id="fit-view" class="btn" aria-label="Fit the drawing on screen" title="Fit drawing (0)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
     </button>
+    <button id="clean-view" class="btn" aria-label="Hide the controls: just the drawing and Undo" title="Hide the controls (T)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.6"/><path d="M4 20 20 4"/></svg>
+    </button>
   </div>
+  <!-- Clean view (body.clean): everything but the drawing, Undo and this button hides. -->
+  <button id="show-tools" class="btn show-tools" aria-label="Show the controls again" title="Show the controls (T)">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.6"/></svg><span>Show tools</span>
+  </button>
 
   <div id="selbar" class="selbar" role="toolbar" aria-label="Selection" hidden>
     <button id="sel-coarser" class="btn" aria-label="Coarser: merge cells into bigger ones" title="Coarser">
@@ -192,6 +199,8 @@
   <a class="build-stamp" id="build-stamp" href="https://github.com/pdxfixit/isopix" target="_blank" rel="noopener" aria-label="Isopix on GitHub" title="Isopix on GitHub"></a>
   <div class="bottom">
     <div id="palette" class="palette" role="radiogroup" aria-label="Colors"></div>
+    <!-- Display → Fold the colors, under 768 px wide: the color in use, opening the row above (ui/controls.js). -->
+    <button id="colors-fold" class="btn colors-fold" aria-expanded="false" aria-controls="palette" aria-label="Colors" title="Colors"></button>
     <div class="tools" role="toolbar" aria-label="Tools">
       <button class="btn tool" data-tool="pencil" aria-pressed="true" aria-label="Pencil" title="Pencil (P)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-5L16 4l4 4L9 19ZM14 6l4 4"/></svg>
@@ -285,9 +294,11 @@
           </fieldset>
         </div>
       </section>
-      <section class="set-fold" id="set-grid" aria-labelledby="set-grid-title">
-        <h3><button type="button" class="set-head" aria-expanded="false" aria-controls="set-grid-body"><span class="set-head-caret" aria-hidden="true">▸</span><span id="set-grid-title">Grid</span><span class="set-head-chip" id="set-grid-chip"></span></button></h3>
-        <div class="set-body" id="set-grid-body" hidden>
+      <section class="set-fold" id="set-display" aria-labelledby="set-display-title">
+        <h3><button type="button" class="set-head" aria-expanded="false" aria-controls="set-display-body"><span class="set-head-caret" aria-hidden="true">▸</span><span id="set-display-title">Display</span><span class="set-head-chip" id="set-display-chip"></span></button></h3>
+        <div class="set-body" id="set-display-body" hidden>
+          <p class="note">How the screen looks. Nothing here changes the drawing.</p>
+          <label class="row"><input type="checkbox" id="opt-fold-colors"> Fold the colors into one button, on a phone or a narrow window</label>
           <label class="row"><input type="checkbox" id="opt-gutters"> Show gutters (the thin grid lines) (G)</label>
           <fieldset>
             <legend>Finer-level hints</legend>
