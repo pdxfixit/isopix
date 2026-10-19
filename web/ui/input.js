@@ -13,6 +13,7 @@ import { applyCells, applyEdges, brushAt, closePopover, commit, doFill, eraseEdg
 import { openDrawing, openHelp, openSettings, syncMenu } from './screens.js';
 import { openProject, saveFile } from './files.js';
 import { barMode, setBar } from './video.js';
+import { endLive, setStampSize, startLive } from './livestamp.js';
 
 // ---------- pointer input ----------
 const pointers = new Map();
@@ -174,6 +175,7 @@ function dragApply(g, wx, wy) {
   if (app.drawing.inTx) app.drawing.rollback();
   app.drawing.begin(s.brush);
   if (s.brush === 'stamp') {
+    g.SA = L.nearestVertex(app.level, wx, wy); // where it lands, to stay live (ui/livestamp.js)
     const { cells, edges } = stampItemsAt(wx, wy);
     applyCells(cells, g.erase);
     if (!g.erase) for (const { edge, c } of edges) applyEdges([edge], c);
@@ -279,6 +281,7 @@ export function onUp(e) {
       reportSkips();
       const s = app.settings;
       emit('stroke', { tool: s.tool, brush: s.brush, lineStyle: s.lineStyle, level: app.level, cells: diff ? diff.cells.length + diff.edges.length : 0, skipped });
+      if (g.SA) startLive(g.SA, g.erase, diff); // a placed stamp stays live, to be sized
     }
   }
   if (g.kind === 'marquee') {
@@ -355,6 +358,7 @@ export function onKey(e) {
     tool: () => setTool(arg),
     options: () => { if (!$('#options').disabled) openPopover(); },
     size: () => chooseNotch(Math.max(0, Math.min(7, cur + Number(arg)))),
+    stampsize: () => setStampSize(app.stampSize + Number(arg)),
     lock: toggleLock,
     gutters: () => { set('gutters', !app.settings.gutters); syncMenu(); requestRender(); },
     reset: fitView,
@@ -368,11 +372,12 @@ export function onKey(e) {
     open: () => openProject(),
     clean: () => setClean(!clean),
     escape: () => {
-      const nothingElse = $('#popover').hidden && !app.moveMode && !app.selection && !colorsOpen() && !clean;
+      const nothingElse = $('#popover').hidden && !app.moveMode && !app.selection && !app.live && !colorsOpen() && !clean;
       closePopover(); if (app.moveMode) setMoveMode(false);
       if (colorsOpen()) openColors(false, true);
       if (clean) setClean(false);
       if (app.selection) { app.selection = null; updateSelbar(); requestRender(); emit('seldone'); }
+      endLive();
       if (nothingElse && app.tour?.active()) app.tour.stop();
     },
     undo, redo,

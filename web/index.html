@@ -64,6 +64,7 @@
   <link rel="modulepreload" href="ui/palettes.js">
   <link rel="modulepreload" href="ui/screens.js">
   <link rel="modulepreload" href="ui/stamps.js">
+  <link rel="modulepreload" href="ui/livestamp.js">
   <link rel="modulepreload" href="ui/tools.js">
   <link rel="modulepreload" href="ui/video.js">
   <link rel="modulepreload" href="welcome.js">
@@ -193,6 +194,24 @@
 
   <div id="handle" class="handle" hidden role="slider" tabindex="0" aria-label="Selection density: drag up for finer, down for coarser" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0">
     <div id="handle-track" class="handle-track" aria-hidden="true"></div>
+  </div>
+
+  <!-- A placed stamp stays live to be sized (web/ui/livestamp.js). -->
+  <div id="stampbar" class="selbar stampbar" role="toolbar" aria-label="Stamp just placed" hidden>
+    <button id="stamp-smaller" class="btn" aria-label="Stamp one size smaller" title="Smaller (,)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+    </button>
+    <span id="stamp-size" class="chip" aria-live="polite"></span>
+    <button id="stamp-bigger" class="btn" aria-label="Stamp one size bigger" title="Bigger (.)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+    </button>
+    <button id="stamp-done" class="btn" aria-label="Done: keep the stamp as it is" title="Done (Esc)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
+    </button>
+  </div>
+
+  <div id="stamp-handle" class="handle stamp-handle" hidden role="slider" tabindex="0" aria-label="Stamp size: drag away from the stamp for bigger, toward it for smaller" aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg>
   </div>
 
   <div id="popover" class="popover" hidden role="dialog" aria-label="Options"></div>

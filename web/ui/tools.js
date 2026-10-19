@@ -14,6 +14,7 @@ import { cancelGesture, gesture, spaceHeld } from './input.js';
 import { syncMenu } from './screens.js';
 import * as SB from '../stampbook.js';
 import { openStamps } from './stamps.js';
+import { stampAt } from './livestamp.js';
 
 // ---------- tools and the options popover ----------
 export function setTool(tool) {
@@ -147,10 +148,9 @@ export function eraseEdgesNear(x, y) {
 export function brushAt(x, y) {
   return B.brushCells(app.settings.brush, app.level, x, y);
 }
+// The Stamp brush at world point (x, y): anchored on the nearest vertex, at the size in use.
 export function stampItemsAt(x, y) {
-  const st = SB.chosen(app.stampChoice, app.stamps);
-  const A = L.nearestVertex(app.level, x, y);
-  return D.placeStamp(st.stamp, A);
+  return stampAt(L.nearestVertex(app.level, x, y));
 }
 
 export function doFill(x, y) {
