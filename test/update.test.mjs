@@ -1,4 +1,4 @@
-// "🆕 An update for Isopix is ready.": when the bar shows, when it waits,
+// "🆕 App update ready.": when the bar shows, when it waits,
 // what ✕ does, and that Reload saves first (web/update.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
