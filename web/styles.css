@@ -229,6 +229,9 @@ body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left
 }
 .update-text { flex: 1 1 12em; min-width: 0; }
 #update-saved { display: block; } /* its own line, never split mid-phrase */
+/* The update bar's 🆕 stands as tall as its two lines, beside them. */
+.update-text.with-icon { display: flex; align-items: center; gap: 10px; }
+.update-icon { flex: none; font-size: 2.4em; line-height: 1; }
 .update-buttons { display: flex; gap: 6px; margin-left: auto; }
 .update-reload { background: var(--accent); color: var(--accent-ink); border: 0; padding: 0 18px; }
 .update-close { background: transparent; color: var(--bg); border: 2px solid currentColor; }
@@ -535,13 +538,13 @@ dialog.feedback { width: min(480px, calc(100vw - 24px)); max-height: calc(100dvh
 }
 
 /* Phones: the zoom rail hangs under the top buttons, and its track stays above
-   where the brush picker and the selection bar open. Under 620 px tall there
+   where the brush picker and the selection bar open. Under 666 px tall there
    is no room for a track worth aiming, so only the buttons remain. */
 @media (max-width: 767px), (max-height: 559px) {
   .zoom { top: calc(64px + env(safe-area-inset-top)); transform: none; }
-  .zoom-track { height: clamp(72px, calc(100dvh - 540px), 220px); }
+  .zoom-track { height: clamp(72px, calc(100dvh - 586px), 220px); } /* 46 px less for the clean-view eye: the rail ends where it did */
 }
-@media (max-width: 767px) and (max-height: 619px), (max-height: 559px) {
+@media (max-width: 767px) and (max-height: 665px), (max-height: 559px) {
   .zoom-track { display: none; }
 }
 /* Short landscape: five buttons from under the top buttons would reach the
