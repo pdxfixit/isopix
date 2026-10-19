@@ -125,3 +125,31 @@ test('samplePath steps are no longer than asked', () => {
   assert.equal(pts.length, 10);
   assert.deepEqual(pts.at(-1), [1, 0]);
 });
+
+// Turning a stamp by dragging (owner, 2026-10-19: "mimic draw face behavior as close as possible").
+test('dragging a flat stamp\'s handle picks the plane Drag a face would draw that way, in every direction', () => {
+  const A = { l: 3, p: 0, q: 0 };
+  for (let a = 1; a < 360; a += 2) {
+    const r = (a * Math.PI) / 180, x = 10 * Math.cos(r), y = 10 * Math.sin(r), qq = x / L.H, pp = y - qq / 2;
+    const face = B.parallelogram(A, pp, qq).face;
+    const nearEdge = [30, 90, 150, 210, 270, 330].some((e) => Math.abs(a - e) < 1);
+    if (!nearEdge) assert.equal(B.poseAt('plane', a, null, ['left', 'right', 'floor']), B.PLANE_OF_FACE[face], `${a}°`);
+  }
+});
+
+test('a picture that can stand upright does within 15° of straight up or down; a 3D stamp faces the quarter it is dragged into', () => {
+  const planes = ['upright', 'floor', 'left', 'right'];
+  for (const a of [80, 95, 260, 280]) assert.equal(B.poseAt('plane', a, null, planes), 'upright', `${a}°`);
+  assert.equal(B.poseAt('plane', 270, null, ['left', 'right', 'floor']), 'right', 'letters have no upright: Drag a face\'s own slice');
+  assert.deepEqual([30, 150, 210, 330].map((a) => B.poseAt('spin', a)), [0, 1, 2, 3]);
+  assert.deepEqual([0, 1, 2, 3].map((n) => B.poseAt('spin', B.poseAngle('spin', n))), [0, 1, 2, 3], 'the handle sits where its pose is');
+  for (const p of ['floor', 'left', 'right']) for (const side of [0, 1]) assert.equal(B.poseAt('plane', B.poseAngle('plane', p, side), null, planes), p);
+  assert.equal(B.poseAt('plane', B.poseAngle('plane', 'upright'), null, planes), 'upright');
+});
+
+test('a pose holds until the drag is 8° past its edge, so a wobble while sizing does not turn it', () => {
+  assert.equal(B.poseAt('spin', 95, 0), 0, '5° into the next quarter: still facing right');
+  assert.equal(B.poseAt('spin', 99, 0), 1, '9° in: it turns');
+  assert.equal(B.poseAt('plane', 34, 'floor', ['floor', 'left', 'right']), 'floor');
+  assert.equal(B.poseAt('plane', 40, 'floor', ['floor', 'left', 'right']), 'left');
+});

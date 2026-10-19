@@ -144,7 +144,7 @@ export const SECTIONS = [
     title: 'Stamp bar',
     intro: 'Shows under a stamp you just placed, until you draw something else.',
     items: [
-      { name: 'Size handle', from: '#stamp-handle', says: 'The round knob on the stamp\'s corner: drag it out to make the stamp bigger, in to make it smaller: quarter steps while it is small (1¼×, 1½×…), then halves, then whole steps. An in-between size is made of smaller cells than the grid, so its edges stay clean; each size is drawn from the stamp itself, so nothing is lost.' },
+      { name: 'Handle', from: '#stamp-handle', says: 'The round knob out from the stamp\'s foot, on a line. Drag it away from the foot or toward it to make the stamp bigger or smaller: quarter steps while it is small, then halves, then whole steps (an in-between size is made of smaller cells, so its edges stay clean). Drag it round the foot to turn it, as Drag a face picks its face: a 3D stamp faces the way you drag; a flat one or a letter lies on the floor if you drag sideways, on a wall if you drag down or up at a slant (straight up keeps a flat picture standing). Your own stamps only size.' },
       { name: 'Smaller', from: '#stamp-smaller', says: 'The stamp one size smaller, down to a quarter of its own size (¼×) where the grid allows.' },
       { name: 'Bigger', from: '#stamp-bigger', says: 'The stamp one size bigger. The next stamps you place come out this size too.' },
       { name: 'Floor or wall', from: '#stamp-plane', says: 'For flat stamps (the Moon, the Smiley, sacred geometry…) and letters and numbers: each tap lays it on the next of the floor, the left wall and the right wall (and, for a flat picture, back to standing up), shaded like that face of a cube. The next stamps go there too.' },

@@ -25,7 +25,7 @@ import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, openColor
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, scaleSelection, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
 import { loadMine, saveMine } from './ui/stamps.js';
-import { liveBox, updateStampbar, wireLiveStamp } from './ui/livestamp.js';
+import { liveBox, livePointer, updateStampbar, wireLiveStamp } from './ui/livestamp.js';
 import { loadPalettes, savePalettes, wirePalettes } from './ui/palettes.js';
 import { setBar, isMaking, cancelVideo, videoButton } from './ui/video.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
@@ -155,6 +155,7 @@ export function requestRender() {
 }
 function render() {
   const s = app.settings;
+  updateStampbar(); // first, so the live stamp's outline and pointer match its handle
   renderer.draw({
     drawing: app.replaying ? app.replaying.drawing : app.drawing,
     view: app.view,
@@ -168,13 +169,13 @@ function render() {
       regionCells: app.selection ? D.paintedIn(app.drawing, app.selection.region).slice(0, 6000) : null,
       ghost: app.ghost,
       live: liveBox(),
+      pointer: livePointer(),
       skip: app.ghostSkip || app.skipFlash,
       crosshair: app.crosshair,
       symmetry: { mode: s.symmetry, center: symCenter() },
       trace: app.trace && { ...app.trace, opacity: s.traceOpacity },
     },
   });
-  updateStampbar();
   placeUpdateBar();
   updateZoomUI();
 }

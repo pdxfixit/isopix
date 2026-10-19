@@ -16,6 +16,7 @@ import * as L from '../engine/lattice.js';
 import * as D from '../engine/density.js';
 import * as ART from '../engine/stampart.js';
 import * as M from '../engine/stampmodels.js';
+import { poseAt, poseAngle } from '../engine/brushes.js';
 import * as SB from '../stampbook.js';
 import { $, app, canvas, requestRender, toast } from '../app.js';
 import { applyCells, applyEdges, commit, reportSkips } from './tools.js';
@@ -78,11 +79,13 @@ export function sizeLabel(s) {
 export function startLive(A, erase, diff) {
   app.live = { drawing: app.drawing, A, erase, diff, depth: app.drawing.undoStack.length, choice: JSON.stringify(app.stampChoice) };
   if (!outline(app.live)) { app.live = null; return; }
-  if (!app.session.stampTold) { app.session.stampTold = true; toast('Drag the round handle to make the stamp bigger or smaller'); }
+  if (!app.session.stampTold) { app.session.stampTold = true; toast(poseKind() ? 'Drag the round handle out or in to size the stamp, round its foot to turn it' : 'Drag the round handle to make the stamp bigger or smaller'); }
   updateStampbar();
 }
-// The live stamp's 1× outline around its anchor on the plane in use, and the
-// handle's corner of it; false when it has no cells.
+// The live stamp's 1× outline around its anchor on the plane in use, the handle's
+// corner of it (for a stamp that does not turn), and its reach, the farthest any of
+// it is from the anchor (the handle of one that turns sits that far out per 1×);
+// false when it has no cells.
 function outline(v) {
   const { cells } = D.placeStamp(base(), v.A), A = v.A;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -94,6 +97,7 @@ function outline(v) {
   const corners = [[box.x1, box.y0], [box.x0, box.y0], [box.x1, box.y1], [box.x0, box.y1]], len = ([x, y]) => Math.hypot(x, y);
   v.box = box;
   v.u = corners.reduce((b, c) => (len(c) > len(b) * 1.05 ? c : b));
+  v.reach = Math.max(...corners.map(len));
   return true;
 }
 
@@ -156,6 +160,31 @@ export function spinStamp() {
   if (stillLive()) { outline(app.live); repaint(); } else { updateStampbar(); toast(`Stamps ${SPIN_SAYS[app.stampSpin]}`); }
 }
 
+// Turning by the handle, the way Drag a face picks its face (owner, 2026-10-19:
+// "mimic draw face behavior as close as possible"; engine/brushes.js poseAt): a 3D
+// stamp spins to face the quarter the handle is dragged into, a flat one lies on
+// the plane Drag a face would draw that way. Null for a stamp that does not turn.
+const poseKind = () => (starterId() && M.spins(starterId()).length ? 'spin' : planes().length ? 'plane' : null);
+const poseNow = () => (poseKind() === 'spin' ? spinNow() : planeNow());
+// The pose and size from the handle at once, painted once.
+function setPoseAndSize(pose, s) {
+  const kind = poseKind(), turned = pose !== poseNow();
+  if (turned) { if (kind === 'spin') app.stampSpin = pose; else app.stampPlane = pose; }
+  const to = D.nearestStep(steps(app.live.A.l), s).s;
+  if (!turned && to === app.stampSize) return;
+  app.stampSize = to;
+  if (turned) outline(app.live);
+  repaint();
+}
+// The next pose round, from the keyboard on the handle.
+function turnBy(d) {
+  if (poseKind() === 'spin') { app.stampSpin = (spinNow() + 4 + d) % 4; outline(app.live); repaint(); return; }
+  const ps = planes();
+  if (!ps.length) return;
+  app.stampPlane = ps[(ps.indexOf(planeNow()) + ps.length + d) % ps.length];
+  outline(app.live); repaint();
+}
+
 // One size up (d = 1) or down (-1) from the one in use.
 export function stepStampSize(d) {
   const list = steps(stillLive() ? app.live.A.l : app.level), i = list.indexOf(D.nearestStep(list, app.stampSize));
@@ -191,15 +220,17 @@ export function updateStampbar() {
     pb.setAttribute('aria-label', `On ${PLANE_SAYS[plane]}. Tap for ${PLANE_SAYS[next]}.`);
   }
   if (!h.classList.contains('dragging')) {
-    // Just outside the stamp's corner, kept on screen, above the bars and off the
-    // buttons and rails (a big stamp's corner may be under them, or off the screen).
-    const [cx, cy] = app.view.toScreen(...corner(v, k)), n = Math.hypot(...v.u) || 1;
+    // Out from the foot the way the stamp faces or lies (or just outside the corner of
+    // one that does not turn), kept on screen, above the bars and off the buttons and
+    // rails (a big stamp's handle may be under them, or off the screen).
+    const [cx, cy] = app.view.toScreen(...handleAt(v, k)), [dx, dy] = handleDir(v), n = Math.hypot(dx, dy) || 1;
     const above = [bar, $('#update-bar')].map((el) => el.getBoundingClientRect()).filter((r) => r.height);
     const floor = above.length ? Math.min(...above.map((r) => r.top)) - 30 : app.view.h - 200;
-    let x = Math.max(30, Math.min(app.view.w - 30, cx + (16 * v.u[0]) / n)), y = Math.max(30, Math.min(floor, cy + (16 * v.u[1]) / n));
+    let x = Math.max(30, Math.min(app.view.w - 30, cx + (16 * dx) / n)), y = Math.max(30, Math.min(floor, cy + (16 * dy) / n));
     [x, y] = clearOf(['.topleft', '.topright', '#levels', '#zoom'], x, y);
     h.style.left = `${x}px`; h.style.top = `${Math.min(floor, y)}px`;
   }
+  h.setAttribute('aria-label', poseKind() ? 'Stamp size and turn: drag away from its foot or toward it to size it, round it to turn it; arrow keys up and down size it, left and right turn it' : 'Stamp size: drag away from the stamp for bigger, toward it for smaller');
   h.hidden = false;
 }
 // A 44 px knob centered at (x, y), moved to the nearest spot on screen that covers
@@ -224,10 +255,26 @@ const PLANE_ICONS = {
   left: FILL('M4 7.5 12 12v9l-8-4.5Z'),
   right: FILL('M12 12l8-4.5v9L12 21Z'),
 };
-// The handle's corner of the outline at size k (any number), in world units.
-function corner(v, k) {
-  const a = L.vertexWorld(v.A.l, v.A.p, v.A.q);
-  return [a.x + k * v.u[0], a.y + k * v.u[1]];
+// Which way the handle sits from the foot, in world units per 1×: the pose's
+// direction at the stamp's reach, or the outline's corner for one that does not turn.
+function handleDir(v) {
+  const kind = poseKind();
+  if (!kind) return v.u;
+  const a = (poseAngle(kind, poseNow(), v.side || 0) * Math.PI) / 180;
+  return [v.reach * Math.cos(a), v.reach * Math.sin(a)];
+}
+// The handle's place at size k (any number), in world units.
+function handleAt(v, k) {
+  const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), [dx, dy] = handleDir(v);
+  return [a.x + k * dx, a.y + k * dy];
+}
+// The line from the live stamp's foot to its handle, in world units, for render.js: the pointer.
+export function livePointer() {
+  const v = app.live, h = $('#stamp-handle');
+  if (!v || !poseKind() || h.hidden) return null;
+  const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), r = canvas.getBoundingClientRect(), hr = h.getBoundingClientRect();
+  const [x1, y1] = app.view.toWorld(hr.left + hr.width / 2 - r.left, hr.top + hr.height / 2 - r.top);
+  return { x0: a.x, y0: a.y, x1, y1 };
 }
 // The live stamp's outline at the size in use, in world units, for render.js.
 export function liveBox() {
@@ -243,35 +290,44 @@ export function wireLiveStamp() {
   $('#stamp-done').addEventListener('click', endLive);
   $('#stamp-plane').addEventListener('click', nextPlane);
   $('#stamp-spin').addEventListener('click', spinStamp);
-  // The handle: moving the finger one corner's length along the line from the
-  // anchor through the 1× corner is 1× more, counted from where it was grabbed (a
-  // handle kept on screen or off a rail is not on the corner itself); the size is
-  // the step nearest that.
+  // The handle. Size: moving the finger one reach farther from the foot (one corner's
+  // length along the line through it, for a stamp that does not turn) is 1× more,
+  // counted from where it was grabbed (a handle kept on screen or off a rail is not
+  // where its size would put it); the size is the step nearest that. Turn: the way
+  // the finger is from the foot picks the pose (poseAt), as a drag picks Drag a face's face.
   const h = $('#stamp-handle');
   let grab = null;
-  const along = (e) => {
-    const v = app.live, r = canvas.getBoundingClientRect();
-    const [wx, wy] = app.view.toWorld(e.clientX - r.left, e.clientY - r.top);
-    const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), [ux, uy] = v.u;
-    return ((wx - a.x) * ux + (wy - a.y) * uy) / (ux * ux + uy * uy);
+  const at = (e) => {
+    const v = app.live, r = canvas.getBoundingClientRect(), a = L.vertexWorld(v.A.l, v.A.p, v.A.q);
+    const [wx, wy] = app.view.toWorld(e.clientX - r.left, e.clientY - r.top), dx = wx - a.x, dy = wy - a.y;
+    const [ux, uy] = v.u, along = poseKind() ? Math.hypot(dx, dy) / v.reach : (dx * ux + dy * uy) / (ux * ux + uy * uy);
+    return { along, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
   };
   h.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     if (!stillLive()) return;
     try { h.setPointerCapture(e.pointerId); } catch { /* synthetic */ }
     h.classList.add('dragging');
-    grab = { t: along(e), s: stepAt(app.live.A.l).s };
+    grab = { t: at(e).along, s: stepAt(app.live.A.l).s };
   });
   h.addEventListener('pointermove', (e) => {
     if (!app.live || !grab || !h.classList.contains('dragging')) return;
     h.style.left = `${e.clientX}px`; h.style.top = `${e.clientY}px`;
-    setStampSize(grab.s + along(e) - grab.t);
+    const { along, angle } = at(e), kind = poseKind(), s = grab.s + along - grab.t;
+    if (!kind) { setStampSize(s); return; }
+    const pose = poseAt(kind, angle, poseNow(), planes());
+    // Which of a plane's two slices the finger is in, so the handle stays on that side.
+    if (kind === 'plane' && pose !== 'upright') app.live.side = Math.cos(((angle - poseAngle(kind, pose, 0)) * Math.PI) / 180) < 0 ? 1 : 0;
+    setPoseAndSize(pose, s);
+    requestRender(); // the pointer line follows the finger
   });
-  const drop = () => { grab = null; h.classList.remove('dragging'); updateStampbar(); };
+  const drop = () => { grab = null; h.classList.remove('dragging'); updateStampbar(); requestRender(); };
   h.addEventListener('pointerup', drop);
   h.addEventListener('pointercancel', drop);
   h.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); stepStampSize(1); }
-    if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); stepStampSize(-1); }
+    const turns = !!poseKind();
+    if (e.key === 'ArrowUp' || (!turns && e.key === 'ArrowRight')) { e.preventDefault(); stepStampSize(1); }
+    if (e.key === 'ArrowDown' || (!turns && e.key === 'ArrowLeft')) { e.preventDefault(); stepStampSize(-1); }
+    if (turns && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { e.preventDefault(); turnBy(e.key === 'ArrowRight' ? 1 : -1); }
   });
 }
