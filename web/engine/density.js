@@ -290,6 +290,56 @@ export function transformRegion(drawing, r, center, g) {
   return makeRegion(r.l, regionCells(r).flatMap((c) => S.transformCell(c, center, g)));
 }
 
+// ---------- bigger and smaller ----------
+// Scale what is inside the selection by 2 (dir +1, Bigger) or 1/2 (dir -1,
+// Smaller) about the vertex at the middle of the bottom of what is painted in
+// it, so a stamp stays standing where it was: every cell moves one level
+// coarser or finer, keeping its place relative to that vertex, which is exact
+// because scaling by 2 about a vertex maps one level's lattice onto the next. Face tags, lit sides and
+// bold edges follow. Smaller first coarsens detail at the finest level (opts
+// as changeDensity), since nothing is finer. Cells landing outside paint over
+// what is there, as Turn does. Returns the scaled region, or null when it
+// cannot go further (Bigger from level 0, Smaller from the finest level).
+export function scaleRegion(drawing, r, dir, opts = {}) {
+  if (dir > 0 ? r.l <= 0 : r.l >= L.MAX_LEVEL) return null;
+  if (dir < 0 && densityOf(drawing, r) >= L.MAX_LEVEL) changeDensity(drawing, r, L.MAX_LEVEL - 1, opts);
+  splitBorder(drawing, r);
+  // Painted cells coarser than the marquee split down to it, so every level moved is on the pivot's lattice.
+  for (const key of r.keys) {
+    const c = L.parseKey(key), anc = drawing.paintedAncestor(c);
+    if (anc && anc.cell.l < r.l) drawing.splitDownTo(c);
+  }
+  const painted = paintedIn(drawing, r);
+  const home = r.home || bottomMiddle(painted.length ? painted : regionCells(r));
+  const V = pivotAt(home, dir > 0 ? r.l - 1 : r.l);
+  const at = (k) => 2 ** (k - V.l);
+  // A cell or edge, moved a level with its place relative to V kept.
+  const move = (o) => ({ ...o, l: o.l - dir, p: V.p * at(o.l - dir) + o.p - V.p * at(o.l), q: V.q * at(o.l - dir) + o.q - V.q * at(o.l) });
+  const cells = painted.map((c) => ({ c, v: drawing.cells.get(L.cellKey(c)) }));
+  const edges = edgesIn(drawing, r).map((e) => ({ e, v: drawing.edges.get(L.edgeKey(e)) }));
+  eraseRegion(drawing, r);
+  for (const { c, v } of cells) drawing.paint(move(c), v.f ? { c: v.c, f: v.f, s: v.s, b: v.b } : { c: v.c }, 'replace');
+  for (const { e, v } of edges) drawing.setEdge(L.edgeKey(move(e)), v);
+  // The region keeps its home point: each level's pivot comes from it the same
+  // way, so every Bigger is undone exactly by a Smaller, however many in a row.
+  return { ...makeRegion(r.l - dir, regionCells(r).map(move)), home };
+}
+// The middle of the bottom of `cells`, a point in world units.
+function bottomMiddle(cells) {
+  const vs = cells.flatMap(L.cellWorldVerts), xs = vs.map((w) => w.x);
+  return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: Math.max(...vs.map((w) => w.y)) };
+}
+// The level-lv vertex for the home point: on its row (rows are half an edge
+// apart, so a bottom on the grid stays exactly where it was), nearest it
+// across, which may be off by up to one level-lv edge.
+function pivotAt(home, lv) {
+  const s = L.edgeLen(lv), mid = home.x / (L.H * s);
+  const K = Math.round((2 * home.y) / s); // 2p + q, from y = (p + q/2)·s
+  let q = Math.round(mid);
+  if ((K - q) % 2) q += mid > q ? 1 : -1;
+  return { l: lv, p: (K - q) / 2, q };
+}
+
 // Relight: every shaded cell in the region shaded again for `light`, from
 // the base color its tone says it was painted with (color.js baseOf).
 export function relightRegion(drawing, r, light) {

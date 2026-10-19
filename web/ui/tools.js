@@ -195,11 +195,19 @@ export function undo() {
   if (!d) return;
   // Undoing a density change also puts the marquee back where it was.
   if (app.lastDensity && d === app.lastDensity.diff && app.selection) app.selection.region = app.lastDensity.before;
+  // So does undoing Bigger or Smaller; redoing it moves the marquee again.
+  if (app.scaled.has(d) && app.selection) app.selection.region = app.scaled.get(d).before;
   toast('Undone');
   afterChange();
   emit('undo');
 }
-export function redo() { cancelGesture(); if (app.drawing.redo()) { toast('Redone'); afterChange(); emit('redo'); } }
+export function redo() {
+  cancelGesture();
+  const d = app.drawing.redo();
+  if (!d) return;
+  if (app.scaled.has(d) && app.selection) app.selection.region = app.scaled.get(d).after;
+  toast('Redone'); afterChange(); emit('redo');
+}
 
 // ---------- selection and density ----------
 export function marqueeRegion(A, wx, wy) {
@@ -222,6 +230,8 @@ export function updateSelbar() {
   $('#sel-level').setAttribute('aria-label', `Selection density: level ${d}`);
   $('#sel-finer').disabled = d >= L.MAX_LEVEL;
   $('#sel-coarser').disabled = d <= 0 || (d <= sel.region.l && D.coarsestReachable(sel.region) >= d);
+  $('#sel-bigger').disabled = sel.region.l <= 0;
+  $('#sel-smaller').disabled = sel.region.l >= L.MAX_LEVEL;
   const mode = app.settings.coarsen;
   $('#sel-mode').textContent = mode === 'crisp' ? 'Crisp' : 'Blend';
   $('#sel-mode').setAttribute('aria-label', `Coarsen color rule: ${mode === 'crisp' ? 'Crisp, majority color' : 'Blend, average color'}. Tap to switch.`);
@@ -243,6 +253,20 @@ export function setDensity(T) {
   afterChange();
   emit('density', { dir: Math.sign(selDensity() - d0) });
   return true;
+}
+// Bigger (dir +1) or Smaller (-1): what is in the selection, about the middle of its bottom.
+export function scaleSelection(dir) {
+  const sel = app.selection;
+  if (!sel) return;
+  const before = sel.region;
+  app.drawing.begin(dir > 0 ? 'bigger' : 'smaller');
+  const r = D.scaleRegion(app.drawing, before, dir, densityOpts());
+  if (!r) { app.drawing.rollback(); toast(dir > 0 ? 'This is as big as it gets.' : 'This is as small as it gets.'); return; }
+  const diff = app.drawing.commit();
+  sel.region = r;
+  if (diff) app.scaled.set(diff, { before, after: r });
+  afterChange();
+  emit(dir > 0 ? 'bigger' : 'smaller');
 }
 function densityOpts() {
   const s = app.settings;

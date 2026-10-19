@@ -162,7 +162,9 @@ body.moving .tools .btn[aria-pressed="true"] { background: transparent; border-c
 .selbar .mode { font-size: 14px; padding: 0 6px; min-width: 52px; }
 .sel-extra { display: none; gap: 4px; }
 .selbar.more { flex-wrap: wrap; }
-.selbar.more .sel-extra { display: flex; flex-basis: 100%; justify-content: center; }
+.selbar.more .sel-extra { display: flex; flex-basis: 100%; flex-wrap: wrap; justify-content: center; }
+/* The narrowest phones: 44 px buttons (still a finger's width) keep the first row one row with ⋯ open. */
+@media (max-width: 359px) { .selbar .btn { min-width: 44px; } }
 .chip { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); }
 .handle {
   position: fixed; z-index: 4; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;

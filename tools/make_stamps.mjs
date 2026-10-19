@@ -76,7 +76,8 @@ const patch = (side, at, [a0, a1], [z0, z1], color) => face(
   color, side);
 
 const BLUE = '#3a86ff', TEAL = '#2a9d8f', YELLOW = '#f4c430', RED = '#e63946', GREEN = '#5a9a3c',
-  BROWN = '#8b5a2b', STONE = '#9aa0a6', SAND = '#e9b949', PINK = '#ff5d8f', SKY = '#8ecae6', ORANGE = '#f4a020', INK = '#2b2d42', WHITE = '#f1ece4', TAN = '#c9a27e';
+  BROWN = '#8b5a2b', STONE = '#9aa0a6', SAND = '#e9b949', PINK = '#ff5d8f', SKY = '#8ecae6', ORANGE = '#f4a020', INK = '#2b2d42', WHITE = '#f1ece4', TAN = '#c9a27e',
+  FOX = '#e8641b', LIME = '#8bc34a', HOG = '#ff9eb5';
 
 const SHAPES = [
   { id: 'cube', name: 'Cube', cells: () => paint(box([0, 0, 0], [1, 1, 1], BLUE)) },
@@ -142,6 +143,43 @@ const SHAPES = [
     ...hbox([5, 1, 3], [1, 2, 1], ORANGE),
     patch('L', 3, [3, 4], [3, 4], INK),
   ]) },
+  { id: 'fox', name: 'Fox', cells: () => paint([
+    ...hbox([-3, 0, 2], [1, 2, 2], WHITE), ...hbox([-2, 0, 2], [3, 2, 2], FOX), // a bushy tail, white at the tip
+    ...hbox([1, 0, 0], [1, 1, 1], INK), ...hbox([6, 0, 0], [1, 1, 1], INK),
+    ...hbox([1, 1, 0], [1, 1, 1], INK), ...hbox([6, 1, 0], [1, 1, 1], INK),
+    ...hbox([1, 0, 1], [6, 2, 2], FOX),
+    ...hbox([6, 0, 2], [3, 3, 3], FOX),
+    ...hbox([9, 1, 2], [1, 1, 1], WHITE), patch('R', 10, [1, 2], [2, 3], INK), // the snout and its nose
+    ...hbox([6, 0, 5], [1, 1, 2], FOX), ...hbox([6, 2, 5], [1, 1, 2], FOX),
+    patch('L', 3, [8, 9], [2, 3], WHITE),
+    patch('L', 3, [7, 8], [3, 4], INK),
+  ]) },
+  { id: 'snake', name: 'Snake', cells: () => paint([
+    ...hbox([-2, 0, 0], [2, 1, 1], LIME), // the tail, thinner
+    ...hbox([0, 0, 0], [2, 2, 2], GREEN), ...hbox([2, 0, 0], [2, 2, 2], LIME), ...hbox([4, 0, 0], [2, 2, 2], GREEN),
+    ...hbox([4, 2, 0], [2, 2, 2], LIME), ...hbox([4, 4, 0], [2, 2, 2], GREEN),
+    ...hbox([6, 4, 0], [2, 2, 2], LIME), ...hbox([8, 4, 0], [2, 2, 2], GREEN),
+    ...hbox([10, 3, 0], [3, 3, 3], GREEN),
+    patch('L', 6, [11, 12], [1, 2], INK),
+    patch('R', 13, [4, 5], [0, 1], RED), // the tongue
+  ]) },
+  { id: 'frog', name: 'Frog', cells: () => paint([
+    ...hbox([0, 0, 0], [5, 4, 2], GREEN),
+    ...hbox([0, 4, 0], [2, 1, 1], LIME), ...hbox([4, 4, 0], [1, 1, 1], LIME), // a back leg and a front foot
+    ...hbox([3, 0, 2], [1, 1, 1], WHITE), ...hbox([3, 3, 2], [1, 1, 1], WHITE),
+    patch('R', 4, [0, 1], [2, 3], INK), patch('R', 4, [3, 4], [2, 3], INK),
+    patch('R', 5, [0, 4], [1, 2], '#a83232'), // a wide smile
+  ]) },
+  { id: 'pig', name: 'Pig', cells: () => paint([
+    ...hbox([0, 1, 3], [1, 1, 1], HOG), // a curl of a tail
+    ...hbox([1, 0, 0], [1, 1, 1], HOG), ...hbox([6, 0, 0], [1, 1, 1], HOG),
+    ...hbox([1, 2, 0], [1, 1, 1], HOG), ...hbox([6, 2, 0], [1, 1, 1], HOG),
+    ...hbox([1, 0, 1], [6, 3, 3], HOG),
+    ...hbox([7, 0, 2], [2, 3, 3], HOG),
+    ...hbox([9, 1, 2], [1, 1, 1], PINK),
+    ...hbox([7, 0, 5], [1, 1, 1], PINK), ...hbox([7, 2, 5], [1, 1, 1], PINK),
+    patch('L', 3, [8, 9], [3, 4], INK),
+  ]) },
 ];
 
 // The stamp: cells relative to the anchor, the vertex at the middle of its bottom.
@@ -155,7 +193,8 @@ function stampOf(cells) {
 
 const out = SHAPES.map((s) => ({ id: s.id, name: s.name, stamp: stampOf(s.cells()) }));
 const js = `// The starter stamps (the owner's pick: Cube, Stairs, House, Tree, Wall,
-// Pyramid, Flower, Star; then Cat, Bunny and Duck for drawing little animals).
+// Pyramid, Flower, Star; then little animals: Cat, Bunny, Duck, Fox, Snake,
+// Frog, Pig).
 // Made by tools/make_stamps.mjs from 3D shapes on the lattice; edit that, not
 // this. Each is a stamp like one saved from a selection: cells
 // [dl, dp, dq, u, color, face] around its anchor vertex.
@@ -175,7 +214,7 @@ if (i > 0) {
   const d = new Drawing();
   out.forEach((s, k) => {
     const c = k % 4, r = Math.floor(k / 4); // four to a row: right is (-1, 2), down (1, 0)
-    const { cells } = placeStamp(s.stamp, { l: 2, p: 8 - 5 * c + 12 * r, q: 4 + 10 * c });
+    const { cells } = placeStamp(s.stamp, { l: 2, p: 8 - 7 * c + 12 * r, q: 4 + 14 * c });
     d.begin(); for (const { cell, c, f } of cells) d.paint(cell, { c, f }); d.commit();
   });
   fs.writeFileSync(process.argv[i + 1], toSVG(d, { background: '#f7f5f0' }));

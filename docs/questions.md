@@ -1,6 +1,6 @@
 # Questions for the owner
 
-Open questions for the owner, one card each. The owner answered cards 1 to 6 on 2026-10-12, 7 the same day, 8 to 10 on 2026-10-15, and 12 and 13 on 2026-10-16;
+Open questions for the owner, one card each. The owner answered cards 1 to 6 on 2026-10-12, 7 the same day, 8 to 10 on 2026-10-15, and 12 and 13 on 2026-10-16, and 14 on 2026-10-19;
 [decisions.md](decisions.md) has the answers.
 
 ## How this works
@@ -25,24 +25,3 @@ ambiguity: one clear question beats a wrong build.
 2. Deletes the card (keep the numbers going up; do not reuse one).
 3. Adds any work he approved to [TODO.md](../TODO.md) "Agents do".
 4. Commits all three together.
-
-## 14. Resize a stamp after placing it?
-
-Now: a stamp's size is the grid size when it is tapped; once placed it cannot
-be made bigger or smaller (asked 2026-10-19: "can stamps be resized on the
-board"). The way round it is Select, Save as stamp, change the grid size,
-place again, erase the old one.
-
-- **A. Bigger and Smaller on the selection bar** (recommended): doubles or
-  halves what is selected, about its bottom vertex, in one undo step. Exact,
-  because one level maps onto the next; Smaller merges four cells into one,
-  so the finest detail blends or snaps like Coarser does.
-- **B. Pick the size in the Stamps drawer**: a size chip (S, M, L) beside the
-  tiles, separate from the grid size. Simple for kids, but a second notion of
-  size next to the grid size.
-- **C. Leave it**: the grid size is the size; teach it in the Stamps lesson.
-
-A, because it works on anything selected, not only stamps, and keeps one
-meaning of size.
-
-**The owner:**

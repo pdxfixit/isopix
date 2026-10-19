@@ -22,7 +22,7 @@ import * as G from './gallery.js';
 import * as SB from './stampbook.js';
 import * as PB from './palettes.js';
 import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLock, updateZoomUI } from './ui/controls.js';
-import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
+import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, scaleSelection, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
 import { loadMine, saveMine, wireStamps } from './ui/stamps.js';
 import { loadPalettes, savePalettes, wirePalettes } from './ui/palettes.js';
@@ -94,6 +94,7 @@ export const app = {
   pickCenter: false,
   moveMode: false,       // the hand on the zoom rail: one finger moves the view
   lastDensity: null,
+  scaled: new WeakMap(), // each Bigger or Smaller's diff → {before, after} marquees, so Undo and Redo move the marquee too
   loadedVersion: null,
   drawingName: 'Untitled drawing', // saved with the drawing (project file and autosave)
   lastSaved: null,       // when the autosave last landed in IndexedDB
@@ -208,7 +209,7 @@ function beginPractice() {
   if (app.replaying) stopReplay();
   app.drawing = newDrawing();
   app.drawing.paper = theirs.paper;
-  app.stamps = app.stamps.slice(); app.palettes = app.palettes.slice(); app.selection = null; app.lastDensity = null; app.trace = null;
+  app.stamps = app.stamps.slice(); app.palettes = app.palettes.slice(); app.selection = null; app.lastDensity = null; app.scaled = new WeakMap(); app.trace = null;
   app.file = { name: null, at: null, via: null, dirty: false, handle: null };
   setName('Practice');
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
@@ -410,7 +411,7 @@ function wire() {
     placeHandle();
   });
   $('#sel-snap').addEventListener('click', () => { set('snap', !app.settings.snap); updateSelbar(); });
-  $('#sel-done').addEventListener('click', () => { app.selection = null; app.lastDensity = null; updateSelbar(); requestRender(); emit('seldone'); });
+  $('#sel-done').addEventListener('click', () => { app.selection = null; app.lastDensity = null; app.scaled = new WeakMap(); updateSelbar(); requestRender(); emit('seldone'); });
   $('#sel-erase').addEventListener('click', () => {
     if (!app.selection) return;
     app.drawing.begin('erase selection');
@@ -442,6 +443,8 @@ function wire() {
     emit('relight');
   });
   $('#sel-flip').addEventListener('click', () => turnSelection(D.FLIP, 'flip selection'));
+  $('#sel-bigger').addEventListener('click', () => scaleSelection(1));
+  $('#sel-smaller').addEventListener('click', () => scaleSelection(-1));
   $('#sel-stamp').addEventListener('click', () => {
     const sel = app.selection;
     if (!sel) return;

@@ -284,11 +284,11 @@ export function onUp(e) {
     clearTimeout(g.timer);
     app.crosshair = null;
     if (!g.moved) {
-      if (app.selection && !g.armed) { app.selection = null; app.lastDensity = null; }
+      if (app.selection && !g.armed) { app.selection = null; app.lastDensity = null; app.scaled = new WeakMap(); }
       else if (!app.selection) app.selection = { region: marqueeRegion(g.A, ...app.view.toWorld(g.x + 1, g.y + 1)), anchor: g.A };
     } else if (g.region) {
       app.selection = { region: g.region, anchor: g.A };
-      app.lastDensity = null;
+      app.lastDensity = null; app.scaled = new WeakMap();
       emit('select');
     }
     updateSelbar();
