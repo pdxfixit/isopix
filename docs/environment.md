@@ -32,6 +32,11 @@ Check them all: `node --version; python3 --version; just --version; gh auth stat
   `--out DIR` puts them somewhere you choose. Open the PNGs and look at them.
 - CI uploads the same screenshots as the `screenshots` artifact of each `test`
   run: `gh run download <run-id> -n screenshots`.
+- Fonts differ: the app's `system-ui` is Inter in a cloud session's Chromium
+  and the wider DejaVu Sans in CI's Chrome on Ubuntu, so a row of buttons that
+  fits locally with a few px to spare can wrap in CI (the selection bar at
+  320 px did, 2026-10-19). Try a tight row with CI's font:
+  `just look selmore --widths 320 --js "document.body.style.fontFamily='DejaVu Sans'"`.
 
 ## Things outside this repo
 
