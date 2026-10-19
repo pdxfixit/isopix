@@ -8,7 +8,7 @@ import * as P from './engine/project.js';
 import { View } from './engine/view.js';
 import { Renderer } from './render.js';
 import * as store from './storage.js';
-import { initUpdate, buildStamp, aboutVersion, versionURL } from './update.js';
+import { initUpdate, barFits, buildStamp, aboutVersion, versionURL } from './update.js';
 import { keyFor } from './keys.js';
 import { paperOf, matchInk } from './engine/paper.js';
 import { readMoveHash } from './move.js';
@@ -181,10 +181,21 @@ function placeUpdateBar() {
   for (const bar of [$('#update-bar'), $('#protect-note'), $('#save-note'), $('#move-note')]) {
     if (bar.hidden) continue;
     bar.style.bottom = `${Math.round(window.innerHeight - top + 8)}px`;
-    top = bar.getBoundingClientRect().top;
+    const r = bar.getBoundingClientRect();
+    if (bar.id === 'update-bar') updateBarH = r.height;
+    top = r.top;
   }
   placeHandle();
 }
+// The update bar's height when it last showed (hidden, it measures 0).
+let updateBarH = 60;
+// True while a selection is open and the update bar would not fit above it
+// with the handle (a short screen): the bar waits for Done, as it does mid-stroke.
+function updateBarCrowded() {
+  const sel = $('#selbar').getBoundingClientRect();
+  return !!sel.height && !barFits({ selTop: sel.top, barH: updateBarH, handle: !$('#handle').hidden });
+}
+app.updateBarCrowded = updateBarCrowded; // for tools/look.mjs
 // One synchronous frame, for tools/perf.mjs (requestAnimationFrame is throttled in hidden tabs).
 app.renderNow = () => render();
 app.placeTrace = (f) => placeTrace(f);
@@ -553,7 +564,7 @@ async function boot() {
     reloadBtn: $('#update-reload'),
     closeBtn: $('#update-close'),
     loaded: () => app.loadedVersion,
-    busy: isBusy,
+    busy: () => isBusy() || updateBarCrowded(),
     beforeReload: prepareReload,
   });
   // Keep the bar in place whenever it appears.
