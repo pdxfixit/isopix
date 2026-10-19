@@ -3,9 +3,9 @@
 // 2026-10-16: "shapes belong to the user, across drawings"). Pure logic
 // (test/stampbook.test.mjs); app.js keeps Mine in IndexedDB at `stamps`.
 
-import { STARTER } from './stamps.js';
+import { GROUPS, STARTER } from './stamps.js';
 
-export { STARTER };
+export { GROUPS, STARTER };
 export const KEY = 'stamps';
 
 const okStamp = (s) => s && typeof s === 'object' && s.stamp && Array.isArray(s.stamp.cells)
@@ -34,10 +34,19 @@ export function nextName(mine) {
   for (let n = mine.length + 1; ; n++) if (!used.has(`Stamp ${n}`)) return `Stamp ${n}`;
 }
 
-// The stamp chosen: {from: 'starter' | 'mine', i}; a choice that no longer
-// exists falls back to the first starter stamp.
+// The stamp chosen: {from: 'starter', id} (by id, so adding or regrouping
+// starter stamps never swaps one for another) or {from: 'mine', i}; a choice
+// that no longer exists falls back to the first starter stamp.
 export function chosen(choice, mine) {
   if (choice?.from === 'mine' && mine[choice.i]) return mine[choice.i];
-  if (choice?.from === 'starter' && STARTER[choice.i]) return STARTER[choice.i];
-  return STARTER[0];
+  return (choice?.from === 'starter' && STARTER.find((s) => s.id === choice.id)) || STARTER[0];
+}
+
+// The Stamps drawer's sections: Mine, then each group of starter stamps.
+// Each item is {s, choice}: the stamp and the choice that picks it.
+export function sections(mine) {
+  return [
+    { id: 'mine', name: 'Mine', items: mine.map((s, i) => ({ s, choice: { from: 'mine', i } })) },
+    ...GROUPS.map((g) => ({ ...g, items: STARTER.filter((s) => s.group === g.id).map((s) => ({ s, choice: { from: 'starter', id: s.id } })) })),
+  ];
 }

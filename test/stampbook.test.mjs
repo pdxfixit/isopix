@@ -1,6 +1,6 @@
 // Starter stamps and the person's own (web/stampbook.js, web/stamps.js):
-// the eight the owner picked and seven animals, each a real stamp that places
-// at every level, and Mine kept once across drawings (owner, 2026-10-16).
+// the eight the owner picked, animals and more in groups, each a real stamp
+// that places at every level, and Mine kept once across drawings (owner, 2026-10-16).
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -10,9 +10,18 @@ import { placeStamp } from '../web/engine/density.js';
 import { Drawing } from '../web/engine/model.js';
 import * as L from '../web/engine/lattice.js';
 
-test('the starter set is the eight the owner picked, then the animals, in order', () => {
-  assert.deepEqual(SB.STARTER.map((s) => s.name), ['Cube', 'Stairs', 'House', 'Tree', 'Wall', 'Pyramid', 'Flower', 'Star', 'Cat', 'Bunny', 'Duck', 'Fox', 'Snake', 'Frog', 'Pig']);
-  assert.equal(new Set(SB.STARTER.map((s) => s.id)).size, 15);
+test('the starter stamps, group by group: the eight the owner picked, the animals, and more', () => {
+  const by = Object.fromEntries(SB.GROUPS.map((g) => [g.name, SB.STARTER.filter((s) => s.group === g.id).map((s) => s.name)]));
+  assert.deepEqual(by, {
+    Shapes: ['Cube', 'Stairs', 'House', 'Wall', 'Pyramid', 'Star'],
+    Nature: ['Tree', 'Flower', 'Sun', 'Cloud', 'Rock', 'Mushroom', 'Pine tree', 'Bush', 'Rainbow'],
+    Animals: ['Cat', 'Bunny', 'Duck', 'Fox', 'Snake', 'Frog', 'Pig', 'Dog', 'Fish', 'Bird'],
+    Vehicles: ['Car', 'Truck', 'Train', 'Boat', 'Rocket', 'Plane'],
+    Food: ['Apple', 'Cake', 'Ice cream', 'Cupcake', 'Pizza', 'Carrot'],
+    Letters: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
+    Numbers: [...'0123456789'],
+  });
+  assert.equal(new Set(SB.STARTER.map((s) => s.id)).size, SB.STARTER.length, 'ids are unique');
 });
 
 test('web/stamps.js is exactly what tools/make_stamps.mjs makes', () => {
@@ -48,10 +57,23 @@ test('a new stamp of one\'s own gets the next free name', () => {
   assert.equal(SB.nextName([mk('Stamp 2', 1)]), 'Stamp 3');
 });
 
-test('the chosen stamp, or the Cube when the choice is gone', () => {
+test('the chosen stamp, by id for a starter one, or the Cube when the choice is gone', () => {
   const mine = [mk('A', 1)];
   assert.equal(SB.chosen({ from: 'mine', i: 0 }, mine).name, 'A');
-  assert.equal(SB.chosen({ from: 'starter', i: 2 }, mine).name, 'House');
+  assert.equal(SB.chosen({ from: 'starter', id: 'house' }, mine).name, 'House');
+  assert.equal(SB.chosen({ from: 'starter', id: 'gone' }, mine).name, 'Cube');
   assert.equal(SB.chosen({ from: 'mine', i: 5 }, mine).name, 'Cube');
   assert.equal(SB.chosen(null, mine).name, 'Cube');
+});
+
+test('the drawer\'s sections: Mine first, then every group in order, each stamp in exactly one, each choice picking its own stamp', () => {
+  const mine = [mk('A', 1), mk('B', 2)];
+  const secs = SB.sections(mine);
+  assert.deepEqual(secs.map((s) => s.id), ['mine', ...SB.GROUPS.map((g) => g.id)]);
+  assert.deepEqual(secs[0].items.map((it) => it.s.name), ['A', 'B']);
+  const starters = secs.slice(1).flatMap((s) => s.items.map((it) => it.s));
+  assert.equal(starters.length, SB.STARTER.length);
+  assert.equal(new Set(starters).size, SB.STARTER.length, 'no stamp twice');
+  for (const sec of secs.slice(1)) assert.ok(sec.items.length, `${sec.name} is not empty`);
+  for (const sec of secs) for (const it of sec.items) assert.equal(SB.chosen(it.choice, mine), it.s);
 });

@@ -241,22 +241,33 @@ VIEWS.selturn = { js: `window.isopix.settings.brush = 'triangle'; // a lone-tria
   for (let i = 0; i < 5; i++) { ${q('#sel-turn')} } ${nap}
   if (snap() !== start) throw new Error('six turns did not give the drawing back');
   ${q('#sel-flip')} ${nap} if (snap() === start) throw new Error('Flip changed nothing');` };
-// Stamp in the brush picker opens Stamps; the fifteen starter tiles; House, then a tap places it.
-VIEWS.stamps = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
+// Stamp in the brush picker opens Stamps: folding sections, all closed and none drawing its
+// pictures at first; Shapes opened holds its six; House, then a tap places it; opened
+// again, Shapes is still open and says it holds the stamp in use.
+const STAMPS_OPEN = `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}`;
+const SECTION = (id) => `document.querySelector('#st-${id} .set-head').click(); ${nap}`;
+const TILE = (id, name) => `[...document.querySelectorAll('#st-${id} .stamp-tile')].find((t) => t.textContent === '${name}').click(); ${nap}`;
+VIEWS.stamps = { fresh: true, js: `${STAMPS_OPEN}
   if (!document.querySelector('#stamps').open) throw new Error('Stamp did not open Stamps');
-  const tiles = [...document.querySelectorAll('#stamps-grid .stamp-tile')];
-  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Tree,Wall,Pyramid,Flower,Star,Cat,Bunny,Duck,Fox,Snake,Frog,Pig') throw new Error('the starter tiles are ' + tiles.map((t) => t.textContent));
+  const heads = [...document.querySelectorAll('#stamps-sections .set-head')];
+  if (heads.map((h) => h.children[1].textContent).join() !== 'Mine,Shapes,Nature,Animals,Vehicles,Food,Letters,Numbers') throw new Error('the sections are ' + heads.map((h) => h.children[1].textContent));
+  if (heads.some((h) => h.getAttribute('aria-expanded') !== 'false') || document.querySelector('#stamps-sections .stamp-tile')) throw new Error('a section started open, or a closed one drew its tiles');
+  ${SECTION('shapes')}
+  const tiles = [...document.querySelectorAll('#st-shapes .stamp-tile')];
+  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Wall,Pyramid,Star') throw new Error('Shapes holds ' + tiles.map((t) => t.textContent));
   if (tiles.some((t) => !t.querySelector('img').src.startsWith('data:image/'))) throw new Error('a tile has no picture');
-  tiles[2].click(); ${nap}
+  ${TILE('shapes', 'House')}
   if (document.querySelector('#stamps').open || window.isopix.settings.brush !== 'stamp') throw new Error('picking House did not close Stamps and pick the Stamp brush');
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
   const n = window.isopix.drawing.cells.size;
   if (n !== 88) throw new Error('a tap placed ' + n + ' cells, not 88 (the House)');
-  ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}` };
+  ${STAMPS_OPEN}
+  const shapes = document.querySelector('#st-shapes .set-head');
+  if (shapes.getAttribute('aria-expanded') !== 'true' || shapes.children[2].textContent !== 'using House') throw new Error('Shapes was not remembered open, or does not say it holds the House');
+  ${SECTION('animals')}` };
 // A wall the other way: place the Wall, select it, Flip. Flip relights it, so its side faces
 // are lit from the left like the rest of the drawing, and one Undo takes the flip back.
-VIEWS['stamp-flip'] = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
-  [...document.querySelectorAll('#stamps-grid .stamp-tile')].find((t) => t.textContent === 'Wall').click(); ${nap}
+VIEWS['stamp-flip'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('shapes')} ${TILE('shapes', 'Wall')}
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
   const a = window.isopix, sides = () => [...a.drawing.cells.values()].filter((v) => v.f && v.f !== 'T');
   const n = a.drawing.cells.size; if (!n) throw new Error('the Wall did not place');
@@ -272,8 +283,7 @@ VIEWS['stamp-flip'] = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#opt
   ${q('#undo')} ${nap} if (JSON.stringify([...a.drawing.cells].sort()) === flipped || a.drawing.cells.size !== n) throw new Error('one Undo did not take the flip back');` };
 // Bigger and Smaller (owner, card 14): a Cat placed, selected and made twice as big;
 // Smaller gives the placed Cat back exactly; Undo, Undo and Redo move the marquee with it.
-VIEWS['stamp-bigger'] = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
-  [...document.querySelectorAll('#stamps-grid .stamp-tile')].find((t) => t.textContent === 'Cat').click(); ${nap}
+VIEWS['stamp-bigger'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.55')} ${nap}
   const a = window.isopix, snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort());
   const placed = snap(); if (!a.drawing.cells.size) throw new Error('the Cat did not place');
@@ -341,10 +351,10 @@ VIEWS['palette-delete'] = { fresh: true, js: `const a = window.isopix; ${PICK_AN
   if (!document.querySelector('#palettes').open || document.querySelector('#palettes-empty').hidden) throw new Error('Palettes should stay open, Mine empty');` };
 VIEWS['stamps-mine'] = { fresh: true, js: `${VIEWS.select.js} ${nap} ${q('#sel-stamp')} ${nap}
   ${q('#drawing-open')} ${q('#file-new')} await new Promise((r) => setTimeout(r, 1100));
-  ${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
-  if (document.querySelector('#stamps-mine').getAttribute('aria-selected') !== 'true') throw new Error('Stamps did not open on Mine');
-  ${q('#stamps-mine')} ${nap}
-  const mine = [...document.querySelectorAll('#stamps-grid .stamp-tile')].map((t) => t.textContent);
+  ${STAMPS_OPEN}
+  if (document.querySelector('#st-mine .set-head').children[2].textContent !== 'using Stamp 1') throw new Error('Mine does not say it holds the stamp in use');
+  ${SECTION('mine')}
+  const mine = [...document.querySelectorAll('#st-mine .stamp-tile')].map((t) => t.textContent);
   if (mine.join() !== 'Stamp 1') throw new Error('Mine in a new drawing shows ' + JSON.stringify(mine));` };
 VIEWS.rail = { js: `const n = document.querySelector('.notch[aria-checked="true"]'); const r = n.getBoundingClientRect();
   n.dispatchEvent(new PointerEvent('pointerdown', { clientX: r.x + 22, clientY: r.y + 22, pointerId: 5, pointerType: 'touch', bubbles: true, buttons: 1 }));` };
