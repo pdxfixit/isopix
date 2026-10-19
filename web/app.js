@@ -29,6 +29,7 @@ import { loadPalettes, savePalettes, wirePalettes } from './ui/palettes.js';
 import { setBar, isMaking, cancelVideo, videoButton } from './ui/video.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
 import { hasContent, leaveDrawing, openDrawing, openSettings, setName, showFold, startDrawing, syncMenu, updateSavedLine, watchDialogs, wireMenu } from './ui/screens.js';
+import { reloadSafeLine } from './sheets.js';
 import { isopixFile, loadProjectObject, markChanged, placeTrace, pngBlob, pngCanvas, projectData, projectFromFile, projectPng, svgBlob, takeMovedDrawing, takeMovedSettings, updateFileUI } from './ui/files.js';
 export { projectData, svgBlob, pngCanvas, pngBlob }; // for tools/export_check.mjs
 
@@ -289,7 +290,9 @@ export async function saveNow() {
   savePending = false;
   if (app.practice || !app.drawingId) return; // the person's own drawing stays as it was in IndexedDB
   const data = projectData();
-  if (await store.idbSet(G.recordKey(app.drawingId), data)) {
+  const kept = await store.idbSet(G.recordKey(app.drawingId), data);
+  $('#update-saved').textContent = reloadSafeLine(kept, hasContent());
+  if (kept) {
     app.lastSaved = Date.now();
     app.gallery = G.withEntry(app.gallery, { id: app.drawingId, name: app.drawingName, savedAt: app.lastSaved });
     await store.idbSet(G.LIST, app.gallery);
