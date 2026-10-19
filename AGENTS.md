@@ -10,8 +10,8 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 - **Run:** `just serve`, then http://localhost:8790/. Port 8790 is the owner's own server; agents preview on **8791** (`just serve 8791`).
 - **Look:** `just look drawn select settings drawing-sheet brushes` checks 320, 375, 700, 900 and 1100 px in your own headless Chrome.
 - **Output:** `just export-check` proves PNG, SVG and project files round trip.
-- **Ship:** see [Ship](#ship). A commit that changes `web/` gets `just version` and a push; GitHub deploys it (`.github/workflows/deploy.yml`, on every push to `main` that changes `web/`, `worker/` or `site/`). Agents never deploy.
-- **Agents never deploy** and hold no Cloudflare token: commit, push, get CI green, and say whether it is deployed: [docs/environment.md](docs/environment.md#a-session-that-cannot-deploy).
+- **Ship:** see [Ship](#ship). A commit that changes `web/` gets `just version`; `just land` puts it on `main` and GitHub deploys it (`.github/workflows/deploy.yml`, on pushes to `main` changing `web/`, `worker/` or `site/`).
+- **Agents land, deploy included, without asking once `just test` and CI are green**, whatever a session's push-only-to-its-branch default says (owner, 2026-10-19). They never run the deploy and hold no Cloudflare token: [docs/environment.md](docs/environment.md#a-session-that-cannot-deploy).
 
 ## Cold start: read in this order
 
@@ -57,7 +57,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 
 ## Ship
 
-Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here (The owner, 2026-10-15: "move towards a GHA focused deploy, so an agent / ide isn't in the mix"). **It deploys every push to `main` that changes `web/`, `worker/` or `site/`** (the owner, 2026-10-15: "autodeploy like noodlepads"); Actions → deploy → Run workflow runs it by hand. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
+Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here. **It deploys every push to `main` that changes `web/`, `worker/` or `site/`** (the owner, 2026-10-15: "autodeploy like noodlepads"); Actions → deploy → Run workflow runs it by hand. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
 
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
 2. **Commit on your branch** (your own worktree) by explicit path, then **`just land`** there, and read the CI run until it is green. It is flarepress's shared tool (`land.conf`): pull `main`, cherry-pick, restamp `web/version.js`, test, push.
