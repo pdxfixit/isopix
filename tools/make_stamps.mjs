@@ -49,6 +49,9 @@ function box([x0, y0, z0], [sx, sy, sz], color) {
 function paint(faces) {
   const cells = new Map();
   for (const { poly, color, f } of faces) {
+    // A corner between grid points (a half unit at an odd U, a quarter unit
+    // at U 2) fills saw-toothed cells and makes cells off the lattice.
+    if (!poly.flat().every(Number.isInteger)) throw new Error(`a face corner is off the grid: ${JSON.stringify(poly)}; use whole lattice steps`);
     const ps = poly.map((v) => v[0]), qs = poly.map((v) => v[1]);
     for (const cell of L.cellsInBox(LV, Math.min(...ps) - 1, Math.max(...ps), Math.min(...qs) - 1, Math.max(...qs))) {
       const { pp, qq } = L.centroidLattice(cell);
