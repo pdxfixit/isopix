@@ -71,7 +71,7 @@ function render() {
   $('#stamps-sections').replaceChildren(...SB.sections(app.stamps).map((sec) => {
     const isOpen = open.has(sec.id), here = sec.items.find((it) => it.s === on);
     const box = document.createElement('section');
-    box.className = 'set-fold';
+    box.className = isOpen ? 'set-fold open' : 'set-fold';
     box.id = `st-${sec.id}`;
     const head = document.createElement('button');
     head.type = 'button';
@@ -118,6 +118,8 @@ export function openStamps() {
   open = readOpen();
   render();
   if (!$('#stamps').open) $('#stamps').showModal();
+  // Section heads stick just under the title, whatever its height in this font.
+  $('#stamps').style.setProperty('--stamps-head', `${$('#stamps header').offsetHeight}px`);
 }
 
 function choose(choice) {
