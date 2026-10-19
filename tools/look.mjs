@@ -618,10 +618,18 @@ const MEASURE = (width) => `(() => {
     return rs.length ? (side === 'right' ? Math.max(...rs.map((r) => r.right)) : Math.min(...rs.map((r) => r.left))) : null; };
   const tlRight = edge('.topleft', 'right'), trLeft = edge('.topright', 'left');
   const topGap = tlRight !== null && trLeft !== null && trLeft - tlRight < 8 ? Math.round(trLeft - tlRight) : null;
+  // A dialog's header buttons keep 4 px clear of the header's bottom edge, where the
+  // first section's line sits (Settings' ✕ once sat on it).
+  const headClear = [...document.querySelectorAll('dialog[open] .menu > header')].flatMap((h) => {
+    const btns = [...h.querySelectorAll('button')].filter(reachable);
+    if (!btns.length) return [];
+    const gap = h.getBoundingClientRect().bottom - Math.max(...btns.map((b) => b.getBoundingClientRect().bottom));
+    return gap < 4 ? [{ dialog: '#' + h.closest('dialog').id, gap: Math.round(gap) }] : [];
+  });
   return {
     sideways: Math.max(document.documentElement.scrollWidth, innerWidth) > ${width},
     scrollWidth: Math.max(document.documentElement.scrollWidth, innerWidth),
-    small, overlaps, checked, topGap,
+    small, overlaps, checked, topGap, headClear,
     dialogSideways: [...document.querySelectorAll('dialog[open]')].filter((d) => d.scrollWidth > d.clientWidth).map((d) => '#' + d.id),
   };
 })()`;
@@ -665,6 +673,7 @@ for (const screen of opts.screens) {
     Object.assign(row, m, { errors: [...new Set(errors)], csp: [...new Set(csp)], logs: [...logs], shot });
     for (const d of m.dialogSideways) row.extra.push(`${d} scrolls sideways`);
     for (const o of m.overlaps) row.extra.push(`overlap: ${o}`);
+    for (const h of m.headClear) row.extra.push(`${h.dialog} header: buttons end ${h.gap}px above the line under it (need 4)`);
     if (m.topGap !== null) row.extra.push(`top bar: the left cluster ends ${m.topGap}px from the right one (need 8)`);
     if (!m.checked) row.extra.push('no buttons found: the page did not render');
     row.ok = !m.sideways && !row.errors.length && !row.csp.length && !m.small.length && !row.extra.length;

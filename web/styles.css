@@ -237,6 +237,11 @@ dialog#help::backdrop, dialog#settings::backdrop, dialog#drawing::backdrop { bac
 .menu { padding: 12px 16px 20px; user-select: text; -webkit-user-select: text; }
 .menu header { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--bg); }
 .menu header .head-btns { display: flex; gap: 6px; }
+/* Header buttons sit at the 44 px floor, smaller than the toolbar's, and clear the line under the header by 8 px
+   without moving it: the header starts 4 px higher and pads 8 px below. */
+.menu header { margin-top: -4px; padding-bottom: 8px; }
+.menu header .btn { min-width: 44px; min-height: 44px; border-radius: 10px; }
+.menu header .btn svg { width: 22px; height: 22px; }
 .menu h2 { margin: 0; font-size: 22px; }
 .menu h3 { margin: 18px 0 6px; font-size: 17px; }
 .menu fieldset { border: 1px solid var(--border); border-radius: 12px; margin: 8px 0; padding: 6px 10px 10px; }
@@ -315,7 +320,8 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
   text-decoration: none; user-select: none; -webkit-user-select: none;
 }
 .build-stamp:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
-.version { text-align: center; color: var(--muted); font-size: 14px; margin: 14px 0 4px; }
+/* The link's 12 px padding (its 44 px tap height) overlaps the dialog's bottom padding, so the line does not float. */
+.version { text-align: center; color: var(--muted); font-size: 14px; margin: 14px 0 -12px; }
 .version a { color: inherit; display: inline-block; padding: 12px 8px; min-height: 44px; }
 .help-report { border-top: 1px solid var(--border); margin: 18px 0 4px; padding-top: 12px; text-align: center; }
 .help-report a { display: inline-block; padding: 12px 8px; min-height: 44px; color: var(--accent); font-weight: 700; }
