@@ -47,7 +47,8 @@ LAN gets the app, but not the install.
   triangle, drag a face, drag a cube, and stamp.
 - **Stamp**: pick one in the Stamps drawer, then tap (or press and slide to
   aim). The stamp just placed stays outlined with a round handle: drag it out
-  for bigger, in for smaller, in whole steps (2×, 3×…), or use − and + on the
+  for bigger, in for smaller (quarter steps while small, made of finer cells so
+  the edges stay clean; then halves, then whole steps), or use − and + on the
   stamp bar (`,` and `.` on a keyboard). The next stamps keep that size; the
   next tap, another tool or Undo finishes it.
 - **Line**: drag; it locks to the three grid directions. Styles: Strip (a strip

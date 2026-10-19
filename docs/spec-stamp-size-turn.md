@@ -47,8 +47,9 @@ I rebuilt the starter stamps at other sizes in a scratch copy of the builder
 2. **Only whole multiples of today's size come out clean.** At 1½ times
    (unit 3), every half-unit feature (eyes, ears, beaks, every pixel of the
    letters) lands between grid points and comes out saw-toothed. The snake's
-   body, which is whole units, stayed clean. So the sizes are **1×, 2×, 3×,
-   4×…** of today's stamp.
+   body, which is whole units, stayed clean. So in-between sizes use finer
+   cells: 1½× is 3× one level finer (the owner's pick of resampled or finer
+   cells, 2026-10-19), giving quarter steps while a stamp is small.
 3. **Whole multiples need no art at all.** Scaling cells by a whole number k
    about a grid point is exact on this lattice: a triangle of side 1 becomes a
    triangle of side k, tiled by exactly k² triangles. That works for **every**
@@ -105,7 +106,7 @@ Place it as today: tap, or press and slide to aim. The stamp then stays
 **live** (a dashed outline) until you do something else:
 
 - a **size handle** on the outline's top corner: drag it, and the stamp grows
-  or shrinks in whole steps, with a readout ("3×") and a light buzz on each
+  or shrinks in steps, with a readout ("1½×") and a light buzz on each
   step;
 - a small **stamp bar** where the selection bar sits: a size stepper
   (− 3× +), **Spin** (3D stamps) or **Turn** (flat ones and Mine), **Flip**,
