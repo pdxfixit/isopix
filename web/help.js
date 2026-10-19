@@ -147,6 +147,7 @@ export const SECTIONS = [
       { name: 'Size handle', from: '#stamp-handle', says: 'The round knob on the stamp\'s corner: drag it out to make the stamp bigger, in to make it smaller: quarter steps while it is small (1¼×, 1½×…), then halves, then whole steps. An in-between size is made of smaller cells than the grid, so its edges stay clean; each size is drawn from the stamp itself, so nothing is lost.' },
       { name: 'Smaller', from: '#stamp-smaller', says: 'The stamp one size smaller, down to a quarter of its own size (¼×) where the grid allows.' },
       { name: 'Bigger', from: '#stamp-bigger', says: 'The stamp one size bigger. The next stamps you place come out this size too.' },
+      { name: 'Floor or wall', from: '#stamp-plane', says: 'For flat stamps (the Moon, the Smiley, sacred geometry…) and letters and numbers: each tap lays it on the next of the floor, the left wall and the right wall (and, for a flat picture, back to standing up), shaded like that face of a cube. The next stamps go there too.' },
       { name: 'Done', from: '#stamp-done', says: 'Keeps the stamp as it is. Placing another stamp, drawing or Undo does the same.' },
     ],
   },

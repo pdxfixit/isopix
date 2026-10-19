@@ -2,8 +2,8 @@
 
 **Status:** the build plan. The owner chose B, both turns with planes first,
 and H1 (2026-10-19; [decisions.md](decisions.md), "A placed stamp stays
-live"). Step 1, size, is built (release with `web/ui/livestamp.js`); steps 2 and 3
-are in [TODO.md](../TODO.md).
+live"). Steps 1 (size) and 2 (planes, round stamps drawn anew; `web/engine/stampart.js`)
+are built; step 3 (Spin) is in [TODO.md](../TODO.md).
 
 **The ask.** Owner, 2026-10-19: "it really does seem like shapes need to be
 rotateable, kind of like drawing a face/plane... it'd be fun if we had really

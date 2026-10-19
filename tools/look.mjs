@@ -348,6 +348,28 @@ VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   if (a.drawing.undoStack.length !== 1 || !bar.hidden) throw new Error('Undo did not take the second Cat away whole, or left the stamp bar up');
   ${q('#redo')} ${nap} if (snap() !== both) throw new Error('Redo did not bring the second Cat back');
   ${TAP('innerWidth * 0.6', 'innerHeight * 0.4')} ${nap}` };
+// Floor or wall (owner, 2026-10-19, spec step 2): a Moon placed shows the plane button,
+// standing up; a tap lays it on the floor (every cell a top face), another on the left
+// wall, in the same undo step; + twice draws it anew at 1½×. Then an A, which goes
+// on the left wall too (the plane in use), and a tap stands it on the right wall.
+// Ends with the A live on the right wall.
+VIEWS['stamp-plane'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('space')} ${TILE('space', 'Moon')}
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}
+  const a = window.isopix, pb = document.querySelector('#stamp-plane'), faces = () => [...new Set([...a.drawing.cells.values()].map((v) => v.f || '-'))].sort().join();
+  if (pb.hidden || !pb.getAttribute('aria-label').startsWith('On standing up') || faces() !== '-') throw new Error('the Moon did not show the plane button standing up (' + pb.getAttribute('aria-label') + ', faces ' + faces() + ')');
+  ${q('#stamp-plane')} ${nap}
+  if (faces() !== 'T' || !pb.getAttribute('aria-label').startsWith('On the floor')) throw new Error('one tap did not lay the Moon on the floor: faces ' + faces());
+  ${q('#stamp-plane')} ${nap}
+  if (faces() !== 'L' || a.drawing.undoStack.length !== 1) throw new Error('a second tap did not stand it on the left wall in one undo step: faces ' + faces());
+  const at1 = a.drawing.cells.size; ${q('#stamp-bigger')} ${nap} ${q('#stamp-bigger')} ${nap}
+  if (document.querySelector('#stamp-size').textContent !== '1½×' || a.drawing.cells.size < 2 * at1 * 4) throw new Error('+ twice gave ' + a.drawing.cells.size + ' cells at ' + document.querySelector('#stamp-size').textContent);
+  ${q('#stamp-done')} ${nap} ${q('#undo')} ${nap} a.stampSize = 1; if (a.drawing.cells.size) throw new Error('Undo did not take the Moon');
+  ${STAMPS_OPEN} ${SECTION('letters')} ${TILE('letters', 'A')}
+  ${TAP('innerWidth * 0.3', 'innerHeight * 0.35')} ${nap}
+  const mine = () => a.live.diff.cells.map((e) => e[2] && e[2].f).filter(Boolean), most = () => { const m = {}; for (const f of mine()) m[f] = (m[f] || 0) + 1; return Object.entries(m).sort((x, y) => y[1] - x[1])[0][0]; };
+  if (pb.hidden || most() !== 'L') throw new Error('the A did not go on the left wall, the plane in use (' + most() + ', ' + JSON.stringify({ plane: a.stampPlane, choice: a.stampChoice, live: !!a.live, n: mine().length }) + ')');
+  ${q('#stamp-plane')} ${nap}
+  if (most() !== 'R') throw new Error('a tap did not stand the A on the right wall (' + most() + ')');` };
 // A stamp of one's own goes in Mine and stays there in a new drawing.
 // Palettes (owner, 2026-10-18): a preset is copied into Mine on the first
 // eyedropper pick, a second pick keeps the first, Mine is stored; ⋯ takes a

@@ -24,6 +24,7 @@
   <link rel="modulepreload" href="engine/brushes.js">
   <link rel="modulepreload" href="engine/color.js">
   <link rel="modulepreload" href="engine/density.js">
+  <link rel="modulepreload" href="engine/stampart.js">
   <link rel="modulepreload" href="engine/fill.js">
   <link rel="modulepreload" href="engine/gesture.js">
   <link rel="modulepreload" href="engine/lattice.js">
@@ -204,6 +205,9 @@
     <span id="stamp-size" class="chip" aria-live="polite"></span>
     <button id="stamp-bigger" class="btn" aria-label="Stamp one size bigger" title="Bigger (.)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+    </button>
+    <button id="stamp-plane" class="btn" aria-label="Lay the stamp on the floor or a wall" title="Floor or wall" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9ZM12 12v9M12 12 4 7.5M12 12l8-4.5"/><path d="M12 3 20 7.5 12 12 4 7.5Z" fill="currentColor"/></svg>
     </button>
     <button id="stamp-done" class="btn" aria-label="Done: keep the stamp as it is" title="Done (Esc)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
