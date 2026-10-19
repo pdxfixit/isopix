@@ -24,7 +24,10 @@ TOOL="$FLAREPRESS/tools/site.sh"
 site() { "$TOOL" "$SITE" "$@"; }
 
 # GitHub's test run for HEAD must be green: `just look` and export-check run only
-# there. A run still going is waited for (CI's own 20-minute limit bounds it). SKIP_CI=1 skips
+# there. A run still going is waited for, up to CI_WAIT_MIN: CI's own job limit
+# (test.yml) plus 10 minutes, since GitHub can mark a run done minutes after its
+# job ends (5 on 2026-10-19, and a deploy that waited 20 gave up on a green run).
+# test/ci-limits.test.mjs keeps the three limits in step. SKIP_CI=1 skips
 # this, for when GitHub or gh is down; say so in the report. Without a logged-in
 # gh (a cloud session), it reads the public repo's runs from GitHub's API instead.
 ci_run() {  # "id status conclusion" of test.yml's newest run for $1, or nothing
@@ -36,6 +39,7 @@ ci_run() {  # "id status conclusion" of test.yml's newest run for $1, or nothing
       | python3 -c 'import json,sys; r=json.load(sys.stdin)["workflow_runs"]; print(r and "%s %s %s" % (r[0]["id"], r[0]["status"], r[0]["conclusion"]) or "")' 2>/dev/null || true
   fi
 }
+CI_WAIT_MIN=40
 ci_green() {
   local sha st id
   [ "${SKIP_CI:-}" = 1 ] && { echo "⚠️ SKIP_CI=1: deploying without GitHub's test run"; return 0; }
@@ -49,7 +53,7 @@ ci_green() {
   # A read that fails (rate limit, network) keeps the last status it had: an
   # empty answer is not "still running" (it once hid a green run for 20 minutes).
   local next misses=0
-  for _ in $(seq 1 120); do   # up to 20 minutes, CI's own limit
+  for _ in $(seq 1 $((CI_WAIT_MIN * 6))); do   # every 10 s, up to CI_WAIT_MIN minutes
     case "$st" in *" completed "*) break ;; esac
     sleep 10; next=$(ci_run "$sha")
     if [ -n "$next" ]; then st=$next; misses=0; else misses=$((misses + 1)); fi
@@ -58,8 +62,8 @@ ci_green() {
   case "$st" in
     *" completed success") echo "✅ CI green for ${sha:0:7} (tests, export-check, move-check, just look)" ;;
     *" completed "*) echo "🛑 CI failed for ${sha:0:7}: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; return 1 ;;
-    *) if [ "$misses" -gt 0 ]; then echo "🛑 could not read CI for ${sha:0:7} for $((misses / 6)) of the last 20 minutes (GitHub rate limit?); it may be green: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2
-       else echo "🛑 CI still not done for ${sha:0:7} after 20 minutes: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; fi
+    *) if [ "$misses" -gt 0 ]; then echo "🛑 could not read CI for ${sha:0:7} for $((misses / 6)) of the last $CI_WAIT_MIN minutes (GitHub rate limit?); it may be green: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2
+       else echo "🛑 CI still not done for ${sha:0:7} after $CI_WAIT_MIN minutes: https://github.com/pdxfixit/isopix/actions/runs/$id" >&2; fi
        return 1 ;;
   esac
 }
