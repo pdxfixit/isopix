@@ -17,7 +17,7 @@ export const NOT_ISOPIX = 'this is not an Isopix drawing, or it is damaged';
 
 // A drawing as a document (spec 1.0): `picture`, all a reader needs to draw
 // it (name, paper, cells and edges as key → color), and `app`, Isopix's own
-// state. `extra` (name, view, stamps, symmetry, trace, savedAt) is the app's.
+// state. `extra` (name, view, stamps, palette, symmetry, trace, savedAt) is the app's.
 export function save(drawing, extra = {}) {
   const { name, ...rest } = extra;
   const cells = {}, ids = {}, faces = {}, edges = {}, edgeTimes = {};
@@ -71,14 +71,15 @@ export function fromOldLayout(obj) {
 }
 
 // The app's fields of a saved drawing (either layout): name, when it was
-// saved, the view, stamps, symmetry, trace picture and undo history.
+// saved, the view, stamps, the palette of one's own in use, symmetry, trace
+// picture and undo history (web/palettes.js checks the palette).
 export function meta(obj) {
   const doc = fromOldLayoutSafe(obj);
   const a = isObj(doc?.app) ? doc.app : {};
   return {
     name: typeof doc?.picture?.name === 'string' ? doc.picture.name : undefined,
     savedAt: Number.isFinite(a.savedAt) ? a.savedAt : null,
-    view: a.view, stamps: a.stamps, symmetry: a.symmetry, trace: a.trace,
+    view: a.view, stamps: a.stamps, palette: a.palette, symmetry: a.symmetry, trace: a.trace,
     log: Array.isArray(a.log) ? a.log : [],
   };
 }

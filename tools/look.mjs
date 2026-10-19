@@ -241,6 +241,41 @@ VIEWS['stamp-flip'] = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#opt
   const flipped = JSON.stringify([...a.drawing.cells].sort());
   ${q('#undo')} ${nap} if (JSON.stringify([...a.drawing.cells].sort()) === flipped || a.drawing.cells.size !== n) throw new Error('one Undo did not take the flip back');` };
 // A stamp of one's own goes in Mine and stays there in a new drawing.
+// Palettes (owner, 2026-10-18): a preset is copied into Mine on the first
+// eyedropper pick, a second pick keeps the first, Mine is stored; ⋯ takes a
+// color out and renames. Ends with the drawer open on Mine.
+const PICK_ANY = `const pick = (c) => { const i = document.querySelector('#pick-any input'); i.value = c; i.dispatchEvent(new Event('change', { bubbles: true })); };
+  const inks = () => document.querySelectorAll('#palette .swatch:not(.tool)').length;`;
+VIEWS.palettes = { fresh: true, js: `const a = window.isopix; ${PICK_ANY}
+  for (const i of document.querySelectorAll('#palettes-open i')) if (i.getBoundingClientRect().height < 10) throw new Error('the palette tile shows no colors');
+  ${q('#palettes-open')} ${nap}
+  if (!document.querySelector('#palettes').open) throw new Error('the palette tile did not open Palettes');
+  if (document.querySelector('#palettes-empty').hidden) throw new Error('an empty Mine should say so');
+  [...document.querySelectorAll('#palettes-presets .pal-pick')].find((b) => b.textContent.includes('Sunset')).click(); ${nap}
+  if (document.querySelector('#palettes').open || a.settings.palette !== 'sunset' || inks() !== 8) throw new Error('picking Sunset did not close Palettes and show its 8 colors');
+  pick('#00ff00'); ${nap}
+  if (a.palettes.length !== 1 || a.palettes[0].name !== 'My Sunset' || a.settings.palette !== a.palettes[0].id || inks() !== 9) throw new Error('a pick on Sunset did not make My Sunset with it: ' + JSON.stringify(a.palettes));
+  pick('#0000ff'); ${nap}
+  if (inks() !== 10 || a.palettes.length !== 1) throw new Error('the second pick did not keep the first: ' + JSON.stringify(a.palettes));
+  const saved = await (await import('./storage.js')).idbGet('palettes');
+  if (!saved || saved[0].colors.slice(-2).join() !== '#00ff00,#0000ff') throw new Error('Mine was not stored: ' + JSON.stringify(saved));
+  ${q('#palettes-open')} ${nap} document.querySelector('#palettes-mine .pal-card .btn').click(); ${nap}
+  if (!document.querySelector('#palette-edit').open) throw new Error('⋯ did not open Change palette');
+  document.querySelector('#palette-edit-colors .swatch').click(); ${nap}
+  document.querySelector('#palette-edit-name').value = 'Embers';
+  document.querySelector('#palette-edit').close('ok'); ${nap}
+  if (a.palettes[0].colors.length !== 9 || a.palettes[0].name !== 'Embers' || inks() !== 9) throw new Error('taking a color out or renaming failed: ' + JSON.stringify(a.palettes));
+  if (!document.querySelector('#palettes-mine').textContent.includes('Embers')) throw new Error('the drawer did not show the new name');` };
+// Delete asks for a second tap; deleting the palette in use goes back to Isopix.
+VIEWS['palette-delete'] = { fresh: true, js: `const a = window.isopix; ${PICK_ANY}
+  pick('#123456'); ${nap}
+  if (a.palettes[0]?.name !== 'My colors' || inks() !== 13) throw new Error('a pick on Isopix did not make My colors with all 13: ' + JSON.stringify(a.palettes));
+  ${q('#palettes-open')} ${nap} document.querySelector('#palettes-mine .pal-card .btn').click(); ${nap}
+  ${q('#palette-delete')} ${nap}
+  if (a.palettes.length !== 1 || !/again/.test(document.querySelector('#palette-delete').textContent)) throw new Error('one tap deleted, or did not ask again');
+  ${q('#palette-delete')} ${nap}
+  if (a.palettes.length || a.settings.palette !== 'isopix' || inks() !== 12 || document.querySelector('#palette-edit').open) throw new Error('delete did not go back to Isopix');
+  if (!document.querySelector('#palettes').open || document.querySelector('#palettes-empty').hidden) throw new Error('Palettes should stay open, Mine empty');` };
 VIEWS['stamps-mine'] = { fresh: true, js: `${VIEWS.select.js} ${nap} ${q('#sel-stamp')} ${nap}
   ${q('#drawing-open')} ${q('#file-new')} await new Promise((r) => setTimeout(r, 1100));
   ${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}

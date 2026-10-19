@@ -39,6 +39,8 @@ Isopix 1.0: a public repo (`github.com/pdxfixit/isopix`, MIT) whose history star
 
 **Starter stamps** (2026-10-16): the Stamp brush opens the Stamps drawer, Starter (Cube, Stairs, House, Tree, Wall, Pyramid, Flower, Star) and Mine; own stamps are kept per browser across drawings (`web/stampbook.js`, `web/ui/stamps.js`, art by `tools/make_stamps.mjs`). Checked: `test/stampbook.test.mjs` (every stamp places at every level), `just look stamps stamps-mine`.
 
+**Palettes** (2026-10-18, on branch `claude/custom-color-palette-save-empp19`, not on `main` yet): the square tile at the start of the color row opens the Palettes drawer, Mine first, then the presets (Isopix, Sunset, Forest, Ocean, Candy, Stone), which never change. An eyedropper pick joins the palette in use, or on a preset makes the person's own copy with it, so a second custom color no longer replaces the first. Mine is kept per browser across drawings (IndexedDB `palettes`); a saved file carries the palette of one's own in use. ⋯ renames, takes colors out, deletes. The old single custom color becomes "My colors" on first start (`web/palettes.js`, `web/ui/palettes.js`). Checked: `test/palettes.test.mjs`, `just look palettes palette-delete`, the Colors lesson's new Palettes step (`test/lessons.test.mjs`). Not tried on a real phone.
+
 **Installing** (2026-10-16): Chrome's installability check passes locally and on isopix.app; iPhone and iPad home-screen tags added; `just install-check` in CI. Not tried on a real iPhone.
 
 **Autosave copies** (2026-10-16): besides the autosave, up to 3 older copies, one per 5 minutes at most, only of a drawing with something in it; a damaged autosave opens the newest copy that loads, with a message (`web/autosave.js`, `test/autosave.test.mjs`, `just autosave-check` in CI). No button opens a copy by hand (offered in TODO).
@@ -91,6 +93,7 @@ Once the branch is live:
 1. Tap the hand at the top of the zoom rail and drag with one finger: the view moves, nothing is drawn. Tap the Pencil to draw again.
 2. Rest one finger, then pinch: no dot is left. Lift one finger mid-pinch and keep moving the other: it keeps panning.
 3. On an iPhone or iPad: Drawing → Save drawing opens the share sheet; Save to Files. On a computer in Chrome: Save asks where once, then Save (or Ctrl+S) writes the same file.
+4. Tap the square tile at the start of the colors: pick Sunset, then pick two colors with the eyedropper. Both should stay, in a palette called My Sunset. Is the tile easy to spot?
 
 Before that:
 
@@ -104,6 +107,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-18: `just look palettes` (in CI via `--all`) fails when the palette tile's color squares have no height: they first rendered as an empty box (a `.swatch.tool` rule centered them to zero height) while every other check passed (proven red by removing the fix). The same view fails if a second eyedropper pick replaces the first or Mine is not stored.
 - 2026-10-18: `test/help.test.mjs` fails when Help's More line leaves out a button under More: it named only Snap, Save as stamp and Erase, so Help sent nobody on a phone to Turn, Relight or Flip (proven red on the old line).
 - 2026-10-18: `just look stamp-flip` (in CI via `--all`) places the starter Wall, selects it and flips it, and fails unless the flipped side faces are lit from the drawing's side and one Undo takes the flip back; `test/density.test.mjs` checks the same in the engine. Flip had dropped each cell's light side and base color, so a flipped wall stayed lit from the wrong side and Relight said it was already right (both proven red on the old code).
 - 2026-10-16: `tools/autosave_check.mjs`'s IndexedDB helper fails after 10 s instead of waiting forever: a throw inside an IndexedDB callback (a field renamed by spec 1.0) hung the check silently until a timeout killed it.

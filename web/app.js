@@ -20,10 +20,12 @@ import { initEvents, cellsBucket } from './events.js';
 import * as AS from './autosave.js';
 import * as G from './gallery.js';
 import * as SB from './stampbook.js';
+import * as PB from './palettes.js';
 import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLock, updateZoomUI } from './ui/controls.js';
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
 import { loadMine, saveMine, wireStamps } from './ui/stamps.js';
+import { loadPalettes, savePalettes, wirePalettes } from './ui/palettes.js';
 import { setBar, isMaking, cancelVideo, videoButton } from './ui/video.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
 import { hasContent, leaveDrawing, openDrawing, openSettings, setName, showFold, startDrawing, syncMenu, updateSavedLine, watchDialogs, wireMenu } from './ui/screens.js';
@@ -41,7 +43,8 @@ export const DEFAULTS = {
   symmetry: 'off', symP: 0, symQ: 0, symL: 0,
   densityHandle: true, densityPinch: false, densityLongpress: false,
   coarsen: 'crisp', snap: false, limited: false, limitedCount: 3, gray: false, traceOpacity: 0.3,
-  custom: '',
+  palette: 'isopix', // the palette in use: a preset's id or one of Mine (web/palettes.js)
+  custom: '', // before palettes: the one custom color; loadPalettes turns it into "My colors"
   welcomed: false, // the welcome card was closed on this device
   savePng: true, // Save writes a PNG with the drawing inside; off: a .isopix.json file
   usage: true, // Share play data (events.js; Settings)
@@ -78,6 +81,7 @@ export const app = {
   level: 3,
   selection: null, // {region, anchor}
   stamps: [],
+  palettes: [], // Mine: this browser's own palettes (web/palettes.js)
   stampChoice: { from: 'starter', i: 0 }, // the stamp the Stamp brush places (web/stampbook.js chosen)
   ghost: null,
   crosshair: null,
@@ -125,7 +129,7 @@ export const emit = (type, detail = {}) => app.tour?.event({ type, ...detail });
 export const symCenter = () => ({ l: app.settings.symL, p: app.settings.symP, q: app.settings.symQ });
 export function palette() {
   const s = app.settings, pp = paperOf(app.drawing.paper);
-  return s.limited ? pp.limited.slice(0, s.limitedCount) : pp.inks.concat(s.custom ? [s.custom] : []);
+  return s.limited ? pp.limited.slice(0, s.limitedCount) : PB.colorsOf(PB.find(s.palette, app.palettes), app.drawing.paper);
 }
 
 // ---------- rendering ----------
@@ -199,12 +203,12 @@ const DONE_KEY = 'isopix-lessons-done';
 export const readDone = () => { try { return doneLessons(localStorage.getItem(DONE_KEY)); } catch { return new Set(); } };
 function beginPractice() {
   const theirs = app.drawing;
-  app.practice = { obj: projectData(), file: { ...app.file }, lastSaved: app.lastSaved, settings: { ...app.settings }, stamps: app.stamps, name: app.drawingName, has: hasContent() };
+  app.practice = { obj: projectData(), file: { ...app.file }, lastSaved: app.lastSaved, settings: { ...app.settings }, stamps: app.stamps, palettes: app.palettes, name: app.drawingName, has: hasContent() };
   cancelGesture();
   if (app.replaying) stopReplay();
   app.drawing = newDrawing();
   app.drawing.paper = theirs.paper;
-  app.stamps = app.stamps.slice(); app.selection = null; app.lastDensity = null; app.trace = null;
+  app.stamps = app.stamps.slice(); app.palettes = app.palettes.slice(); app.selection = null; app.lastDensity = null; app.trace = null;
   app.file = { name: null, at: null, via: null, dirty: false, handle: null };
   setName('Practice');
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
@@ -221,12 +225,12 @@ async function endPractice(keep) {
   app.file = was.file;
   app.lastSaved = was.lastSaved;
   // A stamp saved in the lesson stays only when the practice drawing is kept.
-  if (!kept) app.stamps = was.stamps;
+  if (!kept) { app.stamps = was.stamps; app.palettes = was.palettes; }
   // The person's settings come back either way (the lesson picked tools and brushes for them).
   app.settings = { ...was.settings, welcomed: app.settings.welcomed };
   store.saveSettings(app.settings);
   app.practice = null;
-  if (kept) { saveMine(); await addDrawing(kept); }
+  if (kept) { saveMine(); savePalettes(); await addDrawing(kept); }
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
   buildPalette(); setTool(app.settings.tool); updateModeChip(); syncMenu(); computeLevel(true); afterChange({ changed: false }); updateFileUI();
   toast(kept ? 'Kept: it is in Drawings with your other drawings' : 'Back to your drawing');
@@ -473,6 +477,7 @@ function wire() {
   });
   wireMenu();
   wireStamps();
+  wirePalettes();
 }
 
 async function boot() {
@@ -495,6 +500,7 @@ async function boot() {
   resize();
   computeLevel(true);
   await loadMine(); // this browser's own stamps (web/ui/stamps.js), before any drawing adds to them
+  await loadPalettes(); // and palettes (web/ui/palettes.js)
   // This browser's drawings (web/gallery.js): the one in use opens.
   const had = await openAtStart();
   if (!had && !arriving) setName(sillyName()); // the very first drawing here gets a silly name too

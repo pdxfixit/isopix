@@ -90,7 +90,8 @@ which would prompt). If the browser will not store it (a private window), a
 notice says so once, with a Save drawing button. Besides the autosave it keeps
 up to three older copies, at most one per 5 minutes (`web/autosave.js`): if the
 autosave cannot open, the newest copy that does opens instead, and the app says
-so. Settings live in `localStorage`.
+so. A person's own stamps and palettes are kept in IndexedDB too, for every
+drawing in this browser. Settings live in `localStorage`.
 **Save drawing** writes a PNG picture with the whole project inside
 (`name.isopix.png`; `web/engine/pngproject.js`): it opens in any photo app,
 and Open reads the drawing back out. Settings → Drawing → "Save as a
@@ -118,7 +119,7 @@ Detail: [docs/telemetry.md](docs/telemetry.md).
 
 | Path | What it holds |
 |---|---|
-| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, rendering, wiring) and `ui/` (controls, tools, input, sheets, files), `render.js` (Canvas 2D), `storage.js`, `gallery.js` (the list of drawings, pure), `stampbook.js` (starter and own stamps, pure) and `stamps.js` (the starter art, made by `tools/make_stamps.mjs`), `autosave.js` (autosave copies, pure), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
+| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, rendering, wiring) and `ui/` (controls, tools, input, sheets, files), `render.js` (Canvas 2D), `storage.js`, `gallery.js` (the list of drawings, pure), `stampbook.js` (starter and own stamps, pure), `palettes.js` (preset and own palettes, pure) and `stamps.js` (the starter art, made by `tools/make_stamps.mjs`), `autosave.js` (autosave copies, pure), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2 through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
 | `test/` | `node --test` suites for the engine. |
@@ -146,6 +147,9 @@ recorded with reasons in [docs/decisions.md](docs/decisions.md):
 - Each drawing keeps its own paper (light or dark); the inks follow it.
 - Limited palette starts with black, gray and white, and "+" adds a color
   (nothing is gated).
+- Palettes: the square tile at the start of the colors opens your own
+  palettes, then the presets. Presets never change: a color you pick with the
+  eyedropper on one makes your own copy with it, so no picked color is lost.
 - The trace picture saves with the drawing (project file and autosave); a
   photo over 2048 px on its long side is made smaller first. It is never part
   of PNG or SVG export.
