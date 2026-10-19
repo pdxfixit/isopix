@@ -189,8 +189,9 @@ body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left
 .sel-extra { display: none; gap: 4px; }
 .selbar.more { flex-wrap: wrap; }
 .selbar.more .sel-extra { display: flex; flex-basis: 100%; flex-wrap: wrap; justify-content: center; }
-/* The narrowest phones: 44 px buttons (still a finger's width) keep the first row one row with ⋯ open. */
-@media (max-width: 359px) { .selbar .btn { min-width: 44px; } }
+/* The narrowest phones: 44 px buttons (still a finger's width) and 2 px gaps keep the first row
+   one row with ⋯ open, with room to spare for a wider font (CI's Chrome draws Crisp in DejaVu Sans). */
+@media (max-width: 359px) { .selbar .btn { min-width: 44px; } .selbar, .sel-extra { gap: 2px; } }
 .chip { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); }
 .handle {
   position: fixed; z-index: 4; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
@@ -409,9 +410,6 @@ dialog#welcome::backdrop { background: rgba(0, 0, 0, 0.42); }
 /* The Stamps drawer: a sheet from the bottom with big tiles (web/ui/stamps.js). */
 dialog.drawer { margin: auto auto 0; border: 1px solid var(--border); border-bottom: 0; border-radius: 22px 22px 0 0; padding: 0; background: var(--bg); color: var(--ink); width: min(560px, 100vw); max-height: min(78dvh, 640px); box-shadow: 0 -6px 26px rgba(0, 0, 0, 0.2); }
 dialog.drawer::backdrop { background: rgba(0, 0, 0, 0.25); }
-.stamp-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 6px 0 12px; border-radius: 12px; background: var(--pressed); }
-.stamp-tabs button { min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; }
-.stamp-tabs button[aria-selected="true"] { background: var(--bg); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); font-weight: 700; }
 .stamp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 @media (min-width: 520px) { .stamp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .stamp-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 112px; padding: 6px 4px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }

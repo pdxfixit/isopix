@@ -399,12 +399,8 @@
         <h2 id="stamps-title">Stamps</h2>
         <button class="btn" value="close" aria-label="Close stamps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </header>
-      <div class="stamp-tabs" role="tablist" aria-label="Which stamps">
-        <button type="button" id="stamps-starter" role="tab" aria-controls="stamps-grid">Starter</button>
-        <button type="button" id="stamps-mine" role="tab" aria-controls="stamps-grid">Mine</button>
-      </div>
-      <div id="stamps-grid" class="stamp-grid" role="tabpanel"></div>
-      <p id="stamps-empty" class="note" hidden>None yet. Select part of a drawing, then Save as stamp: it lands here, ready in every drawing.</p>
+      <!-- Mine, then each group of starter stamps, folding like Palettes' (web/ui/stamps.js). -->
+      <div id="stamps-sections"></div>
       <p class="note">Tap one, then tap the grid. It grows and shrinks with the grid size.</p>
     </form>
   </dialog>
