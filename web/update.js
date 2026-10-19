@@ -27,6 +27,17 @@ export function updateOffer({ loaded, live, busy, dismissed }) {
   return busy ? 'wait' : 'show';
 }
 
+// Whether the bar fits above an open selection bar, with the density handle
+// above it: placeHandle keeps the handle's middle 30 px above the bar and at
+// least 80 px down, under the top buttons (without the handle, the bar need
+// only clear their bottom, 56 px down). Pure. At 480 × 320 it does not, so the bar waits
+// for Done (owner, 2026-10-19: "hold the update bar while a selection is open
+// on a screen too short for it, and show it after Done").
+//   selTop: the selection bar's top; barH: the update bar's height; handle: shown
+export function barFits({ selTop, barH, handle }) {
+  return selTop - 8 - barH >= (handle ? 80 + 30 : 56);
+}
+
 // The version a version.json response names, or null.
 export function liveVersionOf(json) {
   if (!json || typeof json !== 'object' || typeof json.version !== 'string') return null;
