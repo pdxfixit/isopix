@@ -220,6 +220,7 @@ export const NOT_TAUGHT = {
   Welcome: 'it is the card that starts the lessons',
   'Save a copy': 'it shows only after Save drawing has a file; Help explains it',
   Help: 'the lessons live in it',
+  Feedback: 'it is for grown-ups, behind a sum; Help explains it',
   'Change a palette': 'it needs a palette of one\'s own first; Help explains it',
 };
 // The Help sections the drift test checks (Words, Gestures and Keys explain, they are not controls).

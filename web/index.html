@@ -54,7 +54,9 @@
   <link rel="modulepreload" href="events-client.js">
   <link rel="modulepreload" href="update.js">
   <link rel="modulepreload" href="video.js">
+  <link rel="modulepreload" href="feedback.js">
   <link rel="modulepreload" href="ui/controls.js">
+  <link rel="modulepreload" href="ui/feedback.js">
   <link rel="modulepreload" href="ui/files.js">
   <link rel="modulepreload" href="ui/gallery.js">
   <link rel="modulepreload" href="ui/input.js">
@@ -316,7 +318,8 @@
         <label class="row"><input type="checkbox" id="opt-usage"> Share play data</label>
         <a id="privacy-link" class="link-btn about-foot" href="https://privacy.pdxfixit.com/isopix/" target="_blank" rel="noopener">Privacy policy</a>
         <button type="button" id="welcome-again" class="link-btn about-foot">Show the welcome again</button>
-        <p class="version"><a id="version-label" target="_blank" rel="noopener" title="The code this copy was built from, on GitHub"></a></p>
+        <!-- Feedback beside the version (owner, 2026-10-19), behind a grown-up check (web/ui/feedback.js). -->
+        <p class="version"><a id="version-label" target="_blank" rel="noopener" title="The code this copy was built from, on GitHub"></a><button type="button" id="feedback-open" class="btn feedback-open" aria-haspopup="dialog" aria-label="Feedback: send an idea or a problem" title="Send feedback"><span aria-hidden="true">💌</span> Feedback</button></p>
       </section>
     </form>
   </dialog>
@@ -446,6 +449,34 @@
         <button class="btn wide danger" value="delete">Delete</button>
       </div>
       <button type="button" id="delete-save-first" class="link-btn">Save it to a file first</button>
+    </form>
+  </dialog>
+  <!-- Feedback (web/ui/feedback.js): a grown-up check first, then the box. Centered on every width; Esc closes. -->
+  <dialog id="feedback-gate" class="small-dialog" aria-labelledby="gate-title" aria-describedby="gate-question">
+    <form method="dialog" class="menu">
+      <h2 id="gate-title">Ask a grown-up</h2>
+      <label for="gate-answer" id="gate-question">Grown-ups: what is 13 + 9?</label>
+      <input type="number" id="gate-answer" inputmode="numeric" min="0" max="999" autocomplete="off">
+      <p id="gate-wrong" class="note gate-wrong" role="alert" hidden>Not quite. Try again.</p>
+      <div class="row">
+        <button class="btn wide" value="cancel">Cancel</button>
+        <button type="button" class="btn wide" id="gate-ok">OK</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="feedback" class="small-dialog feedback" aria-labelledby="feedback-title" aria-describedby="feedback-says">
+    <form method="dialog" class="menu">
+      <header>
+        <h2 id="feedback-title">Send feedback</h2>
+        <button class="btn" value="close" aria-label="Close feedback"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <p id="feedback-says" class="note">Ideas, problems, anything. Please don't include names or contact details: we can't write back. We keep messages for 90 days.</p>
+      <textarea id="feedback-text" aria-label="Your feedback" maxlength="2000" rows="6" autofocus></textarea>
+      <p id="feedback-status" class="note feedback-status" role="status" aria-live="polite"></p>
+      <div class="row">
+        <button class="btn wide" value="cancel">Cancel</button>
+        <button type="button" class="btn wide feedback-send" id="feedback-send" disabled>Send</button>
+      </div>
     </form>
   </dialog>
   <dialog id="help" aria-labelledby="help-title">

@@ -1,5 +1,6 @@
-# Isopix at https://isopix.app: static assets (web/) and the usage Worker
-# (worker/: POST /api/events into R2 `isopix-telemetry`), one hostname.
+# Isopix at https://isopix.app: static assets (web/) and the Worker
+# (worker/: POST /api/events into R2 `isopix-telemetry`, POST /api/feedback
+# into R2 `app-suggestions`), one hostname.
 # Deployed by flarepress (github.com/pdxfixit/flarepress) through this repo's
 # tools/deploy.sh: by .github/workflows/deploy.yml, or the owner's
 # `just --yes deploy`. The old addresses are move Workers kept by the owner
@@ -21,3 +22,18 @@ binding = "ASSETS"
 [[r2_buckets]]
 binding = "EVENTS"
 bucket_name = "isopix-telemetry"
+
+# Feedback (web/ui/feedback.js, handleFeedback in worker/events-worker.js): one
+# bucket shared by every app's feedback, a prefix per app (v1/isopix/...). It
+# exists already; the telemetry runner reads and empties it.
+[[r2_buckets]]
+binding = "FEEDBACK"
+bucket_name = "app-suggestions"
+
+# At most 10 feedback messages a minute to Isopix's box, counted together
+# (keyed by the app, never the sender), so a flood is cut off without reading
+# who sent it.
+[[ratelimits]]
+name = "FEEDBACK_LIMITER"
+namespace_id = "4150"
+simple = { limit = 10, period = 60 }

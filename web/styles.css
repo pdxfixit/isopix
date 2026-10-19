@@ -395,6 +395,19 @@ dialog.small-dialog::backdrop { background: rgba(0, 0, 0, 0.42); }
 .small-dialog h2 { margin: 0; font-size: 22px; }
 .small-dialog input { min-height: 48px; padding: 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; font-size: 17px; }
 .small-dialog .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+/* Feedback (web/ui/feedback.js): the button beside the version, the grown-up check and the box.
+   Both dialogs are small-dialogs: centered on every width, never a bottom sheet (owner: "centered, modalish, esc exits"). */
+.version { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; }
+.btn.feedback-open { gap: 6px; padding: 0 14px; min-height: 44px; font-size: 15px; }
+.small-dialog .gate-wrong { margin: -4px 0 0; color: #c92a2a; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .small-dialog .gate-wrong { color: #ff8787; } }
+dialog.feedback { width: min(480px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+.feedback .menu header { position: static; }
+.feedback .note { margin: 0; }
+.feedback textarea { width: 100%; min-height: 140px; max-height: 40dvh; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; font-size: 17px; user-select: text; -webkit-user-select: text; }
+.feedback textarea:focus-visible, .small-dialog input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.feedback-status { min-height: 1.35em; }
+.btn.feedback-send:not(:disabled) { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 
 .big-row-words > span:first-child { font-size: 16px; }
 .big-row-says { font-size: 13px; font-weight: 500; color: var(--muted); }
