@@ -16,4 +16,7 @@ test("the deploy's wait for CI outlasts CI's own limit, and the deploy job outla
   assert.ok(ci > 0 && deployJob > 0 && wait > 0, `read ci=${ci} wait=${wait} deploy=${deployJob}`);
   assert.ok(wait >= ci + 10, `deploy.sh waits ${wait} min for a CI job allowed ${ci}: GitHub can finish a run minutes after its job`);
   assert.ok(deployJob >= wait + 10, `deploy.yml allows ${deployJob} min, but the CI wait alone can take ${wait}, and the deploy and checks follow`);
+  // just ci-wait reports on the deploy run too, so its default must outlast that job.
+  const ciWait = Number(read('tools/ci_wait.sh').match(/^ref=origin\/main timeout=(\d+)$/m)?.[1]);
+  assert.ok(ciWait >= deployJob, `just ci-wait gives up after ${ciWait} min, before a deploy allowed ${deployJob} can end`);
 });
