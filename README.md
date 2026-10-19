@@ -71,7 +71,7 @@ LAN gets the app, but not the install.
 Keys: P pencil, E eraser, L line, F fill, S select, B brush, [ and ] grid size,
 K lock, G gutters, H move, 0 fit the drawing, + and − zoom, Ctrl+Z undo, Shift+Ctrl+Z redo,
 Ctrl+S save, Ctrl+Shift+S save as a new file, Ctrl+O open,
-Esc clears the selection (and leaves Move), M Settings, D Drawing, ? Help.
+Esc clears the selection (and leaves Move, folds the colors, ends clean view), T hides or shows the controls (clean view), M Settings, D Drawing, ? Help.
 
 ## File format
 

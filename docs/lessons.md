@@ -179,4 +179,4 @@ Each lesson folds; open the one you are editing.
 
 - Pinch inside a selection, long-press then pinch: experimental, off by default.
 - The Words section of Help: definitions, not controls.
-- Settings → Grid (gutters, finer-level hints): view preferences.
+- Settings → Display (folded colors, gutters, finer-level hints): view preferences.
