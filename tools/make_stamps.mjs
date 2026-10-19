@@ -264,8 +264,9 @@ const SHAPES = [
     patch('L', 6, [1, 2], [3, 4], WHITE), patch('L', 6, [4, 5], [4, 5], WHITE), patch('R', 6, [2, 3], [4, 5], WHITE),
   ]) },
   { id: 'pine', name: 'Pine tree', group: 'nature', cells: () => paint([
-    ...hbox([2, 2, 0], [1, 1, 2], BROWN),
-    ...hbox([0, 0, 2], [5, 5, 2], PINE), ...hbox([1, 1, 4], [3, 3, 2], PINE), ...hbox([2, 2, 6], [1, 1, 2], PINE),
+    // A trunk tall enough to show under the branches, so it is not taken for a stepped cake.
+    ...hbox([2, 2, 0], [1, 1, 3], BROWN),
+    ...hbox([0, 0, 3], [5, 5, 2], PINE), ...hbox([1, 1, 5], [3, 3, 2], PINE), ...hbox([2, 2, 7], [1, 1, 2], PINE),
   ]) },
   { id: 'bush', name: 'Bush', group: 'nature', cells: () => paint([
     ...hbox([0, 0, 0], [6, 4, 2], GREEN), ...hbox([1, 0, 2], [4, 4, 1], GREEN),
@@ -548,10 +549,11 @@ function stampOf(cells) {
 
 // The drawer's sections, in order; each starter stamp names its group.
 const GROUPS = [
-  { id: 'shapes', name: 'Shapes' }, { id: 'sacred', name: 'Sacred geometry' }, { id: 'buildings', name: 'Buildings' }, { id: 'nature', name: 'Nature' },
+  { id: 'shapes', name: 'Shapes' }, { id: 'buildings', name: 'Buildings' }, { id: 'nature', name: 'Nature' },
   { id: 'weather', name: 'Weather' }, { id: 'animals', name: 'Animals' }, { id: 'people', name: 'People' },
   { id: 'vehicles', name: 'Vehicles' }, { id: 'space', name: 'Space' }, { id: 'food', name: 'Food' },
   { id: 'letters', name: 'Letters', small: true }, { id: 'numbers', name: 'Numbers', small: true },
+  { id: 'sacred', name: 'Sacred geometry' }, // last (owner, 2026-10-19)
 ];
 const out = GROUPS.flatMap((g) => SHAPES.filter((s) => s.group === g.id))
   .map((s) => ({ id: s.id, name: s.name, group: s.group, stamp: stampOf(s.cells()) }));
