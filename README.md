@@ -115,13 +115,19 @@ What is sent is told in one place, the shared
 [privacy policy](https://privacy.pdxfixit.com/isopix/), which the switch links.
 Detail: [docs/telemetry.md](docs/telemetry.md).
 
+**Feedback** (Settings → About, beside the version): after a grown-up answers
+a sum, a box sends what you type into it, and only that, when you press Send.
+It goes to the owner only, as plain text, with no name and no IP address
+stored, and is kept 90 days. It is never part of the usage events. Please
+don't put names or contact details in it: nobody can write back.
+
 ## Layout
 
 | Path | What it holds |
 |---|---|
-| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, rendering, wiring) and `ui/` (controls, tools, input, sheets, files), `render.js` (Canvas 2D), `storage.js`, `gallery.js` (the list of drawings, pure), `stampbook.js` (starter and own stamps, pure), `palettes.js` (preset and own palettes, pure) and `stamps.js` (the starter art, made by `tools/make_stamps.mjs`), `autosave.js` (autosave copies, pure), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
+| `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, rendering, wiring) and `ui/` (controls, tools, input, sheets, files), `render.js` (Canvas 2D), `storage.js`, `gallery.js` (the list of drawings, pure), `stampbook.js` (starter and own stamps, pure), `palettes.js` (preset and own palettes, pure) and `stamps.js` (the starter art, made by `tools/make_stamps.mjs`), `autosave.js` (autosave copies, pure), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `feedback.js` (Feedback's grown-up check and request, pure; its dialogs are `ui/feedback.js`), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
-| `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2 through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
+| `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2, and `POST /api/feedback` into the shared feedback bucket, both through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
 | `test/` | `node --test` suites for the engine. |
 | `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |
 | `docs/` | `state.md`, `decisions.md`, `questions.md`, `design-brief.md`, `deploy-cloudflare.md`, `environment.md`, `justfile-style.md`. |

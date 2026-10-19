@@ -30,11 +30,31 @@ year); nothing writes new ones.
 ## What is never sent
 
 The drawing, its name, file names, anything typed (key presses inside a text
-field are not recorded, since they would spell part of a name), colors chosen,
+field are not recorded, since they would spell part of a name, and nothing
+typed into Feedback is ever an event), colors chosen,
 the symmetry center, coordinates, the IP address, the city, the User-Agent, or
 an error's message. `cleanDetails` in `web/events.js` drops any key an event
 may not carry and any value that is not a number, a boolean or one of the app's
 own words.
+
+## Feedback is not telemetry
+
+Settings → About → **Feedback** (beside the version) is the one place
+something typed leaves the device, and only when the person presses Send
+(the owner, 2026-10-19). A grown-up check comes first (a sum; kids use the
+app). It sends only what was typed into the box, as plain text, to
+`POST /api/feedback` (`web/feedback.js`, `web/ui/feedback.js`); the Worker
+(flarepress's `handleFeedback`, vendored in `worker/events-worker.js`) stores
+it as it came in the R2 bucket `app-suggestions` (binding `FEEDBACK`), which
+every app's feedback shares, under `v1/isopix/<day>/<version>-<id>.txt`: the
+version and a random id the page makes per message, no name, no device code,
+no IP. A rate limit (`FEEDBACK_LIMITER`, 10 a minute) counts the whole box,
+never the sender. The telemetry runner moves each message to the owner's
+notes and removes it after 90 days. It goes to the owner only, and the box
+says not to include names or contact details, since nobody can write back.
+`test/feedback.test.mjs` fails if `web/ui/feedback.js` reaches the usage
+events or storage, and `just look feedback` checks that the text sent never
+lands in a queued event.
 
 ## COPPA
 

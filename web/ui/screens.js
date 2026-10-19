@@ -12,6 +12,7 @@ import { buildPalette } from './controls.js';
 import { updateModeChip, updateSelbar } from './tools.js';
 import { galleryNew, renderGallery, wireGallery } from './gallery.js';
 import { makeVideo, canRecord } from './video.js';
+import { wireFeedback } from './feedback.js';
 import { openMoved, openProject, openTrace, saveFile, savePicture, saveVector, savesPng, updateFileUI } from './files.js';
 
 // ---------- help ----------
@@ -193,6 +194,7 @@ export function wireMenu() {
     const lesson = e.target.closest('[data-lesson]');
     if (lesson) startLesson(lesson.dataset.lesson);
   });
+  wireFeedback();
   $('#welcome-again').addEventListener('click', () => { $('#settings').close(); app.welcome.open(); });
   $('#sym-center').addEventListener('click', () => { app.pickCenter = true; $('#settings').close(); toast('Tap a grid point for the symmetry center'); });
   $('#trace-open').addEventListener('click', openTrace);

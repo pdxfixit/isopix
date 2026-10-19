@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as E from '../web/events.js';
-import worker, { ORIGIN, EVENTS_OPTS } from '../worker/index.js';
+import worker, { ORIGIN, EVENTS_OPTS, FEEDBACK_OPTS } from '../worker/index.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 const read = (f) => fs.readFileSync(new URL(f, import.meta.url), 'utf8');
@@ -103,6 +103,48 @@ test('site/wrangler.toml binds the R2 bucket as EVENTS, the name the Worker read
   assert.match(toml, /\[\[r2_buckets\]\]\s*\nbinding = "EVENTS"\s*\nbucket_name = "isopix-telemetry"/);
   assert.equal(EVENTS_OPTS.bucket, 'EVENTS');
   assert.deepEqual(EVENTS_OPTS.origins, [ORIGIN]);
+});
+
+// POST /api/feedback: flarepress's shared handleFeedback (vendored, same file) into the shared bucket.
+const FEEDBACK_ID = '7c2d4e6f-1a3b-4c5d-8e9f-0a1b2c3d4e5f';
+const feedbackPost = (body, headers = {}) => new Request('https://isopix.app/api/feedback', {
+  method: 'POST', body, headers: { Origin: ORIGIN, 'Content-Type': 'text/plain;charset=UTF-8', 'X-Feedback': FEEDBACK_ID, 'X-App-Version': '1.2.118', 'User-Agent': 'Mozilla/5.0 Mobile Safari', ...headers },
+});
+function fakeLimiter(ok = true) {
+  const keys = [];
+  return { keys, limit: async ({ key }) => { keys.push(key); return { success: ok }; } };
+}
+
+test('/api/feedback stores the text in the shared bucket under Isopix\'s prefix, counted by the app\'s limiter', async () => {
+  const FEEDBACK = fakeBucket(), FEEDBACK_LIMITER = fakeLimiter();
+  const text = 'The stamps are great. Could there be a waterfall? 🧊';
+  const res = await worker.fetch(feedbackPost(text), { FEEDBACK, FEEDBACK_LIMITER, ASSETS: { fetch: () => assert.fail('to assets') } }, null);
+  assert.equal(res.status, 204);
+  assert.equal(FEEDBACK.puts.length, 1);
+  assert.match(FEEDBACK.puts[0].key, new RegExp(`^v1/isopix/\\d{4}-\\d{2}-\\d{2}/1\\.2\\.118-${FEEDBACK_ID}\\.txt$`));
+  assert.equal(FEEDBACK.puts[0].body, text);
+  assert.deepEqual(FEEDBACK_LIMITER.keys, ['isopix'], 'the limiter counts the app, never the sender');
+});
+
+test('/api/feedback turns away other origins and floods, and has no shortcut for headless checks', async () => {
+  const FEEDBACK = fakeBucket();
+  assert.equal((await worker.fetch(feedbackPost('hi', { Origin: 'https://evil.example' }), { FEEDBACK, FEEDBACK_LIMITER: fakeLimiter() }, null)).status, 403);
+  assert.equal((await worker.fetch(feedbackPost('hi'), { FEEDBACK, FEEDBACK_LIMITER: fakeLimiter(false) }, null)).status, 429);
+  assert.equal((await worker.fetch(feedbackPost('hi', { 'X-Feedback': 'not-a-uuid' }), { FEEDBACK }, null)).status, 400);
+  assert.equal((await worker.fetch(feedbackPost(''), { FEEDBACK }, null)).status, 400);
+  assert.equal(FEEDBACK.puts.length, 0);
+  // Headless Chrome is stored like anyone (the deploy's checks never send feedback); only events get the shortcut.
+  assert.equal((await worker.fetch(feedbackPost('hi', { 'User-Agent': 'Mozilla/5.0 HeadlessChrome/140' }), { FEEDBACK }, null)).status, 204);
+  assert.equal(FEEDBACK.puts.length, 1);
+  assert.equal((await worker.fetch(feedbackPost('hi'), {}, null)).status, 503, 'no binding');
+  assert.equal((await worker.fetch(new Request('https://isopix.app/api/feedback'), { FEEDBACK }, null)).status, 405);
+});
+
+test('site/wrangler.toml binds the shared feedback bucket and the limiter by the names the Worker reads', () => {
+  const toml = fs.readFileSync(new URL('../site/wrangler.toml', import.meta.url), 'utf8');
+  assert.match(toml, /\[\[r2_buckets\]\]\s*\nbinding = "FEEDBACK"\s*\nbucket_name = "app-suggestions"/);
+  assert.match(toml, /\[\[ratelimits\]\]\s*\nname = "FEEDBACK_LIMITER"\s*\nnamespace_id = "4150"\s*\nsimple = \{ limit = 10, period = 60 \}/);
+  assert.deepEqual(FEEDBACK_OPTS, { bucket: 'FEEDBACK', app: 'isopix', origins: [ORIGIN], limiter: 'FEEDBACK_LIMITER' });
 });
 
 test('the vendored flarepress copies are unedited (their body matches the sha256 in their header)', async () => {

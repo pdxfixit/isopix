@@ -35,7 +35,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 | `web/engine/` | Pure logic, no DOM: lattice math, the cell model and undo log, brushes, fill, symmetry, density change and stamps, SVG, project files, view and level-follow. Each file opens with a comment saying what it owns. |
 | `web/app.js`, `web/ui/` | `app.js`: the app state, rendering, lessons, autosave and the wiring; `window.isopix` is the state, for debugging and the tools. `ui/`: one job each (`controls`, `tools`, `input`, `screens`, `files`). Tests that check what the app handles read all of them (`test/appsource.mjs`). |
 | `web/render.js` | Canvas 2D drawing: cells, edges, gutters, overlays. |
-| `worker/` | The isopix.app Worker: `POST /api/events` (usage events, [docs/telemetry.md](docs/telemetry.md)) into R2; every other path goes to the static files. |
+| `worker/` | The isopix.app Worker: `POST /api/events` and `/api/feedback` ([docs/telemetry.md](docs/telemetry.md)) into R2; everything else to the static files. |
 | `web/sw.js`, `web/version.js` | Service worker (network first) and its version stamp. |
 | `web/_headers` | Response headers for Cloudflare and `tools/serve.py` (CSP, no-cache for `sw.js`). |
 | `spec/` | The Isopix file format, spec 1.0, under CC0: the spec, a JSON Schema, examples, and reference renderers in Python and JavaScript (`test/spec.test.mjs` checks they draw what the app does). |

@@ -9,7 +9,7 @@
 // screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
-//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first name-roll loading loading-slow replay
+//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first feedback-gate feedback name-roll loading loading-slow replay
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -341,6 +341,50 @@ VIEWS.welcome = { js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${na
   if (!document.querySelector('#welcome').open) throw new Error('Show the welcome again did not open it');
   if (document.querySelector('#settings').open) throw new Error('Settings stayed open under the welcome');
   ${TOUR}` };
+// Feedback (web/ui/feedback.js): Settings → About → Feedback opens the grown-up
+// check; a wrong answer says so and keeps it open; the right one opens the box.
+// Both are centered at every width, and Esc (requestClose, as the key does)
+// closes each with focus back on the button.
+const CENTERED = (sel) => `{ const r = document.querySelector('${sel}').getBoundingClientRect();
+  if (Math.abs(r.left - (innerWidth - r.right)) > 2 || Math.abs(r.top - (innerHeight - r.bottom)) > 2) throw new Error('${sel} is not centered: ' + JSON.stringify([r.left, r.top, innerWidth - r.right, innerHeight - r.bottom].map(Math.round))); }`;
+const GATE = `${q('#settings-open')} ${nap} ${q('#feedback-open')} ${nap}
+  const gate = document.querySelector('#feedback-gate');
+  if (!gate.open || !document.querySelector('#settings').open) throw new Error('Feedback did not open the grown-up check over Settings');
+  const [, ga, gb] = document.querySelector('#gate-question').textContent.match(/what is (\\d+) \\+ (\\d+)\\?/) || [];
+  if (!ga) throw new Error('the check asks no sum: ' + document.querySelector('#gate-question').textContent);
+  const answer = (v) => { const i = document.querySelector('#gate-answer'); i.value = String(v); i.dispatchEvent(new Event('input', { bubbles: true })); ${q('#gate-ok')} };`;
+const ESC = (sel) => `{ const d = document.querySelector('${sel}'); if (!d.requestClose) throw new Error('no requestClose in this Chrome'); d.requestClose(); await new Promise((r) => setTimeout(r, 50));
+  if (d.open) throw new Error('Esc did not close ${sel}');
+  if (document.activeElement !== document.querySelector('#feedback-open')) throw new Error('focus went to ' + (document.activeElement.id || document.activeElement.tagName) + ', not Feedback'); }`;
+VIEWS['feedback-gate'] = { js: `${GATE} ${CENTERED('#feedback-gate')}
+  answer(+ga + +gb + 1); ${nap}
+  if (!gate.open || document.querySelector('#gate-wrong').hidden) throw new Error('a wrong answer did not say so, or closed the check');
+  if (document.querySelector('#feedback').open) throw new Error('a wrong answer opened Feedback');` };
+VIEWS.feedback = { js: `const ev = window.isopix.events; ev.clear(); ${GATE} ${ESC('#feedback-gate')}
+  ${q('#feedback-open')} ${nap} { const [, a, b] = document.querySelector('#gate-question').textContent.match(/(\\d+) \\+ (\\d+)/); answer(+a + +b); } ${nap}
+  const box = document.querySelector('#feedback'), text = document.querySelector('#feedback-text'), send = document.querySelector('#feedback-send');
+  if (gate.open || !box.open) throw new Error('the right answer did not open Feedback');
+  ${CENTERED('#feedback')} ${ESC('#feedback')}
+  ${q('#feedback-open')} ${nap} { const [, a, b] = document.querySelector('#gate-question').textContent.match(/(\\d+) \\+ (\\d+)/); answer(+a + +b); } ${nap}
+  if (document.activeElement !== text) throw new Error('the box does not have focus');
+  if (!send.disabled) throw new Error('Send is on with nothing typed');
+  const type = (v) => { text.value = v; text.dispatchEvent(new Event('input', { bubbles: true })); };
+  type('   '); if (!send.disabled) throw new Error('Send is on with only spaces');
+  const said = 'Zebra crossing idea from a look run';
+  type(said); if (send.disabled) throw new Error('Send is off with something typed');
+  const sent = [], realFetch = window.fetch;
+  const reply = (status) => { window.fetch = async (url, init) => { sent.push({ url, init }); return new Response(null, { status }); }; };
+  const status = () => document.querySelector('#feedback-status').textContent;
+  reply(503); send.click(); await new Promise((r) => setTimeout(r, 100));
+  if (status() !== "Couldn't send. Please try again." || text.value !== said) throw new Error('a failed send said ' + status() + ' and left ' + text.value);
+  reply(204); send.click(); await new Promise((r) => setTimeout(r, 100));
+  window.fetch = realFetch;
+  if (status() !== 'Thanks! Sent. 💌' || text.value !== '') throw new Error('a sent message said ' + status() + ' and left ' + text.value);
+  const [one, two] = sent, h = one.init.headers;
+  if (sent.length !== 2 || one.url !== '/api/feedback' || one.init.body !== said || one.init.credentials !== 'omit' || h['content-type'] !== 'text/plain;charset=UTF-8'
+    || h['x-app-version'] !== window.ISOPIX_VERSION || !/^[0-9a-f-]{36}$/.test(h['x-feedback']) || two.init.headers['x-feedback'] !== h['x-feedback']) throw new Error('the requests were ' + JSON.stringify(sent));
+  if (JSON.stringify(ev.queued()).includes('Zebra')) throw new Error('the feedback text reached a usage event');
+  type('The stamps drawer is great. Could the paper be blue?');` };
 // A first visit: a fresh profile (storage cleared, never marked welcomed)
 // opens on the card by itself, over an empty drawing.
 const SILLY = /^([A-Z])[a-z]+ \1[a-z]+$/;
