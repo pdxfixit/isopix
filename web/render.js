@@ -108,7 +108,7 @@ export class Renderer {
   }
 
   // s: {drawing, view, level, opts: {gutters, hint, hintLevels}, theme: {bg, line, accent},
-  //     overlay: {region, ghost: [cells], live: {x0, y0, x1, y1}, symmetry: {mode, center}, trace: {img, rect, opacity}}}
+  //     overlay: {region, ghost: [cells], live: {x0, y0, x1, y1}, pointer: {x0, y0, x1, y1}, symmetry: {mode, center}, trace: {img, rect, opacity}}}
   draw(s) {
     const { ctx, dpr } = this;
     const v = s.view;
@@ -281,6 +281,15 @@ export class Renderer {
       ctx.setLineDash([6, 4]);
       ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
       ctx.setLineDash([]);
+    }
+    // The live stamp's pointer: from its foot to the handle that turns and sizes it.
+    if (o.pointer) {
+      const [x0, y0] = [(o.pointer.x0 - t.ox) * t.zoom, (o.pointer.y0 - t.oy) * t.zoom];
+      const [x1, y1] = [(o.pointer.x1 - t.ox) * t.zoom, (o.pointer.y1 - t.oy) * t.zoom];
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+      ctx.lineWidth = 4; ctx.strokeStyle = s.theme.bg; ctx.stroke();
+      ctx.lineWidth = 2; ctx.strokeStyle = s.theme.accent; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x0, y0, 5, 0, Math.PI * 2); ctx.fillStyle = s.theme.accent; ctx.fill();
     }
     if (o.region) {
       const paths = chunked(regionBoundary(o.region), (path, [a, b]) => { path.moveTo(...P(o.region.l, ...a)); path.lineTo(...P(o.region.l, ...b)); });

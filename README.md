@@ -46,8 +46,10 @@ LAN gets the app, but not the install.
   (a cube face), hexagon (a little cube), trapezoid (half a hexagon), big
   triangle, drag a face, drag a cube, and stamp.
 - **Stamp**: pick one in the Stamps drawer, then tap (or press and slide to
-  aim). The stamp just placed stays outlined with a round handle: drag it out
-  for bigger, in for smaller (quarter steps while small, made of finer cells so
+  aim). The stamp just placed stays outlined with a round handle out from its
+  foot: drag it round the foot to turn it, as Drag a face picks its face (3D
+  stamps face that way; flat ones and letters lie on the floor or a wall); drag
+  it out for bigger, in for smaller (quarter steps while small, made of finer cells so
   the edges stay clean; then halves, then whole steps), or use − and + on the
   stamp bar (`,` and `.` on a keyboard). The cube button lays a flat stamp or
   a letter on the floor or a wall; Spin (`R`) turns a 3D stamp a quarter turn. The next stamps keep that size and place; the

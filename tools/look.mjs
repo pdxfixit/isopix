@@ -320,7 +320,7 @@ VIEWS['stamp-bigger'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')}
 // A placed stamp stays live to be sized (owner, 2026-10-19, docs/spec-stamp-size-turn.md):
 // a Cat placed shows the stamp bar at 1× and the handle on screen; + twice makes it 1½×,
 // three times as many cells each way at one level finer, still one undo step; the handle
-// dragged half a size in gives the Cat back exactly; the next tap places a Cat at the size
+// dragged half a reach toward its foot gives the Cat back exactly, unturned; the next tap places a Cat at the size
 // in use and ends the first one's sizing; Undo takes the second away whole. Ends with the
 // third Cat live at 1¼×.
 VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
@@ -334,11 +334,14 @@ VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   ${q('#stamp-bigger')} ${nap} ${q('#stamp-bigger')} ${nap}
   if (a.drawing.cells.size !== 9 * n || size() !== '1½×' || a.drawing.undoStack.length !== 1) throw new Error('+ twice gave ' + a.drawing.cells.size + ' cells at ' + size() + ' in ' + a.drawing.undoStack.length + ' undo steps, not ' + 9 * n + ' at 1½× in 1');
   if ([...a.drawing.cells.keys()].some((k) => +k.split(',')[0] !== a.level + 1)) throw new Error('1½× is not made of cells one level finer');
-  // The handle dragged back half a corner-length toward the stamp, from wherever it sits.
-  const v = a.live, dx = -0.5 * v.u[0] * a.view.zoom, dy = -0.5 * v.u[1] * a.view.zoom;
+  // The handle dragged half a reach straight toward the Cat's foot, from wherever it sits.
+  const v = a.live, sc = 2 ** -v.A.l, r = document.querySelector('#stage').getBoundingClientRect();
+  const [fx, fy] = a.view.toScreen(v.A.q * Math.sqrt(3) / 2 * sc, (v.A.p + v.A.q / 2) * sc).map((n, i) => n + (i ? r.top : r.left));
   const fh = (type, x, y) => h.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 3, pointerType: 'touch', isPrimary: true, bubbles: true, buttons: type === 'pointerup' ? 0 : 1 }));
-  const h0 = h.getBoundingClientRect(), x0 = h0.x + 22, y0 = h0.y + 22;
+  const h0 = h.getBoundingClientRect(), x0 = h0.x + 22, y0 = h0.y + 22, len = Math.hypot(fx - x0, fy - y0), step = 0.5 * v.reach * a.view.zoom;
+  const dx = (fx - x0) / len * step, dy = (fy - y0) / len * step;
   fh('pointerdown', x0, y0); fh('pointermove', x0 + dx / 2, y0 + dy / 2); fh('pointermove', x0 + dx, y0 + dy); fh('pointerup', x0 + dx, y0 + dy); ${nap}
+  if (a.stampSpin !== 0) throw new Error('dragging the handle toward the foot turned the Cat');
   if (snap() !== placed || size() !== '1×' || a.drawing.undoStack.length !== 1) throw new Error('dragging the handle half a size in did not give the Cat back exactly (' + size() + ')');
   ${q('#stamp-bigger')} ${nap}
   ${TAP('innerWidth * 0.25', 'innerHeight * 0.3')} ${nap}
@@ -388,6 +391,37 @@ VIEWS['stamp-spin'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   ${STAMPS_OPEN} ${SECTION('space')} ${TILE('space', 'Moon')} ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}
   if (!sb.hidden || pb.hidden) throw new Error('the Moon showed Spin, or no plane button');
   ${q('#undo')} ${nap} ${STAMPS_OPEN} ${TILE('animals', 'Cat')} a.stampSpin = 2; ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}` };
+// Turning by the handle, like Drag a face (owner, 2026-10-19): the Cat's handle dragged
+// round its foot to down-left faces it left, to up-left away to the left, in one undo
+// step; a Moon's handle dragged sideways lays it on the floor, down-right on the left
+// wall, down-left on the right wall, straight up stands it again. Ends with the Moon
+// on the right wall, its pointer showing.
+const ROUND = `const sc2 = 2 ** -a.live.A.l, rr = document.querySelector('#stage').getBoundingClientRect(), hh = document.querySelector('#stamp-handle');
+  const foot = () => a.view.toScreen(a.live.A.q * Math.sqrt(3) / 2 * sc2, (a.live.A.p + a.live.A.q / 2) * sc2).map((n, i) => n + (i ? rr.top : rr.left));
+  const fire2 = (type, x, y) => hh.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 4, pointerType: 'touch', isPrimary: true, bubbles: true, buttons: type === 'pointerup' ? 0 : 1 }));
+  // Drag the handle to the angle deg, as far from the foot as it is now.
+  const swing = async (deg) => {
+    const b = hh.getBoundingClientRect(), x0 = b.x + 22, y0 = b.y + 22, [fx, fy] = foot(), R = Math.hypot(x0 - fx, y0 - fy), t = deg * Math.PI / 180;
+    fire2('pointerdown', x0, y0); fire2('pointermove', fx + R * Math.cos(t), fy + R * Math.sin(t)); fire2('pointerup', fx + R * Math.cos(t), fy + R * Math.sin(t));
+    await new Promise((res) => setTimeout(res, 150));
+  };`;
+VIEWS['stamp-turn'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
+  const a = window.isopix; a.view.zoom /= 2;
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
+  ${ROUND}
+  await swing(150);
+  if (a.stampSpin !== 1 || a.drawing.undoStack.length !== 1) throw new Error('dragging round to down-left did not face the Cat left in one undo step (spin ' + a.stampSpin + ')');
+  await swing(215);
+  if (a.stampSpin !== 2) throw new Error('dragging round to up-left did not face it away to the left (spin ' + a.stampSpin + ')');
+  ${q('#stamp-done')} ${nap} ${q('#undo')} ${nap} a.stampSpin = 0;
+  ${STAMPS_OPEN} ${SECTION('space')} ${TILE('space', 'Moon')} ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
+  const faces = () => [...new Set([...a.drawing.cells.values()].map((v) => v.f || '-'))].sort().join();
+  if (faces() !== '-') throw new Error('the Moon did not start upright');
+  await swing(0); if (faces() !== 'T') throw new Error('dragging sideways did not lay it on the floor: ' + faces());
+  await swing(60); if (faces() !== 'L') throw new Error('dragging down-right did not stand it on the left wall: ' + faces());
+  await swing(270); if (faces() !== '-') throw new Error('dragging straight up did not stand it upright: ' + faces());
+  await swing(120); if (faces() !== 'R') throw new Error('dragging down-left did not stand it on the right wall: ' + faces());
+  if (a.drawing.undoStack.length !== 1) throw new Error('turning took more than one undo step');` };
 // A stamp of one's own goes in Mine and stays there in a new drawing.
 // Palettes (owner, 2026-10-18): a preset is copied into Mine on the first
 // eyedropper pick, a second pick keeps the first, Mine is stored; ⋯ takes a

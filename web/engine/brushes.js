@@ -35,6 +35,39 @@ export function nearestDir(dp, dq) {
   return { i, V: SECTOR_DIRS[i] };
 }
 
+// Turning a placed stamp by dragging its handle round its foot, the way Drag a face
+// picks its face (owner, 2026-10-19: "mimic draw face behavior as close as
+// possible"). Angles are on screen, in degrees, y down. A flat stamp lies in the
+// plane Drag a face would draw for a drag that way, from the same six slices:
+// sideways the floor, down-right or up-left the left wall, down-left or up-right
+// the right wall; within UPRIGHT° of straight up or down, where the slices meet, a
+// picture that can stand upright does. A 3D stamp faces the quarter it is dragged
+// into: 0 down-right (as drawn), 1 down-left, 2 up-left, 3 up-right. A pose changes
+// only once the drag is STICKY° past the edge of the one it has, so a wobble while
+// sizing does not turn it.
+export const PLANE_OF_FACE = { T: 'floor', L: 'left', R: 'right' };
+const UPRIGHT = 15, STICKY = 8;
+const deg = (a) => ((a % 360) + 360) % 360;
+function rawPose(kind, a, planes) {
+  a = deg(a);
+  if (kind === 'spin') return Math.floor(a / 90);
+  if (planes.includes('upright') && (Math.abs(a - 90) < UPRIGHT || Math.abs(a - 270) < UPRIGHT)) return 'upright';
+  return ['floor', 'left', 'right'][Math.floor(deg(a + 30) / 60) % 3];
+}
+// The pose for a drag at angle a: 'spin' gives 0 to 3, 'plane' one of planes.
+export function poseAt(kind, a, current = null, planes = []) {
+  const p = rawPose(kind, a, planes);
+  if (current === null || p === current) return p;
+  return rawPose(kind, a - STICKY, planes) === current || rawPose(kind, a + STICKY, planes) === current ? current : p;
+}
+// Where the handle sits for a pose: the way a 3D stamp faces; the middle of a
+// plane's slice, on the side (0 or 1) it was last dragged to; upright, straight up.
+export function poseAngle(kind, pose, side = 0) {
+  if (kind === 'spin') return [30, 150, 210, 330][pose];
+  if (pose === 'upright') return 270;
+  return { floor: 0, left: 60, right: 120 }[pose] + 180 * side;
+}
+
 // Cube face of a cell relative to a center vertex, by centroid angle:
 // top from -150 to -30 deg, right from -30 to 90, left from 90 to 210.
 export function cubeFace(cell, v) {
