@@ -15,6 +15,7 @@ test('the starter stamps, group by group: the eight the owner picked, the animal
   const by = Object.fromEntries(SB.GROUPS.map((g) => [g.name, SB.STARTER.filter((s) => s.group === g.id).map((s) => s.name)]));
   assert.deepEqual(by, {
     Shapes: ['Cube', 'Stairs', 'Pyramid', 'Star'],
+    'Sacred geometry': ['Seed of Life', 'Flower of Life', 'Fruit of Life', 'Merkaba', 'Mandala', 'Sierpinski', 'Star cube'],
     Buildings: ['House', 'Wall', 'Castle', 'Tower', 'Bridge'],
     Nature: ['Tree', 'Flower', 'Rock', 'Mushroom', 'Pine tree', 'Bush'],
     Weather: ['Sun', 'Cloud', 'Rainbow', 'Rain cloud', 'Snowflake', 'Lightning'],
