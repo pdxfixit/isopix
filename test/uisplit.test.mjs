@@ -32,3 +32,16 @@ test('no web/ui module uses what it imports from app.js while it loads', () => {
     }
   }
 });
+
+// `just test` syntax-checks each module first (node --check), because the
+// tests read web/ui/*.js as text and never import them: a syntax error there
+// passed every test and broke the app at start. web/ui/ was missing from the
+// list until 2026-10-19; this fails when a folder of modules is left out.
+test('just test syntax-checks every folder of modules in web/ and worker/', () => {
+  const recipe = fs.readFileSync(new URL('../justfile', import.meta.url), 'utf8').match(/^\s*@for f in ([^;]+); do node --check/m)?.[1].split(/\s+/) || [];
+  const folders = ['web', 'worker', ...fs.readdirSync(web, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `web/${d.name}`)];
+  for (const dir of folders) {
+    const hasJs = fs.readdirSync(new URL(`../${dir}/`, import.meta.url)).some((f) => f.endsWith('.js'));
+    if (hasJs) assert.ok(recipe.includes(`${dir}/*.js`), `just test does not run node --check on ${dir}/*.js`);
+  }
+});
