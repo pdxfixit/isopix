@@ -68,7 +68,7 @@ export const SECTIONS = [
       { name: 'Save', from: '#top-save', says: 'On wider screens: Save drawing, as in the Drawing sheet. A dot means changes since the last save to a file.' },
       { name: 'Help', from: '#help-top', says: 'This sheet: every button, gesture and key. It sits next to Settings when there is room, and always in Settings, next to ✕.' },
       { name: 'Settings', from: '#settings-open', says: 'Drawing, Grid, Selection, Learning and About. Each part folds; its chip shows what is set.' },
-      { name: 'Feedback', from: '#feedback-open', text: '💌', says: 'Beside the version at the bottom of Settings: send the people who make Isopix an idea or a problem. A grown-up answers a sum first. Only what you type is sent, when you press Send.' },
+      { name: 'Feedback', from: '#feedback-open', text: '💌', says: 'Send feedback, at the bottom of Settings: send the people who make Isopix an idea or a problem. A grown-up answers a sum first. Only what you type is sent, when you press Send.' },
       { name: 'Welcome', from: '#welcome-again', text: '👋', says: 'Show the welcome again, at the bottom of Settings, opens the card a first visit shows. Its Show me around starts the Basics lesson.' },
       { name: 'Undo', from: '#undo', says: 'Takes back the last change. There is no limit.' },
       { name: 'Redo', from: '#redo', says: 'Puts it back.' },
