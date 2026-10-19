@@ -53,7 +53,7 @@ test('a drawing saved before spec 1.0 opens the same (temporary converter)', () 
   assert.equal(cells(back), cells(d));
   assert.equal(back.paper, 'dark');
   assert.equal(back.undoStack.length, 1);
-  assert.deepEqual(P.meta(old), { name: 'Old', savedAt: 7, view: undefined, stamps: undefined, symmetry: undefined, trace: undefined, log: old.log });
+  assert.deepEqual(P.meta(old), { name: 'Old', savedAt: 7, view: undefined, stamps: undefined, palette: undefined, symmetry: undefined, trace: undefined, log: old.log });
   assert.equal(P.fromOldLayout(old).picture.name, 'Old');
   assert.ok(P.hasContent(old) && !P.hasContent({ format: 'isopix', version: 1, picture: { cells: {} } }));
 });

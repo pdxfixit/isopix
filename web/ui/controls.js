@@ -12,6 +12,7 @@ import { $, app, emit, palette, requestRender, set, toast } from '../app.js';
 import { setTool } from './tools.js';
 import { zoomBy } from './input.js';
 import { syncMenu } from './screens.js';
+import { currentPalette, openPalettes, pickAny } from './palettes.js';
 
 // ---------- level ----------
 export function computeLevel(reset = false) {
@@ -158,12 +159,24 @@ export function buildPalette() {
   const box = $('#palette');
   box.innerHTML = '';
   const s = app.settings;
+  // The palette tile: four of the palette's colors; it opens Palettes (web/ui/palettes.js).
+  if (!s.limited) {
+    const p = currentPalette(), cs = palette();
+    const chip = document.createElement('button');
+    chip.className = 'swatch tool pal-chip';
+    chip.id = 'palettes-open';
+    chip.setAttribute('aria-label', `Palettes: painting from ${p.name}`);
+    chip.title = `Palettes: ${p.name}`;
+    chip.innerHTML = [0, 1, 2, 3].map((i) => `<i aria-hidden="true" style="background:${cs[Math.floor(i * cs.length / 4)] || 'transparent'}"></i>`).join('');
+    chip.addEventListener('click', openPalettes);
+    box.append(chip);
+  }
   for (const c of palette()) {
     const b = document.createElement('button');
     b.className = 'swatch';
     b.setAttribute('role', 'radio');
     b.setAttribute('aria-checked', String(c === s.color));
-    b.setAttribute('aria-label', inkName(app.drawing.paper, c) || `Custom color ${c}`);
+    b.setAttribute('aria-label', inkName(app.drawing.paper, c) || `Color ${c}`);
     b.style.setProperty('--c', c);
     if (s.shading) b.innerHTML = `<span class="tones" aria-hidden="true"><i style="background:${shade(c, 'T', app.drawing.light)}"></i><i style="background:${shade(c, 'L', app.drawing.light)}"></i><i style="background:${shade(c, 'R', app.drawing.light)}"></i></span>`;
     b.addEventListener('click', () => { set('color', c); buildPalette(); pickedColor(); emit('color', { custom: false }); });
@@ -189,8 +202,8 @@ export function buildPalette() {
     custom.setAttribute('aria-label', 'Pick any color');
     custom.innerHTML = `${GLYPHS.eyedropper}<input type="color" aria-label="Pick any color">`;
     const input = custom.querySelector('input');
-    input.value = s.custom || s.color;
-    input.addEventListener('change', () => { set('custom', input.value); set('color', input.value); buildPalette(); pickedColor(); emit('color', { custom: true }); });
+    input.value = s.color;
+    input.addEventListener('change', () => pickAny(input.value));
     pinned.append(custom);
   }
   const sh = document.createElement('button');
@@ -206,7 +219,7 @@ export function buildPalette() {
 }
 
 // A color pick on the Eraser means "paint now": switch to the Pencil (palette.js).
-function pickedColor() {
+export function pickedColor() {
   const next = toolAfterColorPick(app.settings.tool);
   if (next !== app.settings.tool) setTool(next);
 }

@@ -42,6 +42,7 @@
   <link rel="modulepreload" href="layer.js">
   <link rel="modulepreload" href="move.js">
   <link rel="modulepreload" href="palette.js">
+  <link rel="modulepreload" href="palettes.js">
   <link rel="modulepreload" href="render.js">
   <link rel="modulepreload" href="sheets.js">
   <link rel="modulepreload" href="prompts.js">
@@ -57,6 +58,7 @@
   <link rel="modulepreload" href="ui/files.js">
   <link rel="modulepreload" href="ui/gallery.js">
   <link rel="modulepreload" href="ui/input.js">
+  <link rel="modulepreload" href="ui/palettes.js">
   <link rel="modulepreload" href="ui/screens.js">
   <link rel="modulepreload" href="ui/stamps.js">
   <link rel="modulepreload" href="ui/tools.js">
@@ -385,6 +387,35 @@
       <div id="stamps-grid" class="stamp-grid" role="tabpanel"></div>
       <p id="stamps-empty" class="note" hidden>None yet. Select part of a drawing, then Save as stamp: it lands here, ready in every drawing.</p>
       <p class="note">Tap one, then tap the grid. It grows and shrinks with the grid size.</p>
+    </form>
+  </dialog>
+  <!-- Palettes (owner, 2026-10-18): the person's own first, then the presets, which never change (web/ui/palettes.js). -->
+  <dialog id="palettes" class="drawer" aria-labelledby="palettes-title">
+    <form method="dialog" class="menu">
+      <header>
+        <h2 id="palettes-title">Palettes</h2>
+        <button class="btn" value="close" aria-label="Close palettes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <h3>Mine</h3>
+      <div id="palettes-mine" class="pal-cards"></div>
+      <p id="palettes-empty" class="note" hidden>None yet. Pick a color with the eyedropper and it lands here, kept in every drawing.</p>
+      <button type="button" id="palette-new" class="btn pal-new" aria-label="New palette, starting with the color in use">+ New palette</button>
+      <h3>Presets</h3>
+      <div id="palettes-presets" class="pal-cards"></div>
+      <p class="note">Presets stay as they are. A color you pick with the eyedropper on one makes your own copy, with that color added.</p>
+    </form>
+  </dialog>
+  <dialog id="palette-edit" class="small-dialog" aria-labelledby="palette-edit-title">
+    <form method="dialog" class="menu">
+      <h2 id="palette-edit-title">Change palette</h2>
+      <label for="palette-edit-name">Name</label>
+      <input type="text" id="palette-edit-name" maxlength="40" autocomplete="off" spellcheck="false">
+      <p class="note">Tap a color to take it out.</p>
+      <div id="palette-edit-colors" class="pal-edit-colors"></div>
+      <div class="row">
+        <button type="button" class="btn wide danger" id="palette-delete">Delete palette</button>
+        <button class="btn wide" value="ok">Done</button>
+      </div>
     </form>
   </dialog>
   <dialog id="rename" class="small-dialog" aria-labelledby="rename-title">

@@ -9,6 +9,8 @@ import * as store from '../storage.js';
 import { fileKey } from '../gallery.js';
 import { addDrawing } from './gallery.js';
 import { addToMine } from './stamps.js';
+import { adoptPalette, currentPalette } from './palettes.js';
+import { isPreset } from '../palettes.js';
 import { fileBase, saveDot } from '../sheets.js';
 import { paperOf } from '../engine/paper.js';
 import { keysToCopy, landing } from '../move.js';
@@ -126,6 +128,9 @@ export function projectData() {
   const s = app.settings;
   const extra = { view: { zoom: app.view.zoom, cx: app.view.cx, cy: app.view.cy }, stamps: app.stamps, symmetry: { mode: s.symmetry, l: s.symL, p: s.symP, q: s.symQ } };
   extra.name = app.drawingName;
+  // The palette of one's own in use travels with the drawing; opening the file adds it to Mine.
+  const pal = currentPalette();
+  if (!s.limited && !isPreset(pal.id)) extra.palette = { name: pal.name, colors: pal.colors };
   extra.savedAt = Date.now();
   // The trace picture travels with the drawing (made smaller when it was placed).
   if (app.trace && app.trace.src) extra.trace = { src: app.trace.src, rect: app.trace.rect };
@@ -218,6 +223,7 @@ export async function openProject() {
     const obj = await projectFromFile(f);
     // It joins this browser's drawings; the one open now stays in the list.
     await addDrawing(obj, { file: { name: f.name, at: Date.now(), via: 'open', dirty: false, handle: r.handle || null }, say: `Opened ${f.name}` });
+    adoptPalette(P.meta(obj).palette);
     if ($('#settings').open) $('#settings').close(); if ($('#drawing').open) $('#drawing').close();
   } catch (err) { toast(`Could not open it: ${err.message}`); }
 }

@@ -61,11 +61,13 @@ export const LESSONS = [
     ],
   },
   {
-    id: 'colors', title: 'Colors and shading', about: 'Pick colors, pick any color, and see how auto-shade works.',
+    id: 'colors', title: 'Colors and shading', about: 'Pick colors, pick any color, switch palettes, and see how auto-shade works.',
     steps: [
       { id: 'pick', target: '#palette .swatch:not(.tool)', say: 'Tap a color.', done: ev('color', (e) => !e.custom), covers: ['Swatch'] },
       { id: 'any', target: '#pick-any', optional: true,
         say: 'The eyedropper picks any color of your own. Try it.', done: ev('color', (e) => e.custom), covers: ['Any color'] },
+      { id: 'palettes', target: '#palettes-open', optional: true,
+        say: 'The square tile opens Palettes: yours first, then presets like Sunset and Ocean. Open it and pick one.', done: ev('palette'), covers: ['Palettes'] },
       { id: 'flat', setup: { tool: 'pencil', brush: 'hexagon', shading: true }, target: '#shade-toggle',
         say: { touch: 'Turn auto-shade off with the cube button, then tap the paper: one flat color.', mouse: 'Turn auto-shade off with the cube button, then click the paper: one flat color.', pen: 'Turn auto-shade off with the cube button, then tap the paper: one flat color.' },
         done: after(ev('shading', (e) => !e.on), stroke()), covers: ['Auto-shade'] },
@@ -218,6 +220,7 @@ export const NOT_TAUGHT = {
   Welcome: 'it is the card that starts the lessons',
   'Save a copy': 'it shows only after Save drawing has a file; Help explains it',
   Help: 'the lessons live in it',
+  'Change a palette': 'it needs a palette of one\'s own first; Help explains it',
 };
 // The Help sections the drift test checks (Words, Gestures and Keys explain, they are not controls).
 export const TAUGHT_SECTIONS = ['Tools', 'Brush shapes', 'Line styles and selection shapes', 'Top buttons', 'Drawing sheet', 'Grid size', 'Zoom and move', 'Selection bar', 'Colors'];
