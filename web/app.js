@@ -21,7 +21,7 @@ import * as AS from './autosave.js';
 import * as G from './gallery.js';
 import * as SB from './stampbook.js';
 import * as PB from './palettes.js';
-import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLock, updateZoomUI } from './ui/controls.js';
+import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, openColors, setClean, toggleLock, updateZoomUI, wireClean, wireColorsFold } from './ui/controls.js';
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, scaleSelection, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
 import { loadMine, saveMine, wireStamps } from './ui/stamps.js';
@@ -39,7 +39,7 @@ const systemPaper = () => (matchMedia('(prefers-color-scheme: dark)').matches ? 
 export const DEFAULTS = {
   tool: 'pencil', brush: 'triangle', lineStyle: 'strip', marquee: 'hexagon',
   color: '#3a86ff', shading: true, notch: 2, locked: false, lockedLevel: 3,
-  protect: 'protect', gutters: true, hint: 'faint', hintLevels: 1,
+  protect: 'protect', gutters: true, hint: 'faint', hintLevels: 1, foldColors: false,
   symmetry: 'off', symP: 0, symQ: 0, symL: 0,
   densityHandle: true, densityPinch: false, densityLongpress: false,
   coarsen: 'crisp', snap: false, limited: false, limitedCount: 3, gray: false, traceOpacity: 0.3,
@@ -213,6 +213,7 @@ function beginPractice() {
   app.file = { name: null, at: null, via: null, dirty: false, handle: null };
   setName('Practice');
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
+  setClean(false); openColors(false); // a lesson points at the controls
   buildPalette(); syncMenu(); afterChange({ changed: false }); updateFileUI();
 }
 async function endPractice(keep) {
@@ -495,6 +496,8 @@ async function boot() {
   readTheme();
   buildNotches();
   buildZoom();
+  wireClean();
+  wireColorsFold();
   buildPalette();
   wire();
   setTool(app.settings.tool);

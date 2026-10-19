@@ -8,7 +8,7 @@ import { cleanName, savedAgo, fileLine, unsavedToFile, chipText, SECTION_IDS, re
 import { paperName } from '../engine/paper.js';
 import { sillyName } from '../sillynames.js';
 import { $, app, emit, flipPaper, readDone, requestRender, scheduleSave, set, startLesson, startReplay, toast } from '../app.js';
-import { buildPalette } from './controls.js';
+import { buildPalette, openColors } from './controls.js';
 import { updateModeChip, updateSelbar } from './tools.js';
 import { galleryNew, renderGallery, wireGallery } from './gallery.js';
 import { makeVideo, canRecord } from './video.js';
@@ -104,6 +104,7 @@ export function syncMenu() {
   $('#opt-longpress').checked = s.densityLongpress;
   $('#opt-limited').checked = s.limited;
   $('#opt-gray').checked = s.gray;
+  $('#opt-fold-colors').checked = s.foldColors;
   $('#opt-save-png').checked = s.savePng;
   $('#opt-usage').checked = s.usage;
   $('#opt-save-png-row').hidden = !store.offersIsopixFile({ ios: store.isIOS() });
@@ -111,6 +112,8 @@ export function syncMenu() {
   $('#file-save-says').textContent = savesPng() ? 'Opens again in Isopix to keep drawing' : 'An .isopix file that opens again in Isopix';
   $('#opt-trace').value = String(s.traceOpacity);
   document.body.classList.toggle('gray', s.gray);
+  // Folded colors (styles.css, under 768 px wide); never in a lesson, whose steps point at the swatches.
+  document.body.classList.toggle('fold-colors', !!s.foldColors && !app.practice);
   const dark = paperName(app.drawing.paper) === 'dark';
   $('#paper-flip').textContent = dark ? 'Paper: dark · switch to light' : 'Paper: light · switch to dark';
   $('#light-flip').textContent = app.drawing.light === 'right' ? 'Light from the right · switch to left' : 'Light from the left · switch to right';
@@ -174,6 +177,7 @@ export function wireMenu() {
   check('#opt-longpress', 'densityLongpress');
   check('#opt-limited', 'limited', buildPalette);
   check('#opt-gray', 'gray', () => { syncMenu(); emit('gray', { on: app.settings.gray }); });
+  check('#opt-fold-colors', 'foldColors', () => { openColors(false); syncMenu(); });
   check('#opt-save-png', 'savePng', () => { updateFileUI(); syncMenu(); });
   check('#opt-usage', 'usage');
   $('#opt-hint-levels').addEventListener('change', (e) => { set('hintLevels', +e.target.value); requestRender(); });

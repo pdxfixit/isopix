@@ -8,7 +8,7 @@ import { keyFor } from '../keys.js';
 import { protectSplit } from '../engine/protect.js';
 import { dropOnSecondFinger, oneFinger, multiTap } from '../engine/gesture.js';
 import { $, DRAG_BRUSHES, app, canvas, emit, requestRender, set, stopReplay, symCenter, toast } from '../app.js';
-import { chooseNotch, computeLevel, fitView, toggleLock } from './controls.js';
+import { chooseNotch, clean, colorsOpen, computeLevel, fitView, openColors, setClean, toggleLock } from './controls.js';
 import { applyCells, applyEdges, brushAt, closePopover, commit, doFill, eraseEdgesNear, marqueeRegion, openPopover, preview, previewEnd, previewStart, previewTo, redo, reportSkips, setMoveMode, setTool, stampItemsAt, undo, updateCursor, updateSelbar } from './tools.js';
 import { openDrawing, openHelp, openSettings, syncMenu } from './screens.js';
 import { openProject, saveFile } from './files.js';
@@ -98,6 +98,7 @@ export function onDown(e) {
   // Done playing or Video ready: drawing again puts the bar away (not while a video is being made).
   if (barMode() === 'ended' || barMode() === 'ready') setBar(null);
   closePopover();
+  if (colorsOpen()) openColors(false);
   try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or already gone */ }
   const [x, y] = local(e);
   app.lastPointer = e.pointerType;
@@ -365,9 +366,12 @@ export function onKey(e) {
     save: () => saveFile(),
     saveas: () => saveFile({ asNew: true }),
     open: () => openProject(),
+    clean: () => setClean(!clean),
     escape: () => {
-      const nothingElse = $('#popover').hidden && !app.moveMode && !app.selection;
+      const nothingElse = $('#popover').hidden && !app.moveMode && !app.selection && !colorsOpen() && !clean;
       closePopover(); if (app.moveMode) setMoveMode(false);
+      if (colorsOpen()) openColors(false, true);
+      if (clean) setClean(false);
       if (app.selection) { app.selection = null; updateSelbar(); requestRender(); emit('seldone'); }
       if (nothingElse && app.tour?.active()) app.tour.stop();
     },
