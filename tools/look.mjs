@@ -220,7 +220,7 @@ const TILE = (id, name) => `[...document.querySelectorAll('#st-${id} .stamp-tile
 VIEWS.stamps = { fresh: true, js: `${STAMPS_OPEN}
   if (!document.querySelector('#stamps').open) throw new Error('Stamp did not open Stamps');
   const heads = [...document.querySelectorAll('#stamps-sections .set-head')];
-  if (heads.map((h) => h.children[1].textContent).join() !== 'Mine,Shapes,Nature,Animals') throw new Error('the sections are ' + heads.map((h) => h.children[1].textContent));
+  if (heads.map((h) => h.children[1].textContent).join() !== 'Mine,Shapes,Nature,Animals,Vehicles,Food,Letters,Numbers') throw new Error('the sections are ' + heads.map((h) => h.children[1].textContent));
   if (heads.some((h) => h.getAttribute('aria-expanded') !== 'false') || document.querySelector('#stamps-sections .stamp-tile')) throw new Error('a section started open, or a closed one drew its tiles');
   ${SECTION('shapes')}
   const tiles = [...document.querySelectorAll('#st-shapes .stamp-tile')];
