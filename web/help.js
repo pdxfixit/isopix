@@ -141,7 +141,7 @@ export const SECTIONS = [
       { name: 'Swatch', text: '●', says: 'Tap a color. With the Eraser on, picking a color switches to the Pencil. The two small tones show auto-shade.' },
       { name: 'Auto-shade', glyph: 'cube', says: 'One color becomes three tones on cube faces: top light, left mid, right dark.' },
       { name: 'Any color', glyph: 'eyedropper', says: 'Pick a color of your own: it joins the palette in use, so every color you pick stays. On a preset it makes your own copy first. On the Eraser, this also switches to the Pencil.' },
-      { name: 'Palettes', text: '▦', says: 'The square tile at the start of the colors opens Palettes: yours first, then the presets (Isopix, Sunset, Forest, Ocean, Candy, Stone). Tap one to paint from it. Yours are kept in this browser for every drawing, and a saved drawing carries the one it used.' },
+      { name: 'Palettes', text: '▦', says: 'The square tile at the start of the colors opens Palettes: yours first, then the presets (Isopix, Sunset, Forest, Ocean, Candy, Stone), each folded until you open it. Tap one to paint from it. Yours are kept in this browser for every drawing, and a saved drawing carries the one it used.' },
       { name: 'Change a palette', text: '⋯', says: 'In Palettes, ⋯ beside one of yours renames it, takes colors out or deletes it. + New palette starts one with the color in use. Presets never change.' },
       { name: 'Light from', from: '#light-flip', says: 'Settings → Drawing: the side auto-shade lights cube faces from, left or right, kept with the drawing. New strokes shade that way.' },
       { name: 'Paper', text: '◐', says: 'Settings → Drawing → Paper: each drawing keeps its own light or dark paper. The inks follow the paper.' },

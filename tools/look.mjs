@@ -250,6 +250,11 @@ VIEWS.palettes = { fresh: true, js: `const a = window.isopix; ${PICK_ANY}
   for (const i of document.querySelectorAll('#palettes-open i')) if (i.getBoundingClientRect().height < 10) throw new Error('the palette tile shows no colors');
   ${q('#palettes-open')} ${nap}
   if (!document.querySelector('#palettes').open) throw new Error('the palette tile did not open Palettes');
+  const fold = (id) => document.querySelector('#' + id + '-body');
+  if (!fold('pal-mine').hidden || !fold('pal-presets').hidden) throw new Error('Mine and Presets should start folded');
+  if (document.querySelector('#pal-presets-chip').textContent !== 'using Isopix') throw new Error('the Presets chip should name the palette in use');
+  ${q('#pal-mine .set-head')} ${q('#pal-presets .set-head')} ${nap}
+  if (fold('pal-mine').hidden || fold('pal-presets').hidden) throw new Error('tapping a head did not unfold it');
   if (document.querySelector('#palettes-empty').hidden) throw new Error('an empty Mine should say so');
   [...document.querySelectorAll('#palettes-presets .pal-pick')].find((b) => b.textContent.includes('Sunset')).click(); ${nap}
   if (document.querySelector('#palettes').open || a.settings.palette !== 'sunset' || inks() !== 8) throw new Error('picking Sunset did not close Palettes and show its 8 colors');
@@ -265,12 +270,15 @@ VIEWS.palettes = { fresh: true, js: `const a = window.isopix; ${PICK_ANY}
   document.querySelector('#palette-edit-name').value = 'Embers';
   document.querySelector('#palette-edit').close('ok'); ${nap}
   if (a.palettes[0].colors.length !== 9 || a.palettes[0].name !== 'Embers' || inks() !== 9) throw new Error('taking a color out or renaming failed: ' + JSON.stringify(a.palettes));
-  if (!document.querySelector('#palettes-mine').textContent.includes('Embers')) throw new Error('the drawer did not show the new name');` };
+  if (!document.querySelector('#palettes-mine').textContent.includes('Embers')) throw new Error('the drawer did not show the new name');
+  if (document.querySelector('#pal-mine-chip').textContent !== 'using Embers') throw new Error('the Mine chip should name the palette in use');
+  document.querySelector('#palettes').close(); ${nap} ${q('#palettes-open')} ${nap}
+  if (fold('pal-mine').hidden || fold('pal-presets').hidden) throw new Error('the open folds were not remembered');` };
 // Delete asks for a second tap; deleting the palette in use goes back to Isopix.
 VIEWS['palette-delete'] = { fresh: true, js: `const a = window.isopix; ${PICK_ANY}
   pick('#123456'); ${nap}
   if (a.palettes[0]?.name !== 'My colors' || inks() !== 13) throw new Error('a pick on Isopix did not make My colors with all 13: ' + JSON.stringify(a.palettes));
-  ${q('#palettes-open')} ${nap} document.querySelector('#palettes-mine .pal-card .btn').click(); ${nap}
+  ${q('#palettes-open')} ${nap} ${q('#pal-mine .set-head')} ${nap} document.querySelector('#palettes-mine .pal-card .btn').click(); ${nap}
   ${q('#palette-delete')} ${nap}
   if (a.palettes.length !== 1 || !/again/.test(document.querySelector('#palette-delete').textContent)) throw new Error('one tap deleted, or did not ask again');
   ${q('#palette-delete')} ${nap}

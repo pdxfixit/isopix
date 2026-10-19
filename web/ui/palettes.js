@@ -5,6 +5,7 @@
 
 import * as PB from '../palettes.js';
 import * as store from '../storage.js';
+import { rememberOpen, rememberedOpen } from '../sheets.js';
 import { $, app, emit, set, toast } from '../app.js';
 import { buildPalette, pickedColor } from './controls.js';
 
@@ -83,13 +84,40 @@ function card(p, mine) {
   return box;
 }
 
+// Mine and Presets fold like Settings' sections: closed until opened, and
+// which are open is remembered on this device (owner: "start with sections
+// collapsed unless the user has done differently (and its remembered)").
+const FOLDS = ['pal-mine', 'pal-presets'], OPEN_KEY = 'isopix-palettes-open';
+function readOpen() { try { return rememberedOpen(localStorage.getItem(OPEN_KEY)); } catch { return new Set(); } }
+function showFold(id, open) {
+  const head = $(`#${id} .set-head`);
+  head.setAttribute('aria-expanded', String(open));
+  head.querySelector('.set-head-caret').textContent = open ? '▾' : '▸';
+  $(`#${id}-body`).hidden = !open;
+}
+function toggleFold(id) {
+  showFold(id, $(`#${id} .set-head`).getAttribute('aria-expanded') !== 'true');
+  const open = new Set(FOLDS.filter((f) => $(`#${f} .set-head`).getAttribute('aria-expanded') === 'true'));
+  try { localStorage.setItem(OPEN_KEY, rememberOpen(open, FOLDS)); } catch { /* storage blocked */ }
+}
+// A fold's chip: the palette in use when it is in there, else how many there are.
+function chip(list) {
+  const cur = currentPalette();
+  if (list.includes(cur)) return `using ${cur.name}`;
+  return list.length ? `${list.length} palette${list.length === 1 ? '' : 's'}` : 'none yet';
+}
+
 function render() {
   $('#palettes-mine').replaceChildren(...app.palettes.map((p) => card(p, true)));
   $('#palettes-empty').hidden = app.palettes.length > 0;
   $('#palettes-presets').replaceChildren(...PB.PRESETS.map((p) => card(p, false)));
+  $('#pal-mine-chip').textContent = chip(app.palettes);
+  $('#pal-presets-chip').textContent = chip(PB.PRESETS);
 }
 
 export function openPalettes() {
+  const open = readOpen();
+  for (const id of FOLDS) showFold(id, open.has(id));
   render();
   if (!$('#palettes').open) $('#palettes').showModal();
 }
@@ -137,6 +165,7 @@ function openEdit(id) {
 }
 
 export function wirePalettes() {
+  for (const id of FOLDS) $(`#${id} .set-head`).addEventListener('click', () => toggleFold(id));
   $('#palette-new').addEventListener('click', () => {
     const r = PB.newPalette(app.palettes, app.settings.color);
     app.palettes = r.mine;
