@@ -24,7 +24,7 @@ import * as PB from './palettes.js';
 import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, toggleLock, updateZoomUI } from './ui/controls.js';
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, scaleSelection, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
-import { loadMine, saveMine, wireStamps } from './ui/stamps.js';
+import { loadMine, saveMine } from './ui/stamps.js';
 import { loadPalettes, savePalettes, wirePalettes } from './ui/palettes.js';
 import { setBar, isMaking, cancelVideo, videoButton } from './ui/video.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
@@ -82,7 +82,7 @@ export const app = {
   selection: null, // {region, anchor}
   stamps: [],
   palettes: [], // Mine: this browser's own palettes (web/palettes.js)
-  stampChoice: { from: 'starter', i: 0 }, // the stamp the Stamp brush places (web/stampbook.js chosen)
+  stampChoice: { from: 'starter', id: 'cube' }, // the stamp the Stamp brush places (web/stampbook.js chosen)
   ghost: null,
   crosshair: null,
   trace: null,
@@ -479,7 +479,6 @@ function wire() {
     if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); setDensity(selDensity() - 1); }
   });
   wireMenu();
-  wireStamps();
   wirePalettes();
 }
 

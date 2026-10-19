@@ -80,22 +80,22 @@ const BLUE = '#3a86ff', TEAL = '#2a9d8f', YELLOW = '#f4c430', RED = '#e63946', G
   FOX = '#e8641b', LIME = '#8bc34a', HOG = '#ff9eb5', DOG = '#b07040', MUZZLE = '#e3c29b';
 
 const SHAPES = [
-  { id: 'cube', name: 'Cube', cells: () => paint(box([0, 0, 0], [1, 1, 1], BLUE)) },
-  { id: 'stairs', name: 'Stairs', cells: () => paint([...box([0, 0, 0], [3, 1, 1], TEAL), ...box([0, 0, 1], [2, 1, 1], TEAL), ...box([0, 0, 2], [1, 1, 1], TEAL)]) },
-  { id: 'house', name: 'House', cells: () => paint([
+  { id: 'cube', name: 'Cube', group: 'shapes', cells: () => paint(box([0, 0, 0], [1, 1, 1], BLUE)) },
+  { id: 'stairs', name: 'Stairs', group: 'shapes', cells: () => paint([...box([0, 0, 0], [3, 1, 1], TEAL), ...box([0, 0, 1], [2, 1, 1], TEAL), ...box([0, 0, 2], [1, 1, 1], TEAL)]) },
+  { id: 'house', name: 'House', group: 'shapes', cells: () => paint([
     ...box([0, 0, 0], [2, 2, 1.5], YELLOW),
     face([[2, 0, 1.5], [2, 2, 1.5], [2, 1, 2.5]], RED, 'R'),
     face([[0, 1, 2.5], [2, 1, 2.5], [2, 2, 1.5], [0, 2, 1.5]], RED, 'L'),
     face([[0.5, 2, 0], [1, 2, 0], [1, 2, 1], [0.5, 2, 1]], BROWN, 'L'),
     face([[2, 0.5, 0.5], [2, 1, 0.5], [2, 1, 1], [2, 0.5, 1]], SKY, 'R'),
   ]) },
-  { id: 'tree', name: 'Tree', cells: () => paint([...box([0.5, 0.5, 0], [0.5, 0.5, 1], BROWN), ...box([0, 0, 1], [1.5, 1.5, 1.5], GREEN), ...box([0.5, 0.5, 2.5], [0.5, 0.5, 0.5], GREEN)]) },
-  { id: 'wall', name: 'Wall', cells: () => paint([...box([0, 0, 0], [3, 0.5, 1.5], STONE), ...[0, 1, 2].flatMap((x) => box([x, 0, 1.5], [0.5, 0.5, 0.5], STONE)), ...box([2.5, 0, 1.5], [0.5, 0.5, 0.5], STONE)]) },
-  { id: 'pyramid', name: 'Pyramid', cells: () => paint([
+  { id: 'tree', name: 'Tree', group: 'nature', cells: () => paint([...box([0.5, 0.5, 0], [0.5, 0.5, 1], BROWN), ...box([0, 0, 1], [1.5, 1.5, 1.5], GREEN), ...box([0.5, 0.5, 2.5], [0.5, 0.5, 0.5], GREEN)]) },
+  { id: 'wall', name: 'Wall', group: 'shapes', cells: () => paint([...box([0, 0, 0], [3, 0.5, 1.5], STONE), ...[0, 1, 2].flatMap((x) => box([x, 0, 1.5], [0.5, 0.5, 0.5], STONE)), ...box([2.5, 0, 1.5], [0.5, 0.5, 0.5], STONE)]) },
+  { id: 'pyramid', name: 'Pyramid', group: 'shapes', cells: () => paint([
     face([[0, 2, 0], [2, 2, 0], [1, 1, 1.5]], SAND, 'L'),
     face([[2, 0, 0], [2, 2, 0], [1, 1, 1.5]], SAND, 'R'),
   ]) },
-  { id: 'flower', name: 'Flower', cells: () => flat((cell) => {
+  { id: 'flower', name: 'Flower', group: 'nature', cells: () => flat((cell) => {
     const d = hexDistOf(cell);
     if (d <= 1) return YELLOW;
     if (d > 3) return null;
@@ -103,7 +103,7 @@ const SHAPES = [
     return Math.floor(((Math.atan2(y - o.y, x - o.x) + Math.PI) / (Math.PI / 3))) % 2 ? PINK : '#ff8fb1';
   }) },
   // Two lattice-aligned triangles (side 6 edges) pointing left and right: a six-point star.
-  { id: 'star', name: 'Star', cells: () => {
+  { id: 'star', name: 'Star', group: 'shapes', cells: () => {
     const o = L.vertexWorld(LV, 0, 0), step = Math.hypot(L.vertexWorld(LV, 0, 1).x - o.x, L.vertexWorld(LV, 0, 1).y - o.y);
     const R = 2 * Math.sqrt(3) * step; // circumradius of a triangle of side 6 steps
     const tri = (a0) => [0, 1, 2].map((k) => [o.x + R * Math.cos(a0 + (k * 2 * Math.PI) / 3), o.y + R * Math.sin(a0 + (k * 2 * Math.PI) / 3)]);
@@ -116,7 +116,7 @@ const SHAPES = [
     });
   } },
   // Animals, side on, facing right (+x), their profile on the lit L side.
-  { id: 'cat', name: 'Cat', cells: () => paint([
+  { id: 'cat', name: 'Cat', group: 'animals', cells: () => paint([
     ...hbox([0, 1, 2], [1, 1, 4], ORANGE), // tail, up from the rump
     ...hbox([1, 0, 0], [1, 1, 1], ORANGE), ...hbox([6, 0, 0], [1, 1, 1], ORANGE),
     ...hbox([1, 1, 0], [1, 1, 1], ORANGE), ...hbox([6, 1, 0], [1, 1, 1], ORANGE),
@@ -125,7 +125,7 @@ const SHAPES = [
     ...hbox([6, 0, 5], [1, 1, 1], ORANGE), ...hbox([6, 2, 5], [1, 1, 1], ORANGE),
     patch('L', 3, [7, 8], [3, 4], INK),
   ]) },
-  { id: 'bunny', name: 'Bunny', cells: () => paint([
+  { id: 'bunny', name: 'Bunny', group: 'animals', cells: () => paint([
     ...hbox([0, 0, 0], [4, 3, 3], TAN),
     ...hbox([-1, 2, 1], [1, 1, 1], WHITE), // a puff of a tail
     ...hbox([1, 2, 0], [1, 1, 1], WHITE), ...hbox([3, 2, 0], [1, 1, 1], WHITE), // paws
@@ -135,7 +135,7 @@ const SHAPES = [
     patch('L', 3, [4, 5], [3, 4], INK),
     patch('R', 6, [1, 2], [3, 4], PINK),
   ]) },
-  { id: 'duck', name: 'Duck', cells: () => paint([
+  { id: 'duck', name: 'Duck', group: 'animals', cells: () => paint([
     ...hbox([0, 1, 2], [1, 1, 1], YELLOW), // tail
     ...hbox([0, 0, 0], [5, 3, 2], YELLOW),
     patch('L', 3, [1, 3], [1, 2], '#e0a800'), // wing
@@ -143,7 +143,7 @@ const SHAPES = [
     ...hbox([5, 1, 3], [1, 2, 1], ORANGE),
     patch('L', 3, [3, 4], [3, 4], INK),
   ]) },
-  { id: 'fox', name: 'Fox', cells: () => paint([
+  { id: 'fox', name: 'Fox', group: 'animals', cells: () => paint([
     ...hbox([-3, 0, 2], [1, 2, 2], WHITE), ...hbox([-2, 0, 2], [3, 2, 2], FOX), // a bushy tail, white at the tip
     ...hbox([1, 0, 0], [1, 1, 1], INK), ...hbox([6, 0, 0], [1, 1, 1], INK),
     ...hbox([1, 1, 0], [1, 1, 1], INK), ...hbox([6, 1, 0], [1, 1, 1], INK),
@@ -154,7 +154,7 @@ const SHAPES = [
     patch('L', 3, [8, 9], [2, 3], WHITE),
     patch('L', 3, [7, 8], [3, 4], INK),
   ]) },
-  { id: 'snake', name: 'Snake', cells: () => paint([
+  { id: 'snake', name: 'Snake', group: 'animals', cells: () => paint([
     ...hbox([-2, 0, 0], [2, 1, 1], LIME), // the tail, thinner
     ...hbox([0, 0, 0], [2, 2, 2], GREEN), ...hbox([2, 0, 0], [2, 2, 2], LIME), ...hbox([4, 0, 0], [2, 2, 2], GREEN),
     ...hbox([4, 2, 0], [2, 2, 2], LIME), ...hbox([4, 4, 0], [2, 2, 2], GREEN),
@@ -163,14 +163,14 @@ const SHAPES = [
     patch('L', 6, [11, 12], [1, 2], INK),
     patch('R', 13, [4, 5], [0, 1], RED), // the tongue
   ]) },
-  { id: 'frog', name: 'Frog', cells: () => paint([
+  { id: 'frog', name: 'Frog', group: 'animals', cells: () => paint([
     ...hbox([0, 0, 0], [5, 4, 2], GREEN),
     ...hbox([0, 4, 0], [2, 1, 1], LIME), ...hbox([4, 4, 0], [1, 1, 1], LIME), // a back leg and a front foot
     ...hbox([3, 0, 2], [1, 1, 1], WHITE), ...hbox([3, 3, 2], [1, 1, 1], WHITE),
     patch('R', 4, [0, 1], [2, 3], INK), patch('R', 4, [3, 4], [2, 3], INK),
     patch('R', 5, [0, 4], [1, 2], '#a83232'), // a wide smile
   ]) },
-  { id: 'pig', name: 'Pig', cells: () => paint([
+  { id: 'pig', name: 'Pig', group: 'animals', cells: () => paint([
     ...hbox([0, 1, 3], [1, 1, 1], HOG), // a curl of a tail
     ...hbox([1, 0, 0], [1, 1, 1], HOG), ...hbox([6, 0, 0], [1, 1, 1], HOG),
     ...hbox([1, 2, 0], [1, 1, 1], HOG), ...hbox([6, 2, 0], [1, 1, 1], HOG),
@@ -180,7 +180,7 @@ const SHAPES = [
     ...hbox([7, 0, 5], [1, 1, 1], PINK), ...hbox([7, 2, 5], [1, 1, 1], PINK),
     patch('L', 3, [8, 9], [3, 4], INK),
   ]) },
-  { id: 'dog', name: 'Dog', cells: () => paint([
+  { id: 'dog', name: 'Dog', group: 'animals', cells: () => paint([
     ...hbox([0, 0, 3], [1, 1, 2], DOG), // a wagging tail
     ...hbox([1, 0, 0], [1, 1, 1], DOG), ...hbox([6, 0, 0], [1, 1, 1], DOG),
     ...hbox([1, 1, 0], [1, 1, 1], DOG), ...hbox([6, 1, 0], [1, 1, 1], DOG),
@@ -190,7 +190,7 @@ const SHAPES = [
     ...hbox([6, 3, 2], [1, 1, 3], BROWN), // a floppy ear
     patch('L', 3, [7, 8], [3, 4], INK),
   ]) },
-  { id: 'fish', name: 'Fish', cells: () => paint([
+  { id: 'fish', name: 'Fish', group: 'animals', cells: () => paint([
     ...hbox([-1, 0, 0], [1, 2, 2], ORANGE), ...hbox([-1, 0, 3], [1, 2, 2], ORANGE), ...hbox([0, 0, 1], [1, 2, 3], ORANGE), // the tail
     ...hbox([2, 0, 0], [4, 2, 1], ORANGE),
     ...hbox([1, 0, 1], [6, 2, 3], ORANGE),
@@ -198,7 +198,7 @@ const SHAPES = [
     patch('L', 2, [2, 3], [0, 5], WHITE), patch('L', 2, [4, 5], [0, 5], WHITE), // stripes
     patch('L', 2, [5, 6], [2, 3], INK),
   ]) },
-  { id: 'bird', name: 'Bird', cells: () => paint([
+  { id: 'bird', name: 'Bird', group: 'animals', cells: () => paint([
     ...hbox([-2, 1, 3], [2, 1, 1], BLUE), // the tail
     ...hbox([1, 1, 0], [1, 1, 1], INK), ...hbox([3, 1, 0], [1, 1, 1], INK), // legs
     ...hbox([0, 0, 1], [3, 3, 3], BLUE), ...hbox([3, 0, 1], [1, 3, 2], ORANGE), // the breast
@@ -218,13 +218,21 @@ function stampOf(cells) {
   return { base: 0, cells: list.map(({ cell, c, f }) => [0, cell.p - a.p, cell.q - a.q, cell.u, c, f]), edges: [] };
 }
 
-const out = SHAPES.map((s) => ({ id: s.id, name: s.name, stamp: stampOf(s.cells()) }));
+// The drawer's sections, in order; each starter stamp names its group.
+const GROUPS = [
+  { id: 'shapes', name: 'Shapes' }, { id: 'nature', name: 'Nature' }, { id: 'animals', name: 'Animals' },
+];
+const out = GROUPS.flatMap((g) => SHAPES.filter((s) => s.group === g.id))
+  .map((s) => ({ id: s.id, name: s.name, group: s.group, stamp: stampOf(s.cells()) }));
+if (out.length !== SHAPES.length) throw new Error('a shape has no group in GROUPS');
 const js = `// The starter stamps (the owner's pick: Cube, Stairs, House, Tree, Wall,
 // Pyramid, Flower, Star; then little animals: Cat, Bunny, Duck, Fox, Snake,
 // Frog, Pig, Dog, Fish, Bird).
 // Made by tools/make_stamps.mjs from 3D shapes on the lattice; edit that, not
 // this. Each is a stamp like one saved from a selection: cells
-// [dl, dp, dq, u, color, face] around its anchor vertex.
+// [dl, dp, dq, u, color, face] around its anchor vertex. GROUPS are the
+// Stamps drawer's sections, in order; each stamp names its group.
+export const GROUPS = ${JSON.stringify(GROUPS)};
 export const STARTER = ${JSON.stringify(out)};
 `;
 const file = path.join(ROOT, 'web/stamps.js');

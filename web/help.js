@@ -45,8 +45,8 @@ export const SECTIONS = [
       { name: 'Drag a face', glyph: 'face', says: 'Drag to size a cube face of any size.' },
       { name: 'Drag a cube', glyph: 'cube', says: 'Drag to size a hexagon or cube of any size.' },
       { name: 'Stamp', glyph: 'stamp', says: 'Opens Stamps: tap one, then tap the grid to place it. It grows and shrinks with the grid size.' },
-      { name: 'Starter stamps', from: '#stamps-starter', says: 'In Stamps: a cube, stairs, a house, a tree, a wall, a pyramid, a flower, a star, and animals (a cat, a bunny, a duck, a fox, a snake, a frog, a pig, a dog, a fish and a bird), ready to place.' },
-      { name: 'My stamps', from: '#stamps-mine', says: 'In Stamps: the ones you made with Save as stamp. They are kept in this browser, ready in every drawing.' },
+      { name: 'Starter stamps', text: '▸', says: 'In Stamps: a cube, stairs, a house, a tree, a wall, a pyramid, a flower, a star, and animals (a cat, a bunny, a duck, a fox, a snake, a frog, a pig, a dog, a fish and a bird), ready to place.' },
+      { name: 'My stamps', text: '▸', says: 'In Stamps, Mine: the ones you made with Save as stamp. They are kept in this browser, ready in every drawing.' },
     ],
   },
   {
