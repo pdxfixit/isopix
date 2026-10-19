@@ -15,6 +15,5 @@ Offered, not yet approved (ask the owner first):
 
 ## The owner does
 
-- Land branch `claude/feedback-box` (Feedback in Settings → About) once the public privacy policy says what Feedback sends: `just land` from that branch, after flarepress's `claude/feedback-box` (`handleFeedback`) is on its `main`. The bucket `app-suggestions` already exists; the rate-limit namespace 4150 is new in `site/wrangler.toml`.
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
 - In pdxfixit/telemetry, the `[jobs.isopix.ids] visits` entry stays until 2027-10-16, then goes (it blanks the kept copies' device codes); until then its `isopix` job's `TELEMETRY_ISOPIX_D1_ID` secret is unused.
