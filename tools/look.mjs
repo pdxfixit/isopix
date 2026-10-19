@@ -174,6 +174,36 @@ VIEWS.video = { js: `${DRAW} ${q('#drawing-open')} ${nap}
   for (let i = 0; i < 150 && bar.dataset.mode === 'making'; i++) await new Promise((r) => setTimeout(r, 100));
   if (bar.dataset.mode !== 'ready') throw new Error('the video did not become ready: ' + bar.dataset.mode + ' ' + document.querySelector('#replay-say').textContent);` };
 // The selection with ⋯ More open, and the level rail held open by a finger.
+// Clean view: the eye on the zoom rail hides everything but Undo and Show tools;
+// Show tools and T bring the controls back and hide them again.
+const SHOWN = `const shown = (q) => { const el = document.querySelector(q); return !!el && el.getClientRects().length > 0; };`;
+VIEWS.clean = { js: `${DRAW} ${SHOWN} ${q('#clean-view')} ${nap}
+  const hidden = ['#zoom', '.bottom', '.topright', '#levels', '#drawing-open'].filter(shown);
+  if (hidden.length) throw new Error('clean view still shows ' + hidden.join(', '));
+  if (!shown('#undo') || !shown('#show-tools')) throw new Error('clean view lost Undo or Show tools');
+  ${q('#show-tools')} ${nap}
+  if (!shown('.bottom') || !shown('#zoom') || shown('#show-tools')) throw new Error('Show tools did not bring the controls back');
+  document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 't', bubbles: true })); ${nap}
+  if (shown('.bottom') || !shown('#show-tools')) throw new Error('T did not hide the controls');` };
+// Display → Fold the colors, through the real checkbox. Under 768 px wide the
+// row is one button with the color in use; wider, the row stays. UNFOLD puts
+// the setting back in storage last, so the next view starts with the row.
+const FOLD = `${SHOWN} ${q('#settings-open')} ${nap}
+  const head = document.querySelector('[aria-controls="set-display-body"]'); if (head.getAttribute('aria-expanded') !== 'true') head.click();
+  ${q('#opt-fold-colors')} document.querySelector('#settings').close(); ${nap}
+  const narrow = innerWidth < 768;
+  if (narrow && (shown('#palette') || !shown('#colors-fold'))) throw new Error('folded, the color row still shows or its button does not');
+  if (!narrow && (!shown('#palette') || shown('#colors-fold'))) throw new Error('at ' + innerWidth + ' px the colors fold; only under 768 px should');`;
+const UNFOLD = `{ const st = JSON.parse(localStorage.getItem('isopix-settings')); st.foldColors = false; localStorage.setItem('isopix-settings', JSON.stringify(st)); }`;
+VIEWS.fold = { js: `${DRAW} try { ${FOLD} } finally { ${UNFOLD} }` };
+// The folded button opens the row; a pick folds it again (and paints with it); opened again for the screenshot.
+VIEWS['fold-open'] = { js: `${DRAW} try { ${FOLD} if (narrow) {
+  ${q('#colors-fold')} ${nap}
+  if (!shown('#palette') || shown('#colors-fold')) throw new Error('the colors button did not open the row');
+  const other = document.querySelector('#palette .swatch[role="radio"][aria-checked="false"]'), was = window.isopix.settings.color; other.click(); ${nap}
+  if (shown('#palette') || !shown('#colors-fold')) throw new Error('picking a color did not fold the row');
+  if (window.isopix.settings.color === was) throw new Error('the pick did not change the color');
+  ${q('#colors-fold')} ${nap} } } finally { ${UNFOLD} }` };
 VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
 // Light from the right, then Relight: the right faces take the base color (the mid tone).
 VIEWS.light = { js: `const a = window.isopix; a.settings.shading = true; ${q('[data-tool="pencil"]')}
@@ -619,10 +649,12 @@ const MEASURE = (width) => `(() => {
     }
     if (v.right - v.left > 2 && v.bottom - v.top > 2) boxes.push([box, v]);
     // Cut off by the side of the screen (a row of buttons wider than a phone: the page does not
-    // scroll, so they are lost). Its own box, since the page clips it; a row that scrolls is fine.
+    // scroll, so they are lost). Its own box, since the page clips it; a row that scrolls is fine,
+    // and so is one a parent hides on purpose (the closed level rail clips the notches it is not on).
     let rolls = false;
     for (let e = box.parentElement; e && !rolls; e = e.parentElement) rolls = /auto|scroll/.test(getComputedStyle(e).overflowX);
-    if (!rolls && (r.left < -1 || r.right > innerWidth + 1)) cut.push(name(box) + ' (' + Math.round(r.left) + '–' + Math.round(r.right) + 'px)');
+    const clipped = v.right - v.left <= 0 || v.bottom - v.top <= 0;
+    if (!rolls && !clipped && (r.left < -1 || r.right > innerWidth + 1)) cut.push(name(box) + ' (' + Math.round(r.left) + '–' + Math.round(r.right) + 'px)');
   }
   // A control pinned with position: sticky (the palette's add-color and auto-shade)
   // is meant to cover what scrolls under it in the same scroll box.

@@ -55,7 +55,7 @@ export const saveDot = (file, hasContent) => !!hasContent && !!file && !!file.at
 
 
 // ---------- Settings sections ----------
-export const SECTION_IDS = ['set-drawing', 'set-grid', 'set-selection', 'set-learning'];
+export const SECTION_IDS = ['set-drawing', 'set-display', 'set-selection', 'set-learning'];
 
 // The chip on each section's heading: the current value, in a few words.
 export function chipText(id, s, paper = 'light') {
@@ -65,9 +65,10 @@ export function chipText(id, s, paper = 'light') {
       if (s.symmetry && s.symmetry !== 'off') parts.push('symmetry');
       return parts.join(' · ');
     }
-    case 'set-grid':
-      if (!s.gutters) return 'gutters off';
-      return s.hint === 'off' ? 'hints off' : `hints ${s.hint}`;
+    case 'set-display': {
+      const parts = [s.foldColors && 'colors folded', !s.gutters ? 'gutters off' : s.hint === 'off' ? 'hints off' : `hints ${s.hint}`];
+      return parts.filter(Boolean).join(' · ');
+    }
     case 'set-selection': {
       const on = [s.densityHandle && 'handle', s.densityPinch && 'pinch', s.densityLongpress && 'long-press'].filter(Boolean);
       return on.length ? on.join(' · ') : 'buttons only';
@@ -85,10 +86,12 @@ export function chipText(id, s, paper = 'light') {
 // until they close it (owner: "start with sections collapsed unless the user
 // has done differently (and its remembered)"). Stored as a JSON list of the
 // open ids; an older "!set-drawing" entry reads as closed, the new default.
+// Grid became Display (2026-10-19): its old id keeps that section open.
+const RENAMED = { 'set-grid': 'set-display' };
 export function rememberedOpen(raw) {
   try {
     const list = JSON.parse(raw ?? '[]');
-    return new Set(Array.isArray(list) ? list.filter((x) => typeof x === 'string') : []);
+    return new Set(Array.isArray(list) ? list.filter((x) => typeof x === 'string').map((x) => RENAMED[x] || x) : []);
   } catch { return new Set(); }
 }
 export const startsOpen = (id, remembered) => remembered.has(id);

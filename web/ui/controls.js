@@ -1,5 +1,6 @@
-// The grid-size rail (levels, notches, the lock), the palette, and the zoom
-// rail. Split out of app.js; app.js holds the state and the wiring.
+// The grid-size rail (levels, notches, the lock), the palette (and its folded
+// button), the zoom rail and clean view. Split out of app.js; app.js holds the
+// state and the wiring.
 
 import * as L from '../engine/lattice.js';
 import { bounds } from '../engine/svg.js';
@@ -9,7 +10,7 @@ import { GLYPHS, notchGlyph } from '../glyphs.js';
 import { toolAfterColorPick } from '../palette.js';
 import { paperOf, paperName, inkName, matchInk } from '../engine/paper.js';
 import { $, app, emit, palette, requestRender, set, toast } from '../app.js';
-import { setTool } from './tools.js';
+import { closePopover, setTool } from './tools.js';
 import { zoomBy } from './input.js';
 import { syncMenu } from './screens.js';
 import { currentPalette, openPalettes, pickAny } from './palettes.js';
@@ -90,11 +91,16 @@ function nudgeRail() {
   if (cs.position === 'absolute' && cs.flexDirection === 'column') {
     const s = app.settings, k = s.locked ? s.lockedLevel : s.notch;
     const fanTop = $('.notch-window').getBoundingClientRect().top - k * 46;
-    const floor = Math.min(...['.bottom > .palette', '.bottom > .tools'].map((q) => $(q).getBoundingClientRect().top)) - 8;
+    const floor = Math.min(...bottomBars().map((r) => r.top)) - 8;
     const ceiling = $('.topright').getBoundingClientRect().bottom + 8;
     nudge = Math.min(Math.max(fanTop, ceiling), floor - box.offsetHeight) - fanTop;
   }
   levels.style.setProperty('--nudge', `${Math.round(nudge)}px`);
+}
+// The bottom bars showing now: the palette or its folded button, and the tools.
+// A hidden one has no box (offsetParent is null for fixed boxes, so not that).
+function bottomBars() {
+  return ['.bottom > .palette', '#colors-fold', '.bottom > .tools'].map((q) => $(q)).filter((el) => el && el.getClientRects().length).map((el) => el.getBoundingClientRect());
 }
 function closeRail(ms) {
   clearTimeout(railTimer);
@@ -179,7 +185,7 @@ export function buildPalette() {
     b.setAttribute('aria-label', inkName(app.drawing.paper, c) || `Color ${c}`);
     b.style.setProperty('--c', c);
     if (s.shading) b.innerHTML = `<span class="tones" aria-hidden="true"><i style="background:${shade(c, 'T', app.drawing.light)}"></i><i style="background:${shade(c, 'L', app.drawing.light)}"></i><i style="background:${shade(c, 'R', app.drawing.light)}"></i></span>`;
-    b.addEventListener('click', () => { set('color', c); buildPalette(); pickedColor(); emit('color', { custom: false }); });
+    b.addEventListener('click', (e) => { set('color', c); buildPalette(); pickedColor(); emit('color', { custom: false }); if (openedColors) openColors(false, e.detail === 0); });
     box.append(b);
   }
   // The add-color and auto-shade buttons stay pinned at the end, so a narrow
@@ -203,7 +209,7 @@ export function buildPalette() {
     custom.innerHTML = `${GLYPHS.eyedropper}<input type="color" aria-label="Pick any color">`;
     const input = custom.querySelector('input');
     input.value = s.color;
-    input.addEventListener('change', () => pickAny(input.value));
+    input.addEventListener('change', () => { pickAny(input.value); openColors(false); });
     pinned.append(custom);
   }
   const sh = document.createElement('button');
@@ -216,6 +222,54 @@ export function buildPalette() {
   sh.addEventListener('click', () => { set('shading', !s.shading); buildPalette(); syncMenu(); toast(s.shading ? 'Auto-shade on: top light, left mid, right dark' : 'Auto-shade off'); emit('shading', { on: s.shading }); });
   pinned.append(sh);
   if (s.limited && !palette().includes(s.color)) set('color', palette()[0]);
+  // The folded button shows the color in use, with its tones while auto-shade is on.
+  const fold = $('#colors-fold');
+  const ink = inkName(app.drawing.paper, s.color) || `color ${s.color}`;
+  fold.innerHTML = `<span class="fold-swatch" aria-hidden="true">${s.shading ? box.querySelector('[aria-checked="true"]')?.innerHTML || '' : ''}</span><span class="fold-caret" aria-hidden="true">▲</span>`;
+  fold.style.setProperty('--c', s.color);
+  fold.setAttribute('aria-label', `Colors: painting with ${ink}${s.shading ? ', auto-shade on' : ''}. Show the colors`);
+  fold.title = 'Colors';
+}
+
+// Display → Fold the colors (styles.css): under 768 px wide the color row is
+// one button showing the color in use. It opens the row; picking a color, the
+// paper or Esc folds it again. Elsewhere the row always shows and this is a no-op.
+let openedColors = false;
+export function openColors(open, keyboard = false) {
+  openedColors = open;
+  document.body.classList.toggle('colors-open', open);
+  $('#colors-fold').setAttribute('aria-expanded', String(open));
+  if (!open) {
+    if (keyboard && $('#colors-fold').getClientRects().length) $('#colors-fold').focus();
+    return;
+  }
+  const cur = $('#palette [aria-checked="true"]');
+  cur?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (keyboard) cur?.focus();
+}
+export const colorsOpen = () => openedColors;
+export function wireColorsFold() {
+  $('#colors-fold').addEventListener('click', (e) => openColors(!openedColors, e.detail === 0));
+}
+
+// ---------- clean view ----------
+// The eye on the zoom rail (or T): every control hides but Undo and Show tools,
+// so the whole screen is the drawing; it still draws with the tool in use.
+// Never kept: a reload, a lesson or Esc brings the controls back.
+export let clean = false;
+export function setClean(on) {
+  if (on === clean) return;
+  clean = on;
+  if (on) closePopover();
+  document.body.classList.toggle('clean', on);
+  // Focus follows the button that replaced the one pressed.
+  const to = $(on ? '#show-tools' : '#clean-view');
+  if (document.activeElement?.closest?.('#zoom, #show-tools')) to.focus();
+  emit('clean', { on });
+}
+export function wireClean() {
+  $('#clean-view').addEventListener('click', () => setClean(true));
+  $('#show-tools').addEventListener('click', () => setClean(false));
 }
 
 // A color pick on the Eraser means "paint now": switch to the Pencil (palette.js).
@@ -278,7 +332,7 @@ export function fitView() {
     const { w, h } = app.view, pad = 16;
     const rect = { x0: pad, y0: pad, x1: w - pad, y1: h - pad };
     const zoom = r('#zoom'), levels = r('#levels'), tops = ['.topleft', '.topright'].map(r).filter(Boolean);
-    const lows = ['.bottom > .palette', '.bottom > .tools'].map(r).filter(Boolean);
+    const lows = ['.bottom > .palette', '#colors-fold', '.bottom > .tools'].map(r).filter(Boolean);
     if (zoom) rect.x0 = zoom.right + pad;
     // The level control is a side rail on phones and a bar under the top row on wider screens.
     if (levels && levels.height > levels.width) rect.x1 = levels.left - pad;
