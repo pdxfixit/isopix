@@ -1,4 +1,4 @@
-// The "🆕 An update for Isopix is ready." bar, ported from Noodle Pads.
+// The "🆕 App update ready." bar, ported from Noodle Pads.
 // A copy left open (or installed on a home screen) keeps running the code it
 // loaded. Now and then this asks version.json which version is live (the
 // deploy writes it; sw.js never caches it) and, when it differs from the one

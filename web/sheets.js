@@ -48,10 +48,10 @@ export function fileLine(file, hasContent, now = Date.now()) {
 
 // The update notice's second line (web/index.html #update-saved): Reload saves
 // first, so the drawing is safe, unless this browser keeps nothing (a private
-// window, no space), when only a file keeps it. kept: the last autosave landed.
+// window, no space; the save note offers a file then). kept: the last autosave landed.
 export const reloadSafeLine = (kept, hasContent) => (kept || !hasContent
-  ? 'Your drawing is saved.'
-  : 'This browser is not keeping your drawing: Save drawing first.');
+  ? 'Drawing saved.'
+  : 'Drawing not saved.');
 
 // Whether something drawn is not in a file (New and Open ask first then).
 export const unsavedToFile = (file, hasContent) => !!hasContent && (!file || !file.at || !!file.dirty);
