@@ -168,12 +168,12 @@ function render() {
       trace: app.trace && { ...app.trace, opacity: s.traceOpacity },
     },
   });
-  placeHandle();
   placeUpdateBar();
   updateZoomUI();
 }
 // The update bar sits just above the selection bar or the bottom bars.
-// The protect notice stacks above it when both show.
+// The protect notice stacks above it when both show. The density handle
+// keeps above them, so it is placed after them, each time they move.
 function placeUpdateBar() {
   const tops = [$('.bottom > .palette'), $('.bottom > .tools'), $('#selbar')]
     .map((el) => el.getBoundingClientRect()).filter((r) => r.height).map((r) => r.top);
@@ -183,6 +183,7 @@ function placeUpdateBar() {
     bar.style.bottom = `${Math.round(window.innerHeight - top + 8)}px`;
     top = bar.getBoundingClientRect().top;
   }
+  placeHandle();
 }
 // One synchronous frame, for tools/perf.mjs (requestAnimationFrame is throttled in hidden tabs).
 app.renderNow = () => render();
@@ -412,7 +413,7 @@ function wire() {
     const open = !$('#selbar').classList.contains('more');
     $('#selbar').classList.toggle('more', open);
     $('#sel-more').setAttribute('aria-expanded', String(open));
-    placeHandle();
+    placeUpdateBar();
   });
   $('#sel-snap').addEventListener('click', () => { set('snap', !app.settings.snap); updateSelbar(); });
   $('#sel-done').addEventListener('click', () => { app.selection = null; app.lastDensity = null; app.scaled = new WeakMap(); updateSelbar(); requestRender(); emit('seldone'); });
