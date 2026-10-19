@@ -7,7 +7,10 @@ set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 if ! python3 tools/bump_version.py --check >/dev/null 2>/tmp/isopix-pre-push.$$; then
   cat /tmp/isopix-pre-push.$$ >&2; rm -f /tmp/isopix-pre-push.$$
-  echo "🛑 push refused: run 'just version', commit web/version.js, then push (a rebase moves the commit count)." >&2
+  # 'just version' + 'git commit --amend' cannot work: the pre-commit hook
+  # counts an amend as a new commit (count + 1), and --check wants HEAD's own
+  # count. Recommitting from the parent satisfies both (2026-10-19).
+  echo "🛑 push refused: a rebase moved the commit count. Recommit the stamp: git reset --soft HEAD~1 && just version && git add web/version.js && git commit (not --amend: the pre-commit hook counts an amend as a new commit)." >&2
   exit 1
 fi
 rm -f /tmp/isopix-pre-push.$$
