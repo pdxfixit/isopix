@@ -243,7 +243,8 @@ VIEWS.selturn = { js: `window.isopix.settings.brush = 'triangle'; // a lone-tria
   ${q('#sel-flip')} ${nap} if (snap() === start) throw new Error('Flip changed nothing');` };
 // Stamp in the brush picker opens Stamps: folding sections, all closed and none drawing its
 // pictures at first; Buildings opened holds the House; it, then a tap places it; opened
-// again, Buildings is still open and says it holds the stamp in use.
+// again, Buildings is still open and says it holds the stamp in use; Letters, in small
+// tiles, keeps its head under the title while scrolled into.
 const STAMPS_OPEN = `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}`;
 const SECTION = (id) => `document.querySelector('#st-${id} .set-head').click(); ${nap}`;
 const TILE = (id, name) => `[...document.querySelectorAll('#st-${id} .stamp-tile')].find((t) => t.textContent === '${name}').click(); ${nap}`;
@@ -267,7 +268,15 @@ VIEWS.stamps = { fresh: true, js: `${STAMPS_OPEN}
   if ([...document.querySelectorAll('#stamps-sections .set-head')].filter((h) => h.getAttribute('aria-expanded') === 'true').length !== 1) throw new Error('a section opened that was never opened');
   ${SECTION('letters')}
   const small = document.querySelector('#st-letters .stamp-grid.small .stamp-tile').getBoundingClientRect();
-  if (small.width > 80) throw new Error('Letters tiles are ' + small.width + ' px wide, not small');` };
+  if (small.width > 80) throw new Error('Letters tiles are ' + small.width + ' px wide, not small');
+  // Scrolled into Letters, its head stays just under the drawer's title, one tap from folding.
+  const dlg = document.querySelector('#stamps'), sec = document.querySelector('#st-letters');
+  dlg.scrollTop += sec.getBoundingClientRect().top - dlg.getBoundingClientRect().top; ${nap}
+  const titleBottom = dlg.querySelector('header').getBoundingClientRect().bottom;
+  if (sec.getBoundingClientRect().top < titleBottom - 20) {
+    const gap = sec.querySelector('h3').getBoundingClientRect().top - titleBottom;
+    if (Math.abs(gap) > 1.5) throw new Error('the open Letters head is ' + gap + ' px from the title, not stuck under it');
+  } else if (dlg.scrollTop + dlg.clientHeight < dlg.scrollHeight - 2) throw new Error('Stamps did not scroll into Letters');` };
 // A wall the other way: place the Wall, select it, Flip. Flip relights it, so its side faces
 // are lit from the left like the rest of the drawing, and one Undo takes the flip back.
 VIEWS['stamp-flip'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('buildings')} ${TILE('buildings', 'Wall')}

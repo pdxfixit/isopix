@@ -412,6 +412,10 @@ dialog.drawer { margin: auto auto 0; border: 1px solid var(--border); border-bot
 dialog.drawer::backdrop { background: rgba(0, 0, 0, 0.25); }
 .stamp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 @media (min-width: 520px) { .stamp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* An open section's head stays in view under the drawer's (pinned) title while its stamps
+   scroll, until the section itself scrolls past, so it is always one tap to fold it (owner). */
+#stamps-sections .set-fold.open h3 { position: sticky; top: var(--stamps-head, 52px); z-index: 1; background: var(--bg); }
+#stamps header { z-index: 2; }
 /* Small tiles (Letters, Numbers): five to a row on a phone, seven wider; still 44 px and more. */
 .stamp-grid.small { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 @media (min-width: 520px) { .stamp-grid.small { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
