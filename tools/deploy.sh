@@ -14,6 +14,9 @@ cd "$(dirname "$0")/.."
 
 SITE="$PWD/site"
 export FLAREPRESS="${FLAREPRESS:-$HOME/src/flarepress}"
+# No clone there (a cloud session): the copy `just land` keeps in the cache will do.
+cached="${XDG_CACHE_HOME:-$HOME/.cache}/flarepress"
+[ -x "$FLAREPRESS/tools/site.sh" ] || [ ! -x "$cached/tools/site.sh" ] || export FLAREPRESS="$cached"
 # DEPLOY_URL points the live checks at another server (for trying this script out).
 URL="${DEPLOY_URL:-https://isopix.app}"
 TOOL="$FLAREPRESS/tools/site.sh"
