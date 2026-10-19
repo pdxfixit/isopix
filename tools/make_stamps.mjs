@@ -77,7 +77,7 @@ const patch = (side, at, [a0, a1], [z0, z1], color) => face(
 
 const BLUE = '#3a86ff', TEAL = '#2a9d8f', YELLOW = '#f4c430', RED = '#e63946', GREEN = '#5a9a3c',
   BROWN = '#8b5a2b', STONE = '#9aa0a6', SAND = '#e9b949', PINK = '#ff5d8f', SKY = '#8ecae6', ORANGE = '#f4a020', INK = '#2b2d42', WHITE = '#f1ece4', TAN = '#c9a27e',
-  FOX = '#e8641b', LIME = '#8bc34a', HOG = '#ff9eb5';
+  FOX = '#e8641b', LIME = '#8bc34a', HOG = '#ff9eb5', DOG = '#b07040', MUZZLE = '#e3c29b';
 
 const SHAPES = [
   { id: 'cube', name: 'Cube', cells: () => paint(box([0, 0, 0], [1, 1, 1], BLUE)) },
@@ -180,6 +180,33 @@ const SHAPES = [
     ...hbox([7, 0, 5], [1, 1, 1], PINK), ...hbox([7, 2, 5], [1, 1, 1], PINK),
     patch('L', 3, [8, 9], [3, 4], INK),
   ]) },
+  { id: 'dog', name: 'Dog', cells: () => paint([
+    ...hbox([0, 0, 3], [1, 1, 2], DOG), // a wagging tail
+    ...hbox([1, 0, 0], [1, 1, 1], DOG), ...hbox([6, 0, 0], [1, 1, 1], DOG),
+    ...hbox([1, 1, 0], [1, 1, 1], DOG), ...hbox([6, 1, 0], [1, 1, 1], DOG),
+    ...hbox([1, 0, 1], [6, 2, 2], DOG),
+    ...hbox([6, 0, 2], [3, 3, 3], DOG),
+    ...hbox([9, 1, 2], [1, 1, 2], MUZZLE), patch('R', 10, [1, 2], [3, 4], INK), // the snout and its nose
+    ...hbox([6, 3, 2], [1, 1, 3], BROWN), // a floppy ear
+    patch('L', 3, [7, 8], [3, 4], INK),
+  ]) },
+  { id: 'fish', name: 'Fish', cells: () => paint([
+    ...hbox([-1, 0, 0], [1, 2, 2], ORANGE), ...hbox([-1, 0, 3], [1, 2, 2], ORANGE), ...hbox([0, 0, 1], [1, 2, 3], ORANGE), // the tail
+    ...hbox([2, 0, 0], [4, 2, 1], ORANGE),
+    ...hbox([1, 0, 1], [6, 2, 3], ORANGE),
+    ...hbox([2, 0, 4], [4, 2, 1], ORANGE),
+    patch('L', 2, [2, 3], [0, 5], WHITE), patch('L', 2, [4, 5], [0, 5], WHITE), // stripes
+    patch('L', 2, [5, 6], [2, 3], INK),
+  ]) },
+  { id: 'bird', name: 'Bird', cells: () => paint([
+    ...hbox([-2, 1, 3], [2, 1, 1], BLUE), // the tail
+    ...hbox([1, 1, 0], [1, 1, 1], INK), ...hbox([3, 1, 0], [1, 1, 1], INK), // legs
+    ...hbox([0, 0, 1], [3, 3, 3], BLUE), ...hbox([3, 0, 1], [1, 3, 2], ORANGE), // the breast
+    ...hbox([3, 0, 3], [3, 3, 3], BLUE),
+    ...hbox([6, 1, 4], [1, 1, 1], YELLOW),
+    patch('L', 3, [0, 2], [2, 3], '#1f5fbf'), // a wing
+    patch('L', 3, [4, 5], [4, 5], INK),
+  ]) },
 ];
 
 // The stamp: cells relative to the anchor, the vertex at the middle of its bottom.
@@ -194,7 +221,7 @@ function stampOf(cells) {
 const out = SHAPES.map((s) => ({ id: s.id, name: s.name, stamp: stampOf(s.cells()) }));
 const js = `// The starter stamps (the owner's pick: Cube, Stairs, House, Tree, Wall,
 // Pyramid, Flower, Star; then little animals: Cat, Bunny, Duck, Fox, Snake,
-// Frog, Pig).
+// Frog, Pig, Dog, Fish, Bird).
 // Made by tools/make_stamps.mjs from 3D shapes on the lattice; edit that, not
 // this. Each is a stamp like one saved from a selection: cells
 // [dl, dp, dq, u, color, face] around its anchor vertex.
