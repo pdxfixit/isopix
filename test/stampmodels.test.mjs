@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MODELS, spins, spun } from '../web/engine/stampmodels.js';
-import { render, COLORS } from '../web/engine/stampart.js';
+import { render, paint, COLORS } from '../web/engine/stampart.js';
 import { shade } from '../web/engine/color.js';
 import { placeStamp } from '../web/engine/density.js';
 import { Drawing } from '../web/engine/model.js';
@@ -60,6 +60,26 @@ test('a model the same from every side looks the same spun; the House shows its 
     assert.ok(st.cells.some((c) => c[4] === shade(COLORS.RED, 'L') || c[4] === shade(COLORS.RED, 'R')), `house ${n}: its roof`);
     assert.ok(!st.cells.some((c) => c[4] === shade(COLORS.YELLOW, 'T')), `house ${n}: no wall top showing through the roof`);
   }
+});
+
+// The nine older stamps draw a feature on top (decisions.md, Spin); any other box
+// art must paint as drawn the same as by depth, or its turned views would not match.
+const ON_TOP = ['rock', 'bunny', 'duck', 'car', 'truck', 'train', 'plane', 'planet', 'carrot'];
+test('box art looks the same front on whether painted in order or drawn by depth (but the nine older ones)', () => {
+  const key = (cells) => JSON.stringify([...cells].map(([k, v]) => [k, v.c, v.f]).sort());
+  for (const id of IDS) {
+    const same = key(paint(MODELS[id]())) === key(render(MODELS[id](), 0));
+    assert.equal(same, !ON_TOP.includes(id), same ? `${id} now draws the same by depth: take it off ON_TOP` : `${id} paints differently than it draws by depth: order its boxes back to front, and do not let boxes overlap`);
+  }
+});
+
+test('the Castle is a castle all round (owner: "boxier and have more features on the back. maybe even a drawbridge")', () => {
+  const colors = (n) => new Set(spun('castle', n).cells.map((c) => c[4]));
+  const has = (n, color, f) => colors(n).has(shade(color, f));
+  assert.ok(has(0, COLORS.BROWN, 'T') && has(0, COLORS.BLUE, 'T'), 'the drawbridge down over the moat, from the front');
+  assert.ok(has(2, COLORS.YELLOW, 'R') || has(2, COLORS.YELLOW, 'L'), 'a banner on the back');
+  assert.ok(has(2, COLORS.GREEN, 'L') || has(2, COLORS.GREEN, 'R'), 'ivy or the bush, behind');
+  for (const n of [0, 1, 2, 3]) assert.ok(has(n, COLORS.RED, 'T'), `${n}: red tower caps`);
 });
 
 test('four quarter turns come back to the start', () => {
