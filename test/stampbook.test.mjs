@@ -1,16 +1,23 @@
 // Starter stamps and the person's own (web/stampbook.js, web/stamps.js):
-// the eight the owner picked, each a real stamp that places at every level,
-// and Mine kept once across drawings (owner, 2026-10-16).
+// the eight the owner picked and three animals, each a real stamp that places
+// at every level, and Mine kept once across drawings (owner, 2026-10-16).
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import * as SB from '../web/stampbook.js';
 import { placeStamp } from '../web/engine/density.js';
 import { Drawing } from '../web/engine/model.js';
 import * as L from '../web/engine/lattice.js';
 
-test('the starter set is the eight the owner picked, in order', () => {
-  assert.deepEqual(SB.STARTER.map((s) => s.name), ['Cube', 'Stairs', 'House', 'Tree', 'Wall', 'Pyramid', 'Flower', 'Star']);
-  assert.equal(new Set(SB.STARTER.map((s) => s.id)).size, 8);
+test('the starter set is the eight the owner picked, then the animals, in order', () => {
+  assert.deepEqual(SB.STARTER.map((s) => s.name), ['Cube', 'Stairs', 'House', 'Tree', 'Wall', 'Pyramid', 'Flower', 'Star', 'Cat', 'Bunny', 'Duck']);
+  assert.equal(new Set(SB.STARTER.map((s) => s.id)).size, 11);
+});
+
+test('web/stamps.js is exactly what tools/make_stamps.mjs makes', () => {
+  const r = spawnSync(process.execPath, [fileURLToPath(new URL('../tools/make_stamps.mjs', import.meta.url)), '--check'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
 });
 
 test('every starter stamp places at every level and keeps the one-cell-or-children rule', () => {

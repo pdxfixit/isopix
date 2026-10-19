@@ -8,6 +8,7 @@
 // stamp works at every grid size and scales with it.
 //
 //   node tools/make_stamps.mjs              writes web/stamps.js
+//   node tools/make_stamps.mjs --check      fails if web/stamps.js is not what this makes
 //   node tools/make_stamps.mjs --svg FILE   also writes every stamp side by side as SVG
 import fs from 'node:fs';
 import path from 'node:path';
@@ -66,8 +67,16 @@ function flat(pick) {
 }
 const hexDistOf = (cell) => Math.max(...L.cellVerts(cell).map(([p, q]) => L.hexDist(p, q)));
 
+// Boxes and side patches in half units, for small features (ears, eyes, a beak).
+const hbox = (o, sz, color) => box(o.map((v) => v / 2), sz.map((v) => v / 2), color);
+// A patch on a box's side: on the L side (the plane y = at) from x0 to x1, or
+// the R side (x = at) from y0 to y1; z0 to z1 up. Half units.
+const patch = (side, at, [a0, a1], [z0, z1], color) => face(
+  (side === 'L' ? [[a0, at, z0], [a1, at, z0], [a1, at, z1], [a0, at, z1]] : [[at, a0, z0], [at, a1, z0], [at, a1, z1], [at, a0, z1]]).map((v) => v.map((n) => n / 2)),
+  color, side);
+
 const BLUE = '#3a86ff', TEAL = '#2a9d8f', YELLOW = '#f4c430', RED = '#e63946', GREEN = '#5a9a3c',
-  BROWN = '#8b5a2b', STONE = '#9aa0a6', SAND = '#e9b949', PINK = '#ff5d8f', SKY = '#8ecae6', ORANGE = '#f4a020';
+  BROWN = '#8b5a2b', STONE = '#9aa0a6', SAND = '#e9b949', PINK = '#ff5d8f', SKY = '#8ecae6', ORANGE = '#f4a020', INK = '#2b2d42', WHITE = '#f1ece4', TAN = '#c9a27e';
 
 const SHAPES = [
   { id: 'cube', name: 'Cube', cells: () => paint(box([0, 0, 0], [1, 1, 1], BLUE)) },
@@ -105,6 +114,34 @@ const SHAPES = [
       return a && b ? YELLOW : a || b ? ORANGE : null;
     });
   } },
+  // Animals, side on, facing right (+x), their profile on the lit L side.
+  { id: 'cat', name: 'Cat', cells: () => paint([
+    ...hbox([0, 1, 2], [1, 1, 4], ORANGE), // tail, up from the rump
+    ...hbox([1, 0, 0], [1, 1, 1], ORANGE), ...hbox([6, 0, 0], [1, 1, 1], ORANGE),
+    ...hbox([1, 1, 0], [1, 1, 1], ORANGE), ...hbox([6, 1, 0], [1, 1, 1], ORANGE),
+    ...hbox([1, 0, 1], [6, 2, 2], ORANGE),
+    ...hbox([6, 0, 2], [3, 3, 3], ORANGE),
+    ...hbox([6, 0, 5], [1, 1, 1], ORANGE), ...hbox([6, 2, 5], [1, 1, 1], ORANGE),
+    patch('L', 3, [7, 8], [3, 4], INK),
+  ]) },
+  { id: 'bunny', name: 'Bunny', cells: () => paint([
+    ...hbox([0, 0, 0], [4, 3, 3], TAN),
+    ...hbox([-1, 2, 1], [1, 1, 1], WHITE), // a puff of a tail
+    ...hbox([1, 2, 0], [1, 1, 1], WHITE), ...hbox([3, 2, 0], [1, 1, 1], WHITE), // paws
+    ...hbox([3, 0, 2], [3, 3, 3], TAN),
+    ...hbox([3, 0, 5], [1, 1, 3], TAN), ...hbox([3, 2, 5], [1, 1, 3], TAN),
+    patch('L', 3, [3, 4], [5, 8], PINK),
+    patch('L', 3, [4, 5], [3, 4], INK),
+    patch('R', 6, [1, 2], [3, 4], PINK),
+  ]) },
+  { id: 'duck', name: 'Duck', cells: () => paint([
+    ...hbox([0, 1, 2], [1, 1, 1], YELLOW), // tail
+    ...hbox([0, 0, 0], [5, 3, 2], YELLOW),
+    patch('L', 3, [1, 3], [1, 2], '#e0a800'), // wing
+    ...hbox([3, 1, 2], [2, 2, 3], YELLOW),
+    ...hbox([5, 1, 3], [1, 2, 1], ORANGE),
+    patch('L', 3, [3, 4], [3, 4], INK),
+  ]) },
 ];
 
 // The stamp: cells relative to the anchor, the vertex at the middle of its bottom.
@@ -118,19 +155,27 @@ function stampOf(cells) {
 
 const out = SHAPES.map((s) => ({ id: s.id, name: s.name, stamp: stampOf(s.cells()) }));
 const js = `// The starter stamps (the owner's pick: Cube, Stairs, House, Tree, Wall,
-// Pyramid, Flower, Star). Made by tools/make_stamps.mjs from 3D shapes on the
-// lattice; edit that, not this. Each is a stamp like one saved from a
-// selection: cells [dl, dp, dq, u, color, face] around its anchor vertex.
+// Pyramid, Flower, Star; then Cat, Bunny and Duck for drawing little animals).
+// Made by tools/make_stamps.mjs from 3D shapes on the lattice; edit that, not
+// this. Each is a stamp like one saved from a selection: cells
+// [dl, dp, dq, u, color, face] around its anchor vertex.
 export const STARTER = ${JSON.stringify(out)};
 `;
-fs.writeFileSync(path.join(ROOT, 'web/stamps.js'), js);
+const file = path.join(ROOT, 'web/stamps.js');
+if (process.argv.includes('--check')) {
+  if (fs.readFileSync(file, 'utf8') !== js) { console.error('❌ web/stamps.js is not what tools/make_stamps.mjs makes: run node tools/make_stamps.mjs'); process.exit(1); }
+  console.log('✅ web/stamps.js matches tools/make_stamps.mjs');
+  process.exit(0);
+}
+fs.writeFileSync(file, js);
 console.log(`✅ web/stamps.js: ${out.map((s) => `${s.name} ${s.stamp.cells.length}`).join(', ')} cells`);
 
 const i = process.argv.indexOf('--svg');
 if (i > 0) {
   const d = new Drawing();
   out.forEach((s, k) => {
-    const { cells } = placeStamp(s.stamp, { l: 2, p: 6 + (k % 4) * 0, q: 4 + k * 9 });
+    const c = k % 4, r = Math.floor(k / 4); // four to a row: right is (-1, 2), down (1, 0)
+    const { cells } = placeStamp(s.stamp, { l: 2, p: 8 - 5 * c + 12 * r, q: 4 + 10 * c });
     d.begin(); for (const { cell, c, f } of cells) d.paint(cell, { c, f }); d.commit();
   });
   fs.writeFileSync(process.argv[i + 1], toSVG(d, { background: '#f7f5f0' }));
