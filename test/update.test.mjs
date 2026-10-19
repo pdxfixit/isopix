@@ -2,8 +2,15 @@
 // what ✕ does, and that Reload saves first (web/update.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { updateOffer, liveVersionOf, buildStamp, aboutVersion, versionURL, reportURL, REPO, SUPPORT, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
+import { updateOffer, barFits, liveVersionOf, buildStamp, aboutVersion, versionURL, reportURL, REPO, SUPPORT, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
 
+test('barFits: the bar waits for Done where it and the handle cannot both fit above the selection bar', () => {
+  // Measured in just look: the selection bar's top at 320 px tall, and the bar's 60 px.
+  assert.equal(barFits({ selTop: 130, barH: 60, handle: true }), false); // 480 × 320
+  assert.equal(barFits({ selTop: 186, barH: 60, handle: true }), true);  // 568 × 320
+  assert.equal(barFits({ selTop: 130, barH: 60, handle: false }), true); // no handle: only the top buttons
+  assert.equal(barFits({ selTop: 120, barH: 60, handle: false }), false);
+});
 const offer = (o) => updateOffer({ loaded: 'aaa1111', live: 'bbb2222', busy: false, dismissed: null, ...o });
 
 test('a newer live version shows the bar; the same one, or none known, does not', () => {

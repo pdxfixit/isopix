@@ -9,7 +9,7 @@
 // the side of the screen, and saves a screenshot. Exits 1 when a check fails.
 //
 //   node tools/look.mjs [VIEW ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
-//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel protect hoverskip help move pinchpan save-file welcome welcome-first feedback-gate feedback name-roll loading loading-slow replay
+//   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel updatedone protect hoverskip help move pinchpan save-file welcome welcome-first feedback-gate feedback name-roll loading loading-slow replay
 //   console.log() in --js prints under the table (📝).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -388,9 +388,16 @@ VIEWS.update = { live: ['look-a', 'look-b'], js: `${DRAW} ${SETTLE} await window
 // A replay in progress: its bar sits above the palette and tools, clear of everything.
 VIEWS.replay = { js: `${DRAW} document.querySelector('#replay').click(); ${nap}
   if (document.querySelector('#replay-bar').hidden) throw new Error('the replay bar did not appear');` };
-// With a selection open, the bar must sit above the selection bar.
+// With a selection open, the bar must sit above the selection bar; where it
+// and the handle cannot both fit there (480 × 320), it waits for Done.
 VIEWS.updatesel = { live: ['look-a', 'look-b'], js: `${VIEWS.select.js} ${nap} await window.isopix.update.ask(); ${nap}
-  if (document.querySelector('#update-bar').hidden) throw new Error('the update bar did not appear');` };
+  const crowded = window.isopix.updateBarCrowded(), hidden = document.querySelector('#update-bar').hidden;
+  if (hidden && !crowded) throw new Error('the update bar did not appear');
+  if (!hidden && crowded) throw new Error('the update bar showed with no room above the selection');` };
+// After Done the waiting bar shows (on the next tick).
+VIEWS.updatedone = { live: ['look-a', 'look-b'], js: `${VIEWS.updatesel.js}
+  document.querySelector('#sel-done').click(); ${nap} window.isopix.update.tick(); ${nap}
+  if (document.querySelector('#update-bar').hidden) throw new Error('the update bar did not appear after Done');` };
 
 // Keep fine detail made visible: fine detail, then a bigger tile clicked on it (the
 // skipped cells hatch and the once-a-session notice shows), then hovered.
