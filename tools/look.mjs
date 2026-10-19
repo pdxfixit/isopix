@@ -318,10 +318,11 @@ VIEWS['stamp-bigger'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')}
   ${q('#redo')} ${nap}
   if (snap() !== big || a.selection.region.l !== l0 - 1) throw new Error('Redo did not grow the Cat and its marquee again');` };
 // A placed stamp stays live to be sized (owner, 2026-10-19, docs/spec-stamp-size-turn.md):
-// a Cat placed shows the stamp bar at 1× and the handle on screen; + twice makes it 3×,
-// nine times the cells, still one undo step; the handle dragged two sizes in gives the
-// Cat back exactly; the next tap places a Cat at that size and ends the first one's sizing;
-// Undo takes the second away whole. Ends with the second Cat live at 2×.
+// a Cat placed shows the stamp bar at 1× and the handle on screen; + twice makes it 1½×,
+// three times as many cells each way at one level finer, still one undo step; the handle
+// dragged half a size in gives the Cat back exactly; the next tap places a Cat at the size
+// in use and ends the first one's sizing; Undo takes the second away whole. Ends with the
+// third Cat live at 1¼×.
 VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}
   const a = window.isopix, n = a.drawing.cells.size;
@@ -331,17 +332,18 @@ VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   const hr = h.getBoundingClientRect();
   if (h.hidden || hr.left < 0 || hr.right > innerWidth || hr.top < 0 || hr.bottom > innerHeight) throw new Error('the size handle is hidden or off the screen');
   ${q('#stamp-bigger')} ${nap} ${q('#stamp-bigger')} ${nap}
-  if (a.drawing.cells.size !== 9 * n || size() !== '3×' || a.drawing.undoStack.length !== 1) throw new Error('+ twice gave ' + a.drawing.cells.size + ' cells at ' + size() + ' in ' + a.drawing.undoStack.length + ' undo steps, not ' + 9 * n + ' at 3× in 1');
-  // The handle dragged back two corner-lengths toward the stamp, from wherever it sits.
-  const v = a.live, dx = -2 * v.u[0] * a.view.zoom, dy = -2 * v.u[1] * a.view.zoom;
+  if (a.drawing.cells.size !== 9 * n || size() !== '1½×' || a.drawing.undoStack.length !== 1) throw new Error('+ twice gave ' + a.drawing.cells.size + ' cells at ' + size() + ' in ' + a.drawing.undoStack.length + ' undo steps, not ' + 9 * n + ' at 1½× in 1');
+  if ([...a.drawing.cells.keys()].some((k) => +k.split(',')[0] !== a.level + 1)) throw new Error('1½× is not made of cells one level finer');
+  // The handle dragged back half a corner-length toward the stamp, from wherever it sits.
+  const v = a.live, dx = -0.5 * v.u[0] * a.view.zoom, dy = -0.5 * v.u[1] * a.view.zoom;
   const fh = (type, x, y) => h.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 3, pointerType: 'touch', isPrimary: true, bubbles: true, buttons: type === 'pointerup' ? 0 : 1 }));
   const h0 = h.getBoundingClientRect(), x0 = h0.x + 22, y0 = h0.y + 22;
   fh('pointerdown', x0, y0); fh('pointermove', x0 + dx / 2, y0 + dy / 2); fh('pointermove', x0 + dx, y0 + dy); fh('pointerup', x0 + dx, y0 + dy); ${nap}
-  if (snap() !== placed || size() !== '1×' || a.drawing.undoStack.length !== 1) throw new Error('dragging the handle two sizes in did not give the Cat back exactly (' + size() + ')');
+  if (snap() !== placed || size() !== '1×' || a.drawing.undoStack.length !== 1) throw new Error('dragging the handle half a size in did not give the Cat back exactly (' + size() + ')');
   ${q('#stamp-bigger')} ${nap}
   ${TAP('innerWidth * 0.25', 'innerHeight * 0.3')} ${nap}
   if (a.drawing.undoStack.length !== 2) throw new Error('the next tap did not place a second Cat');
-  if (a.live.A === v.A || size() !== '2×') throw new Error('the second Cat is not the live one, at 2×');
+  if (a.live.A === v.A || size() !== '1¼×') throw new Error('the second Cat is not the live one, at 1¼×');
   const both = snap(); ${q('#undo')} ${nap}
   if (a.drawing.undoStack.length !== 1 || !bar.hidden) throw new Error('Undo did not take the second Cat away whole, or left the stamp bar up');
   ${q('#redo')} ${nap} if (snap() !== both) throw new Error('Redo did not bring the second Cat back');

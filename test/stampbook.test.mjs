@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import * as SB from '../web/stampbook.js';
 import { pack, unpack } from '../web/stamppack.js';
-import { placeStamp, scaleStamp } from '../web/engine/density.js';
+import { placeStamp, scaleStamp, sizeSteps, nearestStep, placeSized } from '../web/engine/density.js';
 import { Drawing } from '../web/engine/model.js';
 import * as L from '../web/engine/lattice.js';
 
@@ -87,6 +87,44 @@ test('a stamp\'s bold edges scale with it, k edges along each one\'s line', () =
     [0, 0, 0, 1, '#111111'], [0, 0, 1, 1, '#111111'], [0, 0, 2, 1, '#111111'],
     [1, -3, 9, 2, '#222222'], [1, -4, 10, 2, '#222222'], [1, -5, 11, 2, '#222222'],
   ]);
+});
+
+// Any size (owner, 2026-10-19: "quarter steps on finer cells, clean edges").
+const box = (cells) => {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const { cell } of cells) for (const w of L.cellWorldVerts(cell)) { x0 = Math.min(x0, w.x); y0 = Math.min(y0, w.y); x1 = Math.max(x1, w.x); y1 = Math.max(y1, w.y); }
+  return [x0, y0, x1, y1];
+};
+test('at every size step a stamp is exactly s times its 1x self about its anchor, in s²·k² cells at j levels finer', () => {
+  const A = { l: 3, p: 2, q: -1 }, o = L.vertexWorld(3, 2, -1);
+  for (const s of SB.STARTER.filter((_, i) => i % 7 === 0)) {
+    const b1 = box(placeStamp(s.stamp, A).cells);
+    for (const step of sizeSteps(s.stamp, A.l)) {
+      const { cells } = placeSized(s.stamp, A, step);
+      assert.equal(cells.length, step.k * step.k * s.stamp.cells.length, `${s.name} at ${step.s}`);
+      assert.ok(cells.every(({ cell }) => cell.l === A.l + step.j), `${s.name} at ${step.s}: cells ${step.j} levels finer`);
+      const b = box(cells), want = b1.map((v, i) => (i % 2 ? o.y : o.x) + step.s * (v - (i % 2 ? o.y : o.x)));
+      b.forEach((v, i) => assert.ok(Math.abs(v - want[i]) < 1e-9, `${s.name} at ${step.s}: outline ${b} not ${want}`));
+    }
+  }
+});
+
+test('size steps: quarters while small, then halves, then whole steps, under the cell cap and never past the finest level', () => {
+  const cat = SB.STARTER.find((s) => s.id === 'cat').stamp; // 111 cells
+  const steps = sizeSteps(cat, 3), ss = steps.map((x) => x.s);
+  assert.deepEqual(ss.slice(0, 8), [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]);
+  assert.ok(ss.includes(3.25) && !ss.includes(3.75) && ss.includes(6.5) && !ss.includes(7.5) && ss.at(-1) === 13, ss.join());
+  assert.ok(steps.every(({ k }) => k * k * 111 <= 20000));
+  assert.deepEqual(steps.find((x) => x.s === 2), { s: 2, k: 2, j: 0 }, 'a whole size uses the grid\'s own cells');
+  assert.ok(sizeSteps(cat, 6).every(({ s, j }) => j <= 1 && Number.isInteger(s * 2)), 'one level from the finest: half steps');
+  assert.ok(sizeSteps(cat, L.MAX_LEVEL).every(({ s, j }) => j === 0 && Number.isInteger(s)), 'at the finest level: whole steps');
+  const deep = { base: 0, cells: [[1, 0, 0, 1, '#123456', null]], edges: [] }; // a stamp of one's own with finer detail
+  assert.ok(sizeSteps(deep, L.MAX_LEVEL - 1).every(({ j }) => j === 0), 'its finest cells never go past the finest level');
+  assert.deepEqual(sizeSteps({ base: 0, cells: new Array(30000).fill([0, 0, 0, 1, '#000000', null]), edges: [] }, 3), [{ s: 1, k: 1, j: 0 }], 'a huge stamp keeps its own size');
+  assert.equal(nearestStep(steps, 1.6).s, 1.5);
+  assert.equal(nearestStep(steps, 1.625).s, 1.5, 'a tie goes to the smaller');
+  assert.equal(nearestStep(steps, 99).s, 13);
+  assert.equal(nearestStep(steps, -3).s, 0.25);
 });
 
 const mk = (name, n) => ({ name, stamp: { base: 0, cells: [[0, n, 0, 1, '#ff0000', null]], edges: [] } });

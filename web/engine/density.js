@@ -423,8 +423,30 @@ export function scaleStamp(stamp, k) {
   }
   return { ...stamp, cells, edges };
 }
-// How many cells a stamp has, so the app can cap how big it grows.
-export const stampSize = (stamp) => stamp.cells.length;
+// The sizes a stamp can take with its anchor at level l (owner, 2026-10-19: any
+// size, "quarter steps on finer cells, clean edges"): s = k / 2^j is the stamp
+// scaled by k, j levels finer (j ≤ 2, never past the finest level), so every edge
+// stays on the lattice. Quarter steps while the stamp stays under maxCells, then
+// halves, then whole steps; the same s at the coarsest cells it can have.
+// Sorted by s; each {s, k, j}.
+export function sizeSteps(stamp, l, maxCells = 20000) {
+  const edges = stamp.edges || [], n = Math.max(1, stamp.cells.length + edges.length);
+  const deepest = Math.max(0, ...stamp.cells.map((c) => c[0]), ...edges.map((e) => e[0]));
+  const jmax = Math.max(0, Math.min(2, L.MAX_LEVEL - l - deepest));
+  const at = new Map([[1, { s: 1, k: 1, j: 0 }]]);
+  for (let j = jmax; j >= 0; j--) for (let k = 1; k * k * n <= maxCells; k++) at.set(k / 2 ** j, { s: k / 2 ** j, k, j });
+  return [...at.values()].sort((a, b) => a.s - b.s);
+}
+// The step nearest size s (the smaller on a tie).
+export function nearestStep(steps, s) {
+  return steps.reduce((b, x) => (Math.abs(x.s - s) < Math.abs(b.s - s) ? x : b));
+}
+// Place a stamp at a size step with its anchor at vertex A: scaled by k, at j
+// levels finer, about the same point.
+export function placeSized(stamp, A, { k, j }) {
+  const f = 2 ** j;
+  return placeStamp(scaleStamp(stamp, k), { l: A.l + j, p: A.p * f, q: A.q * f });
+}
 
 // Place a stamp with its anchor at vertex A (level A.l). Cells that would be
 // finer than the finest level are skipped.

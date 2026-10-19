@@ -1,8 +1,9 @@
 // A placed stamp stays live, to be sized where it stands (docs/spec-stamp-size-turn.md;
 // the owner's pick, 2026-10-19: "place, then adjust"). It is painted and committed
 // like any stamp; live only means the stamp bar and the corner handle can redraw it
-// at another whole-number size (engine/density.js scaleStamp), replacing its one
-// undo step. It stays live while that step is still the last one: the next paint,
+// at another size, replacing its one undo step. Sizes go in quarter steps while the
+// stamp is small, then halves, then whole steps; an in-between size is made of finer
+// cells, so every edge stays clean (owner, 2026-10-19; engine/density.js sizeSteps). It stays live while that step is still the last one: the next paint,
 // Undo, another tool or another stamp ends it by themselves, and panning or
 // zooming does not. The size is kept for the next stamp.
 //
@@ -21,20 +22,25 @@ import { applyCells, applyEdges, commit, reportSkips } from './tools.js';
 export const MAX_CELLS = 20000;
 
 const chosen = () => SB.chosen(app.stampChoice, app.stamps).stamp;
-export const maxSize = (stamp) => Math.max(1, Math.floor(Math.sqrt(MAX_CELLS / Math.max(1, stamp.cells.length + (stamp.edges || []).length))));
-
-// The chosen stamp at size k, made once per stamp and size.
-const scaled = new WeakMap();
-function sized(stamp, k) {
-  if (!scaled.has(stamp)) scaled.set(stamp, new Map());
-  const m = scaled.get(stamp);
-  if (!m.has(k)) m.set(k, D.scaleStamp(stamp, k));
-  return m.get(k);
+// The sizes the chosen stamp has with its anchor at level l, made once per stamp
+// and level, and the one nearest the size in use.
+const memo = new WeakMap();
+function steps(l) {
+  const st = chosen();
+  if (!memo.has(st)) memo.set(st, new Map());
+  const m = memo.get(st);
+  if (!m.has(l)) m.set(l, D.sizeSteps(st, l, MAX_CELLS));
+  return m.get(l);
 }
+const stepAt = (l) => D.nearestStep(steps(l), app.stampSize);
 // What the Stamp brush paints with its anchor at vertex A, at the size in use.
 export function stampAt(A) {
-  const st = chosen();
-  return D.placeStamp(sized(st, Math.min(app.stampSize, maxSize(st))), A);
+  return D.placeSized(chosen(), A, stepAt(A.l));
+}
+// A size as the bar says it: 1×, 1½×, 2¼×, ¾×.
+export function sizeLabel(s) {
+  const whole = Math.floor(s), part = { 0.25: '¼', 0.5: '½', 0.75: '¾' }[s - whole] || '';
+  return `${whole || !part ? whole : ''}${part}×`;
 }
 
 // After a stamp is placed (ui/input.js onUp).
@@ -68,16 +74,14 @@ export function endLive() {
   requestRender();
 }
 
-// Size k for the next stamp, and for the live one: its undo step is taken back
-// and it is painted again from the stamp itself, so no size loses detail.
-export function setStampSize(k) {
-  if (!Number.isFinite(k)) return;
-  const max = maxSize(chosen());
-  k = Math.max(1, Math.min(max, k));
-  const live = stillLive();
-  if (k === app.stampSize && live) return;
-  app.stampSize = k;
-  if (!live) { app.live = null; updateStampbar(); toast(`Stamp size ${k}×`); return; }
+// The size nearest s, for the next stamp and the live one: its undo step is taken
+// back and it is painted again from the stamp itself, so no size loses detail.
+export function setStampSize(s) {
+  if (!Number.isFinite(s)) return;
+  const live = stillLive(), to = D.nearestStep(steps(live ? app.live.A.l : app.level), s).s;
+  if (to === app.stampSize && live) return;
+  app.stampSize = to;
+  if (!live) { app.live = null; updateStampbar(); toast(`Stamp size ${sizeLabel(to)}`); return; }
   const v = app.live, d = app.drawing;
   if (v.diff) { d.undo(); d.redoStack.pop(); }
   app.strokeSkips.clear();
@@ -92,22 +96,29 @@ export function setStampSize(k) {
   updateStampbar();
 }
 
+// One size up (d = 1) or down (-1) from the one in use.
+export function stepStampSize(d) {
+  const list = steps(stillLive() ? app.live.A.l : app.level), i = list.indexOf(D.nearestStep(list, app.stampSize));
+  setStampSize(list[Math.max(0, Math.min(list.length - 1, i + d))].s);
+}
+
 // The bar and the handle follow the live stamp; called on every render.
 export function updateStampbar() {
   if (app.live && !stillLive()) app.live = null;
   const v = app.live, bar = $('#stampbar'), h = $('#stamp-handle');
   if (bar.hidden !== !v) bar.hidden = !v;
   if (!v) { h.hidden = true; return; }
-  const k = app.stampSize, max = maxSize(chosen());
-  const label = `${k}×`;
+  const list = steps(v.A.l), k = stepAt(v.A.l).s, label = sizeLabel(k);
   if ($('#stamp-size').textContent !== label) {
     $('#stamp-size').textContent = label;
     $('#stamp-size').setAttribute('aria-label', `Stamp size: ${k} times`);
     h.setAttribute('aria-valuenow', String(k));
+    h.setAttribute('aria-valuetext', label);
   }
-  h.setAttribute('aria-valuemax', String(max));
-  $('#stamp-smaller').disabled = k <= 1;
-  $('#stamp-bigger').disabled = k >= max;
+  h.setAttribute('aria-valuemin', String(list[0].s));
+  h.setAttribute('aria-valuemax', String(list.at(-1).s));
+  $('#stamp-smaller').disabled = k <= list[0].s;
+  $('#stamp-bigger').disabled = k >= list.at(-1).s;
   if (!h.classList.contains('dragging')) {
     // Just outside the stamp's corner, kept on screen, above the bars and off the
     // buttons and rails (a big stamp's corner may be under them, or off the screen).
@@ -120,20 +131,20 @@ export function updateStampbar() {
   }
   h.hidden = false;
 }
-// A 44 px knob centered at (x, y), moved the shortest way off any of the
-// controls it would cover: below a top cluster, or toward the middle off a rail.
+// A 44 px knob centered at (x, y), moved to the nearest spot on screen that covers
+// none of the controls: beside or below each one it would cover, three times over (a gap
+// between two clusters may be too narrow for it, so it goes below them).
 function clearOf(sels, x, y) {
   const rects = sels.map((sel) => document.querySelector(sel)?.getBoundingClientRect()).filter((r) => r && r.width && r.height);
-  for (let pass = 0; pass < 2; pass++) {
-    for (const r of rects) {
-      if (x + 26 < r.left || x - 26 > r.right || y + 26 < r.top || y - 26 > r.bottom) continue;
-      const side = (r.left + r.right) / 2 < innerWidth / 2 ? r.right + 26 - x : r.left - 26 - x, down = r.bottom + 26 - y;
-      if (Math.abs(down) < Math.abs(side)) y += down; else x += side;
-    }
+  const covers = (cx, cy) => rects.filter((r) => !(cx + 26 < r.left || cx - 26 > r.right || cy + 26 < r.top || cy - 26 > r.bottom));
+  let spots = [[x, y]];
+  for (let pass = 0; pass < 3; pass++) {
+    spots = spots.concat(spots.flatMap(([cx, cy]) => covers(cx, cy).flatMap((r) => [[r.right + 28, cy], [r.left - 28, cy], [cx, r.bottom + 28]])));
   }
-  return [x, y];
+  const ok = spots.filter(([cx, cy]) => cx >= 26 && cx <= innerWidth - 26 && !covers(cx, cy).length);
+  return ok.length ? ok.reduce((b, c) => (Math.hypot(c[0] - x, c[1] - y) < Math.hypot(b[0] - x, b[1] - y) ? c : b)) : [x, y];
 }
-// The handle's corner of the outline at size k, in world units.
+// The handle's corner of the outline at size k (any number), in world units.
 function corner(v, k) {
   const a = L.vertexWorld(v.A.l, v.A.p, v.A.q);
   return [a.x + k * v.u[0], a.y + k * v.u[1]];
@@ -142,17 +153,18 @@ function corner(v, k) {
 export function liveBox() {
   const v = app.live;
   if (!v) return null;
-  const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), k = app.stampSize;
+  const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), k = stepAt(v.A.l).s;
   return { x0: a.x + k * v.box.x0, y0: a.y + k * v.box.y0, x1: a.x + k * v.box.x1, y1: a.y + k * v.box.y1 };
 }
 
 export function wireLiveStamp() {
-  $('#stamp-smaller').addEventListener('click', () => setStampSize(app.stampSize - 1));
-  $('#stamp-bigger').addEventListener('click', () => setStampSize(app.stampSize + 1));
+  $('#stamp-smaller').addEventListener('click', () => stepStampSize(-1));
+  $('#stamp-bigger').addEventListener('click', () => stepStampSize(1));
   $('#stamp-done').addEventListener('click', endLive);
   // The handle: moving the finger one corner's length along the line from the
-  // anchor through the 1× corner is one size, counted from where it was grabbed
-  // (a handle kept on screen or off a rail is not on the corner itself).
+  // anchor through the 1× corner is 1× more, counted from where it was grabbed (a
+  // handle kept on screen or off a rail is not on the corner itself); the size is
+  // the step nearest that.
   const h = $('#stamp-handle');
   let grab = null;
   const along = (e) => {
@@ -166,19 +178,18 @@ export function wireLiveStamp() {
     if (!stillLive()) return;
     try { h.setPointerCapture(e.pointerId); } catch { /* synthetic */ }
     h.classList.add('dragging');
-    grab = { t: along(e), k: app.stampSize };
+    grab = { t: along(e), s: stepAt(app.live.A.l).s };
   });
   h.addEventListener('pointermove', (e) => {
     if (!app.live || !grab || !h.classList.contains('dragging')) return;
     h.style.left = `${e.clientX}px`; h.style.top = `${e.clientY}px`;
-    const k = Math.round(grab.k + along(e) - grab.t);
-    if (k !== app.stampSize) setStampSize(k);
+    setStampSize(grab.s + along(e) - grab.t);
   });
   const drop = () => { grab = null; h.classList.remove('dragging'); updateStampbar(); };
   h.addEventListener('pointerup', drop);
   h.addEventListener('pointercancel', drop);
   h.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); setStampSize(app.stampSize + 1); }
-    if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); setStampSize(app.stampSize - 1); }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); stepStampSize(1); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); stepStampSize(-1); }
   });
 }

@@ -13,7 +13,7 @@ import { applyCells, applyEdges, brushAt, closePopover, commit, doFill, eraseEdg
 import { openDrawing, openHelp, openSettings, syncMenu } from './screens.js';
 import { openProject, saveFile } from './files.js';
 import { barMode, setBar } from './video.js';
-import { endLive, setStampSize, startLive } from './livestamp.js';
+import { endLive, startLive, stepStampSize } from './livestamp.js';
 
 // ---------- pointer input ----------
 const pointers = new Map();
@@ -358,7 +358,7 @@ export function onKey(e) {
     tool: () => setTool(arg),
     options: () => { if (!$('#options').disabled) openPopover(); },
     size: () => chooseNotch(Math.max(0, Math.min(7, cur + Number(arg)))),
-    stampsize: () => setStampSize(app.stampSize + Number(arg)),
+    stampsize: () => stepStampSize(Number(arg)),
     lock: toggleLock,
     gutters: () => { set('gutters', !app.settings.gutters); syncMenu(); requestRender(); },
     reset: fitView,
