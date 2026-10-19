@@ -369,8 +369,9 @@ VIEWS.fit = { js: `${DRAW} const app = window.isopix; app.view.zoomAt(app.view.w
   const right = lv.height > lv.width ? lv.left : innerWidth, bottom = Math.min(box('#palette').top, box('.tools').top);
   if (x0 < box('#zoom').right - 1 || x1 > right + 1 || y0 < top - 1 || y1 > bottom + 1) throw new Error('fit left the drawing under the controls: ' + [x0, y0, x1, y1].map(Math.round));` };
 // The update notice: the page loads as version look-a, then look-b goes "live".
-VIEWS.update = { live: ['look-a', 'look-b'], js: `await window.isopix.update.ask();
-  if (document.querySelector('#update-bar').hidden) throw new Error('the update bar did not appear');` };
+VIEWS.update = { live: ['look-a', 'look-b'], js: `${DRAW} ${SETTLE} await window.isopix.update.ask();
+  if (document.querySelector('#update-bar').hidden) throw new Error('the update bar did not appear');
+  if (!/Your drawing is saved/.test(document.querySelector('#update-bar').textContent)) throw new Error('the update bar does not say the drawing is saved');` };
 // A replay in progress: its bar sits above the palette and tools, clear of everything.
 VIEWS.replay = { js: `${DRAW} document.querySelector('#replay').click(); ${nap}
   if (document.querySelector('#replay-bar').hidden) throw new Error('the replay bar did not appear');` };

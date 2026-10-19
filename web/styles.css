@@ -227,6 +227,7 @@ body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left
   padding: 6px 6px 6px 14px; border-radius: 14px; background: var(--ink); color: var(--bg); font-weight: 700; box-shadow: var(--shadow);
 }
 .update-text { flex: 1 1 12em; min-width: 0; }
+#update-saved { display: block; } /* its own line, never split mid-phrase */
 .update-buttons { display: flex; gap: 6px; margin-left: auto; }
 .update-reload { background: var(--accent); color: var(--accent-ink); border: 0; padding: 0 18px; }
 .update-close { background: transparent; color: var(--bg); border: 2px solid currentColor; }

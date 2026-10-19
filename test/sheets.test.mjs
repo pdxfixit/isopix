@@ -87,3 +87,9 @@ test('the saved line', () => {
   assert.match(S.savedAgo(3 * 60000), /3 minutes ago/);
   assert.match(S.savedAgo(61000), /1 minute ago/);
 });
+
+test('the update notice says the drawing is saved, unless this browser keeps nothing', () => {
+  assert.equal(S.reloadSafeLine(true, true), 'Your drawing is saved.');
+  assert.equal(S.reloadSafeLine(false, false), 'Your drawing is saved.', 'nothing drawn: nothing to lose');
+  assert.match(S.reloadSafeLine(false, true), /not keeping your drawing: Save drawing first/);
+});
