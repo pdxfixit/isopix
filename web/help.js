@@ -148,6 +148,7 @@ export const SECTIONS = [
       { name: 'Smaller', from: '#stamp-smaller', says: 'The stamp one size smaller, down to a quarter of its own size (¼×) where the grid allows.' },
       { name: 'Bigger', from: '#stamp-bigger', says: 'The stamp one size bigger. The next stamps you place come out this size too.' },
       { name: 'Floor or wall', from: '#stamp-plane', says: 'For flat stamps (the Moon, the Smiley, sacred geometry…) and letters and numbers: each tap lays it on the next of the floor, the left wall and the right wall (and, for a flat picture, back to standing up), shaded like that face of a cube. The next stamps go there too.' },
+      { name: 'Spin', from: '#stamp-spin', says: 'For the 3D stamps (the Cat, the Train, the House…): each tap turns it a quarter turn where it stands, so it faces right, left, or away to either side; the light stays where it is. The next stamps come out turned too (R on a keyboard).' },
       { name: 'Done', from: '#stamp-done', says: 'Keeps the stamp as it is. Placing another stamp, drawing or Undo does the same.' },
     ],
   },

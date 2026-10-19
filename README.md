@@ -50,7 +50,7 @@ LAN gets the app, but not the install.
   for bigger, in for smaller (quarter steps while small, made of finer cells so
   the edges stay clean; then halves, then whole steps), or use − and + on the
   stamp bar (`,` and `.` on a keyboard). The cube button lays a flat stamp or
-  a letter on the floor or a wall. The next stamps keep that size and place; the
+  a letter on the floor or a wall; Spin (`R`) turns a 3D stamp a quarter turn. The next stamps keep that size and place; the
   next tap, another tool or Undo finishes it.
 - **Line**: drag; it locks to the three grid directions. Styles: Strip (a strip
   of cells) and Edge (a bold line on the grid lines).
@@ -133,7 +133,7 @@ don't put names or contact details in it: nobody can write back.
 | Path | What it holds |
 |---|---|
 | `web/` | The site, and nothing else is served. `index.html`, `styles.css`, `app.js` (state, rendering, wiring) and `ui/` (controls, tools, input, sheets, files, the live stamp), `render.js` (Canvas 2D), `storage.js`, `gallery.js` (the list of drawings, pure), `stampbook.js` (starter and own stamps, pure), `palettes.js` (preset and own palettes, pure) and `stamps.js` (the starter art, packed by `stamppack.js`, made by `tools/make_stamps.mjs`), `autosave.js` (autosave copies, pure), `events.js` (usage events, the shared standard) on `events-client.js` (vendored from flarepress), `feedback.js` (Feedback's grown-up check and request, pure; its dialogs are `ui/feedback.js`), `glyphs.js`, `welcome.js` (the first-visit card), `lessons.js` (the lessons' steps, pure) and `tour.js` (the lesson bubble), `loading.js` (the loading screen), `sillynames.js`, `sw.js`, `version.js`, `manifest.webmanifest`, `_headers`, `icons/`. |
-| `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `stampart.js` (the starter stamps the app draws itself: flat pictures, planes, the block font), `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
+| `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `stampart.js` (the starter stamps the app draws itself: flat pictures, planes, the block font, turning by depth), `stampmodels.js` (the box stamps as 3D models, for Spin), `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2, and `POST /api/feedback` into the shared feedback bucket, both through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
 | `test/` | `node --test` suites for the engine. |
 | `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |

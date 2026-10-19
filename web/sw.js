@@ -14,7 +14,7 @@ const SHELL = [
   './keys.js', './help.js', './palette.js', './palettes.js', './sheets.js', './move.js', './events.js', './events-client.js', './welcome.js', './tour.js', './lessons.js', './sillynames.js', './loading.js', './autosave.js', './gallery.js', './stampbook.js', './prompts.js', './video.js', './stamps.js', './stamppack.js', './feedback.js',
   './ui/controls.js', './ui/tools.js', './ui/input.js', './ui/screens.js', './ui/files.js', './ui/gallery.js', './ui/stamps.js', './ui/livestamp.js', './ui/palettes.js', './ui/video.js', './ui/feedback.js',
   './engine/lattice.js', './engine/model.js', './engine/brushes.js', './engine/symmetry.js',
-  './engine/fill.js', './engine/density.js', './engine/stampart.js', './engine/svg.js', './engine/project.js',
+  './engine/fill.js', './engine/density.js', './engine/stampart.js', './engine/stampmodels.js', './engine/svg.js', './engine/project.js',
   './engine/view.js', './engine/color.js', './engine/paper.js', './engine/protect.js',
   './engine/gesture.js', './engine/pngproject.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
