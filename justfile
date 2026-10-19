@@ -27,6 +27,13 @@ test:
     node --test test/*.test.mjs
     python3 -m unittest discover -s tools -p 'test_*.py'
 
+#   just ci-wait              main on GitHub
+#   just ci-wait 9f639a4      one commit (a short SHA is fine)
+# 🔎 Wait for GitHub Actions on a commit and say how each run ended (test, and deploy when it deployed); fails if one failed
+[positional-arguments]
+ci-wait *args:
+    @bash tools/ci_wait.sh "$@"
+
 # Lands through flarepress's shared tool (tools/land.sh in the flarepress checkout beside this one,
 # else $FLAREPRESS, else a clone in ~/.cache); land.conf here says what it runs.
 # 🛬 Land commits on main: pull main from GitHub, cherry-pick, restamp web/version.js, test, push (GitHub deploys): just land [--wait] [<sha>…]; no sha: this branch's
