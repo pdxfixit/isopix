@@ -548,7 +548,7 @@ dialog.feedback { width: min(480px, calc(100vw - 24px)); max-height: calc(100dvh
    is no room for a track worth aiming, so only the buttons remain. */
 @media (max-width: 767px), (max-height: 559px) {
   .zoom { top: calc(64px + env(safe-area-inset-top)); transform: none; }
-  .zoom-track { height: clamp(72px, calc(100dvh - 586px), 220px); } /* 46 px less for the clean-view eye: the rail ends where it did */
+  .zoom-track { height: clamp(72px, calc(100dvh - 586px), 174px); } /* 46 px less, cap included, for the clean-view eye: the rail ends where it did */
 }
 @media (max-width: 767px) and (max-height: 665px), (max-height: 559px) {
   .zoom-track { display: none; }
