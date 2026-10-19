@@ -23,7 +23,7 @@ test('the starter stamps, group by group: the eight the owner picked, the animal
     People: ['Smiley', 'Kid', 'Person'],
     Vehicles: ['Car', 'Truck', 'Train', 'Boat', 'Rocket', 'Plane'],
     Space: ['Planet', 'Moon', 'Stars', 'UFO'],
-    Food: ['Apple', 'Cake', 'Tiered cake', 'Ice cream', 'Cupcake', 'Pizza', 'Carrot'],
+    Food: ['Apple', 'Cake', 'Ice cream', 'Cupcake', 'Pizza', 'Carrot'],
     Letters: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
     Numbers: [...'0123456789'],
   });

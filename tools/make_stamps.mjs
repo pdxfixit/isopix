@@ -324,12 +324,8 @@ const SHAPES = [
     ...hbox([1, 1, 0], [3, 3, 1], RED), ...hbox([0, 0, 1], [5, 5, 4], RED), ...hbox([1, 1, 5], [3, 3, 1], RED),
     ...hbox([2, 2, 6], [1, 1, 1], BROWN), ...hbox([2, 3, 6], [1, 1, 1], GREEN),
   ]) },
+  // Three tiers and a cherry (the one-block Cake went, owner 2026-10-19).
   { id: 'cake', name: 'Cake', group: 'food', cells: () => paint([
-    ...hbox([0, 0, 0], [5, 5, 2], FROSTING), ...hbox([0, 0, 2], [5, 5, 1], CREAM), ...hbox([0, 0, 3], [5, 5, 2], FROSTING),
-    ...hbox([2, 2, 5], [1, 1, 2], SKY), ...hbox([2, 2, 7], [1, 1, 1], YELLOW), // a candle
-    patch('L', 5, [1, 2], [3, 4], RED), patch('L', 5, [3, 4], [3, 4], RED), patch('R', 5, [2, 3], [3, 4], RED), // cherries
-  ]) },
-  { id: 'tiered-cake', name: 'Tiered cake', group: 'food', cells: () => paint([
     ...hbox([0, 0, 0], [7, 7, 2], FROSTING), ...hbox([1, 1, 2], [5, 5, 2], CREAM), ...hbox([2, 2, 4], [3, 3, 2], FROSTING),
     ...hbox([3, 3, 6], [1, 1, 1], RED), // a cherry
   ]) },
