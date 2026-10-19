@@ -227,9 +227,15 @@ body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left
   padding: 6px 6px 6px 14px; border-radius: 14px; background: var(--ink); color: var(--bg); font-weight: 700; box-shadow: var(--shadow);
 }
 .update-text { flex: 1 1 12em; min-width: 0; }
-#update-saved { display: block; } /* its own line, never split mid-phrase */
 /* The update bar's 🆕 stands as tall as its two lines, beside them. */
 .update-text.with-icon { display: flex; align-items: center; gap: 10px; }
+/* One row at every width (owner: "it should still be only one row"): the words wrap, the buttons never drop below. */
+#update-bar { flex-wrap: nowrap; padding-left: 10px; }
+/* Two lines, never more: each sentence stays whole and the words (and the 🆕
+   with them) shrink a little on narrow phones, to 12 px at 320 px wide. */
+#update-bar .update-text { flex: 1 1 auto; font-size: clamp(12px, 3.75vw, 16px); }
+#update-bar .update-line { display: block; white-space: nowrap; }
+#update-bar .update-reload { padding: 0 12px; }
 .update-icon { flex: none; font-size: 2.4em; line-height: 1; }
 .update-buttons { display: flex; gap: 6px; margin-left: auto; }
 .update-reload { background: var(--accent); color: var(--accent-ink); border: 0; padding: 0 18px; }
