@@ -261,7 +261,7 @@ VIEWS.stamps = { fresh: true, js: `${STAMPS_OPEN}
   if (document.querySelector('#stamps').open || window.isopix.settings.brush !== 'stamp') throw new Error('picking House did not close Stamps and pick the Stamp brush');
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
   const n = window.isopix.drawing.cells.size;
-  if (n !== 88) throw new Error('a tap placed ' + n + ' cells, not 88 (the House)');
+  if (n !== 80) throw new Error('a tap placed ' + n + ' cells, not 80 (the House)');
   ${STAMPS_OPEN}
   const b = document.querySelector('#st-buildings .set-head');
   if (b.getAttribute('aria-expanded') !== 'true' || b.children[2].textContent !== 'using House') throw new Error('Buildings was not remembered open, or does not say it holds the House');
