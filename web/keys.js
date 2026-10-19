@@ -15,6 +15,7 @@ export const KEYS = [
   { keys: [']'], match: [{ key: ']' }], action: 'size:+1', says: 'Smaller cells: one notch down' },
   { keys: [','], match: [{ key: ',' }, { key: '<' }], action: 'stampsize:-1', says: 'Stamp one size smaller: the stamp just placed, and the next ones' },
   { keys: ['.'], match: [{ key: '.' }, { key: '>' }], action: 'stampsize:+1', says: 'Stamp one size bigger: the stamp just placed, and the next ones' },
+  { keys: ['R'], match: [{ key: 'r' }], action: 'spin', says: 'Spin a 3D stamp a quarter turn: the stamp just placed, and the next ones' },
   { keys: ['K'], match: [{ key: 'k' }], action: 'lock', says: 'Lock or unlock the grid level' },
   { keys: ['G'], match: [{ key: 'g' }], action: 'gutters', says: 'Show or hide the gutters (the thin grid lines)' },
   { keys: ['H'], match: [{ key: 'h' }], action: 'move', says: 'Move mode on or off: one finger (or the mouse) moves the view instead of drawing' },

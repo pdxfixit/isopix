@@ -370,6 +370,24 @@ VIEWS['stamp-plane'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('space')} ${
   if (pb.hidden || most() !== 'L') throw new Error('the A did not go on the left wall, the plane in use (' + most() + ', ' + JSON.stringify({ plane: a.stampPlane, choice: a.stampChoice, live: !!a.live, n: mine().length }) + ')');
   ${q('#stamp-plane')} ${nap}
   if (most() !== 'R') throw new Error('a tap did not stand the A on the right wall (' + most() + ')');` };
+// Spin (owner, 2026-10-19, spec step 3): a Cat placed shows Spin (and no plane button);
+// a tap turns it to face left, in the same undo step, its eye now out of sight; three
+// more give the placed Cat back exactly. A Moon shows the plane button, not Spin. Ends
+// with a Cat live, facing away to the left.
+VIEWS['stamp-spin'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}
+  const a = window.isopix, sb = document.querySelector('#stamp-spin'), pb = document.querySelector('#stamp-plane');
+  const snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort()), placed = snap();
+  const dark = () => [...a.drawing.cells.values()].some((v) => v.c === '#2b2d42' || v.c === '#070819' || v.c === '#4a4c63'); // the eye, any side
+  if (sb.hidden || !pb.hidden || !sb.getAttribute('aria-label').includes('facing right') || !dark()) throw new Error('the Cat did not show Spin facing right, with its eye');
+  ${q('#stamp-spin')} ${nap}
+  if (snap() === placed || a.drawing.undoStack.length !== 1 || dark() || !sb.getAttribute('aria-label').includes('facing left')) throw new Error('a tap did not turn the Cat to face left, eye hidden, in one undo step');
+  ${q('#stamp-spin')} ${nap} ${q('#stamp-spin')} ${nap} ${q('#stamp-spin')} ${nap}
+  if (snap() !== placed) throw new Error('four quarter turns did not give the placed Cat back');
+  ${q('#stamp-spin')} ${nap} ${q('#stamp-spin')} ${nap} ${q('#stamp-done')} ${nap} ${q('#undo')} ${nap} a.stampSpin = 0;
+  ${STAMPS_OPEN} ${SECTION('space')} ${TILE('space', 'Moon')} ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}
+  if (!sb.hidden || pb.hidden) throw new Error('the Moon showed Spin, or no plane button');
+  ${q('#undo')} ${nap} ${STAMPS_OPEN} ${TILE('animals', 'Cat')} a.stampSpin = 2; ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}` };
 // A stamp of one's own goes in Mine and stays there in a new drawing.
 // Palettes (owner, 2026-10-18): a preset is copied into Mine on the first
 // eyedropper pick, a second pick keeps the first, Mine is stored; ⋯ takes a

@@ -37,14 +37,18 @@ export function inside(poly, pp, qq) {
   }
   return hit;
 }
-// A face: 3D corners, a color, and its cube-face tag (T, L or R; null for flat paint).
-export const face = (pts, color, f) => ({ poly: pts.map(at), color, f });
+// A face: 3D corners, a color, and which way it faces as a cube-face tag: T (up,
+// +z), L (+y) and R (+x) face the viewer; l (-y) and r (-x) face away, and show
+// only when the stamp is spun (render). null for flat paint.
+export const face = (pts, color, f) => ({ poly: pts.map(at), pts, color, f });
 export function box([x0, y0, z0], [sx, sy, sz], color) {
   const x1 = x0 + sx, y1 = y0 + sy, z1 = z0 + sz;
   return [
     face([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], color, 'T'),
     face([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], color, 'L'),
     face([[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], color, 'R'),
+    face([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], color, 'l'),
+    face([[x0, y0, z0], [x0, y1, z0], [x0, y1, z1], [x0, y0, z1]], color, 'r'),
   ];
 }
 // Boxes in half units, for small features (ears, eyes, a beak, a letter's pixel).
@@ -54,6 +58,7 @@ export const hbox = (o, sz, color) => box(o.map((v) => v / 2), sz.map((v) => v /
 export function paint(faces) {
   const cells = new Map();
   for (const { poly, color, f } of faces) {
+    if (f === 'l' || f === 'r') continue; // facing away
     // A corner between grid points (a half unit at an odd U, a quarter unit
     // at U 2) fills saw-toothed cells and makes cells off the lattice.
     if (!poly.flat().every(Number.isInteger)) throw new Error(`a face corner is off the grid: ${JSON.stringify(poly)}; use whole lattice steps`);
@@ -64,6 +69,40 @@ export function paint(faces) {
     }
   }
   return cells;
+}
+
+// ---------- spinning ----------
+// A model (faces) turned a quarter turn spin times about the up axis, (x, y) to
+// (-y, x) each time (what faced down-right faces down-left, then up-left, then
+// up-right), and drawn as it looks: each cell shows the nearest face
+// over its center, and a face is shaded as the side it now faces, so the light
+// stays where it is. Map key → {cell, c, f} at LV. Spin 0 is the stamp as drawn.
+const DIR = { T: [0, 0, 1], L: [0, 1, 0], R: [1, 0, 0], l: [0, -1, 0], r: [-1, 0, 0] };
+const SIDE = ([x, y, z]) => (z > 0 ? 'T' : y > 0 ? 'L' : x > 0 ? 'R' : null);
+const turn = ([x, y, z], n) => { for (let i = 0; i < n; i++) [x, y] = [-y, x]; return [x, y, z]; };
+export function render(faces, spin = 0) {
+  const best = new Map();
+  faces.forEach(({ pts, color, f }, order) => {
+    const side = f && SIDE(turn(DIR[f], spin));
+    if (!side) return; // facing away (or flat paint, which only stamps drawn upright use)
+    const P = pts.map((v) => turn(v, spin)), poly = P.map(at);
+    if (!poly.flat().every(Number.isInteger)) throw new Error(`a face corner is off the grid: ${JSON.stringify(poly)}; use whole lattice steps`);
+    // The face's plane, n · X = d: depth (x + y + z, bigger is nearer) at the point over (pp, qq).
+    const [a, b, c] = P, u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], w = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]], s = n[0] + n[1] + n[2];
+    if (Math.abs(s) < 1e-12) return; // seen edge on
+    const d = n[0] * a[0] + n[1] * a[1] + n[2] * a[2];
+    const ps = poly.map((v) => v[0]), qs = poly.map((v) => v[1]);
+    for (const cell of L.cellsInBox(LV, Math.min(...ps) - 1, Math.max(...ps), Math.min(...qs) - 1, Math.max(...qs))) {
+      const { pp, qq } = L.centroidLattice(cell);
+      if (!inside(poly, pp, qq)) continue;
+      const t = (d - (n[0] * qq) / U + (n[2] * pp) / U) / s, depth = 3 * t + qq / U - pp / U;
+      const key = L.cellKey(cell), was = best.get(key);
+      // Nearer wins; on a tie (a patch on a box's side) the later face, as when painting.
+      if (!was || depth > was.depth - 1e-9) best.set(key, { cell, c: shade(color, side), f: side, depth, order });
+    }
+  });
+  return new Map([...best].map(([k, { cell, c, f }]) => [k, { cell, c, f }]));
 }
 
 // ---------- points ----------
@@ -282,11 +321,27 @@ export function glyphCells(ch, color, plane = 'left') {
 }
 
 // ---------- stamps ----------
-// The anchor of cells (Map key → {cell}): the vertex at the middle of their bottom.
+// The anchor of cells (Map key → {cell}): the vertex nearest the middle of their
+// bottom (across their centers, at the lowest center). In whole numbers, so the
+// same shape moved anywhere gets the same anchor: centers are (3p + 1, 3q + 1) / 3
+// for an up cell and (3p + 2, 3q + 2) / 3 for a down one; on screen x goes with q
+// and y with p + q / 2. A tie goes to the vertex further left, then higher.
 export function anchorOf(cells) {
-  const ws = [...cells.values()].map(({ cell }) => L.centroid(cell));
-  const midX = (Math.min(...ws.map((w) => w.x)) + Math.max(...ws.map((w) => w.x))) / 2, low = Math.max(...ws.map((w) => w.y));
-  return L.nearestVertex(LV, midX, low);
+  let qMin = Infinity, qMax = -Infinity, low = -Infinity;
+  for (const { cell: { p, q, u } } of cells.values()) {
+    const P = 3 * p + (u ? 1 : 2), Q = 3 * q + (u ? 1 : 2);
+    qMin = Math.min(qMin, Q); qMax = Math.max(qMax, Q); low = Math.max(low, 2 * P + Q);
+  }
+  const Q2 = qMin + qMax; // twice the middle's 3q
+  // 16 × the squared distance from vertex (p, q) to the point, in whole numbers.
+  const d = (p, q) => 3 * (6 * q - Q2) ** 2 + (12 * p + 6 * q - 2 * low) ** 2;
+  const q0 = Math.floor(Q2 / 6), p0 = Math.floor((low - Q2 / 2) / 6 - q0 / 2);
+  let best = null;
+  for (let p = p0 - 2; p <= p0 + 2; p++) for (let q = q0 - 1; q <= q0 + 2; q++) {
+    const v = d(p, q);
+    if (!best || v < best.v || (v === best.v && (q < best.q || (q === best.q && p < best.p)))) best = { v, p, q };
+  }
+  return { l: LV, p: best.p, q: best.q };
 }
 // Cells as a stamp around anchor a: [dl, dp, dq, u, color, face].
 export const stampFrom = (cells, a) => ({ base: 0, cells: [...cells.values()].map(({ cell, c, f }) => [0, cell.p - a.p, cell.q - a.q, cell.u, c, f]), edges: [] });

@@ -15,6 +15,7 @@
 import * as L from '../engine/lattice.js';
 import * as D from '../engine/density.js';
 import * as ART from '../engine/stampart.js';
+import * as M from '../engine/stampmodels.js';
 import * as SB from '../stampbook.js';
 import { $, app, canvas, requestRender, toast } from '../app.js';
 import { applyCells, applyEdges, commit, reportSkips } from './tools.js';
@@ -33,10 +34,14 @@ export const planeNow = () => { const ps = planes(); return ps.includes(app.stam
 const art = new Map();
 const artOf = (id, plane, k) => { const key = `${id} ${plane} ${k}`; if (!art.has(key)) art.set(key, ART.variant(id, plane, k)); return art.get(key); };
 const scaledOf = new WeakMap();
-// The chosen stamp at 1× on its plane, and at k times.
+// The quarter turns the chosen stamp is spun (Spin; 3D stamps only), and it spun, made once each.
+const spinNow = () => (starterId() && M.spins(starterId()).length ? app.stampSpin % 4 : 0);
+const spunOf = new Map();
+const spunAt = (id, n) => { const key = `${id} ${n}`; if (!spunOf.has(key)) spunOf.set(key, M.spun(id, n)); return spunOf.get(key); };
+// The chosen stamp at 1× on its plane or spun, and at k times.
 function base() {
-  const plane = planeNow();
-  return plane ? artOf(starterId(), plane, 1) : chosen();
+  const plane = planeNow(), spin = spinNow();
+  return plane ? artOf(starterId(), plane, 1) : spin ? spunAt(starterId(), spin) : chosen();
 }
 function sizedAt(k) {
   const plane = planeNow();
@@ -142,6 +147,15 @@ export function nextPlane() {
   if (stillLive()) { outline(app.live); repaint(); } else updateStampbar();
 }
 
+// A quarter turn more for the 3D stamps, for the one just placed and the next ones.
+// What each view faces, for the button and the notice: a quarter turn takes down-right to down-left.
+const SPIN_SAYS = ['facing right', 'facing left', 'facing away to the left', 'facing away to the right'];
+export function spinStamp() {
+  if (!(starterId() && M.spins(starterId()).length)) return;
+  app.stampSpin = (app.stampSpin + 1) % 4;
+  if (stillLive()) { outline(app.live); repaint(); } else { updateStampbar(); toast(`Stamps ${SPIN_SAYS[app.stampSpin]}`); }
+}
+
 // One size up (d = 1) or down (-1) from the one in use.
 export function stepStampSize(d) {
   const list = steps(stillLive() ? app.live.A.l : app.level), i = list.indexOf(D.nearestStep(list, app.stampSize));
@@ -165,6 +179,9 @@ export function updateStampbar() {
   h.setAttribute('aria-valuemax', String(list.at(-1).s));
   $('#stamp-smaller').disabled = k <= list[0].s;
   $('#stamp-bigger').disabled = k >= list.at(-1).s;
+  const sb = $('#stamp-spin'), spinning = !!(starterId() && M.spins(starterId()).length);
+  sb.hidden = !spinning;
+  if (spinning) sb.setAttribute('aria-label', `Spin: ${SPIN_SAYS[spinNow()]}. Tap for a quarter turn.`);
   const plane = planeNow(), pb = $('#stamp-plane');
   pb.hidden = !plane;
   if (plane && pb.dataset.plane !== plane) {
@@ -225,6 +242,7 @@ export function wireLiveStamp() {
   $('#stamp-bigger').addEventListener('click', () => stepStampSize(1));
   $('#stamp-done').addEventListener('click', endLive);
   $('#stamp-plane').addEventListener('click', nextPlane);
+  $('#stamp-spin').addEventListener('click', spinStamp);
   // The handle: moving the finger one corner's length along the line from the
   // anchor through the 1× corner is 1× more, counted from where it was grabbed (a
   // handle kept on screen or off a rail is not on the corner itself); the size is
