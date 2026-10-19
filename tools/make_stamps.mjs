@@ -117,16 +117,18 @@ const SHAPES = [
   { id: 'stairs', name: 'Stairs', group: 'shapes', cells: () => paint([...box([0, 0, 0], [3, 1, 1], TEAL), ...box([0, 0, 1], [2, 1, 1], TEAL), ...box([0, 0, 2], [1, 1, 1], TEAL)]) },
   { id: 'house', name: 'House', group: 'buildings', cells: () => paint([
     ...box([0, 0, 0], [2, 2, 1.5], YELLOW),
-    face([[2, 0, 1.5], [2, 2, 1.5], [2, 1, 2.5]], RED, 'R'),
-    face([[0, 1, 2.5], [2, 1, 2.5], [2, 2, 1.5], [0, 2, 1.5]], RED, 'L'),
+    // A roof sloping on all four sides at the Pyramid's slope, so its edges come out straight.
+    face([[0, 2, 1.5], [2, 2, 1.5], [1, 1, 2.5]], RED, 'L'),
+    face([[2, 0, 1.5], [2, 2, 1.5], [1, 1, 2.5]], RED, 'R'),
     face([[0.5, 2, 0], [1, 2, 0], [1, 2, 1], [0.5, 2, 1]], BROWN, 'L'),
     face([[2, 0.5, 0.5], [2, 1, 0.5], [2, 1, 1], [2, 0.5, 1]], SKY, 'R'),
   ]) },
   { id: 'tree', name: 'Tree', group: 'nature', cells: () => paint([...box([0.5, 0.5, 0], [0.5, 0.5, 1], BROWN), ...box([0, 0, 1], [1.5, 1.5, 1.5], GREEN), ...box([0.5, 0.5, 2.5], [0.5, 0.5, 0.5], GREEN)]) },
   { id: 'wall', name: 'Wall', group: 'buildings', cells: () => paint([...box([0, 0, 0], [3, 0.5, 1.5], STONE), ...[0, 1, 2].flatMap((x) => box([x, 0, 1.5], [0.5, 0.5, 0.5], STONE)), ...box([2.5, 0, 1.5], [0.5, 0.5, 0.5], STONE)]) },
   { id: 'pyramid', name: 'Pyramid', group: 'shapes', cells: () => paint([
-    face([[0, 2, 0], [2, 2, 0], [1, 1, 1.5]], SAND, 'L'),
-    face([[2, 0, 0], [2, 2, 0], [1, 1, 1.5]], SAND, 'R'),
+    // Its peak half the base's width up, so every edge runs along a lattice line and comes out straight.
+    face([[0, 2, 0], [2, 2, 0], [1, 1, 1]], SAND, 'L'),
+    face([[2, 0, 0], [2, 2, 0], [1, 1, 1]], SAND, 'R'),
   ]) },
   { id: 'flower', name: 'Flower', group: 'nature', cells: () => flat((cell) => {
     const d = hexDistOf(cell);
@@ -326,6 +328,10 @@ const SHAPES = [
     ...hbox([0, 0, 0], [5, 5, 2], FROSTING), ...hbox([0, 0, 2], [5, 5, 1], CREAM), ...hbox([0, 0, 3], [5, 5, 2], FROSTING),
     ...hbox([2, 2, 5], [1, 1, 2], SKY), ...hbox([2, 2, 7], [1, 1, 1], YELLOW), // a candle
     patch('L', 5, [1, 2], [3, 4], RED), patch('L', 5, [3, 4], [3, 4], RED), patch('R', 5, [2, 3], [3, 4], RED), // cherries
+  ]) },
+  { id: 'tiered-cake', name: 'Tiered cake', group: 'food', cells: () => paint([
+    ...hbox([0, 0, 0], [7, 7, 2], FROSTING), ...hbox([1, 1, 2], [5, 5, 2], CREAM), ...hbox([2, 2, 4], [3, 3, 2], FROSTING),
+    ...hbox([3, 3, 6], [1, 1, 1], RED), // a cherry
   ]) },
   { id: 'icecream', name: 'Ice cream', group: 'food', cells: () => paint([
     ...hbox([1, 1, 0], [1, 1, 2], SAND), ...hbox([0, 0, 2], [3, 3, 2], SAND),
