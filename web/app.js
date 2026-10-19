@@ -86,6 +86,7 @@ export const app = {
   palettes: [], // Mine: this browser's own palettes (web/palettes.js)
   stampChoice: { from: 'starter', id: 'cube' }, // the stamp the Stamp brush places (web/stampbook.js chosen)
   stampSize: 1,  // how many times its own size the Stamp brush places it (web/ui/livestamp.js); not remembered
+  stampPlane: null, // the floor or wall flat stamps and letters were last put on (web/ui/livestamp.js); not remembered
   live: null,    // the stamp just placed, while it can still be sized (web/ui/livestamp.js)
   ghost: null,
   crosshair: null,
