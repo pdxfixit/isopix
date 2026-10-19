@@ -211,11 +211,11 @@ VIEWS.selturn = { js: `window.isopix.settings.brush = 'triangle'; // a lone-tria
   for (let i = 0; i < 5; i++) { ${q('#sel-turn')} } ${nap}
   if (snap() !== start) throw new Error('six turns did not give the drawing back');
   ${q('#sel-flip')} ${nap} if (snap() === start) throw new Error('Flip changed nothing');` };
-// Stamp in the brush picker opens Stamps; the fifteen starter tiles; House, then a tap places it.
+// Stamp in the brush picker opens Stamps; the eighteen starter tiles; House, then a tap places it.
 VIEWS.stamps = { fresh: true, js: `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}
   if (!document.querySelector('#stamps').open) throw new Error('Stamp did not open Stamps');
   const tiles = [...document.querySelectorAll('#stamps-grid .stamp-tile')];
-  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Tree,Wall,Pyramid,Flower,Star,Cat,Bunny,Duck,Fox,Snake,Frog,Pig') throw new Error('the starter tiles are ' + tiles.map((t) => t.textContent));
+  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Tree,Wall,Pyramid,Flower,Star,Cat,Bunny,Duck,Fox,Snake,Frog,Pig,Dog,Fish,Bird') throw new Error('the starter tiles are ' + tiles.map((t) => t.textContent));
   if (tiles.some((t) => !t.querySelector('img').src.startsWith('data:image/'))) throw new Error('a tile has no picture');
   tiles[2].click(); ${nap}
   if (document.querySelector('#stamps').open || window.isopix.settings.brush !== 'stamp') throw new Error('picking House did not close Stamps and pick the Stamp brush');

@@ -1,5 +1,5 @@
 // Starter stamps and the person's own (web/stampbook.js, web/stamps.js):
-// the eight the owner picked and seven animals, each a real stamp that places
+// the eight the owner picked and ten animals, each a real stamp that places
 // at every level, and Mine kept once across drawings (owner, 2026-10-16).
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
@@ -11,8 +11,8 @@ import { Drawing } from '../web/engine/model.js';
 import * as L from '../web/engine/lattice.js';
 
 test('the starter set is the eight the owner picked, then the animals, in order', () => {
-  assert.deepEqual(SB.STARTER.map((s) => s.name), ['Cube', 'Stairs', 'House', 'Tree', 'Wall', 'Pyramid', 'Flower', 'Star', 'Cat', 'Bunny', 'Duck', 'Fox', 'Snake', 'Frog', 'Pig']);
-  assert.equal(new Set(SB.STARTER.map((s) => s.id)).size, 15);
+  assert.deepEqual(SB.STARTER.map((s) => s.name), ['Cube', 'Stairs', 'House', 'Tree', 'Wall', 'Pyramid', 'Flower', 'Star', 'Cat', 'Bunny', 'Duck', 'Fox', 'Snake', 'Frog', 'Pig', 'Dog', 'Fish', 'Bird']);
+  assert.equal(new Set(SB.STARTER.map((s) => s.id)).size, 18);
 });
 
 test('web/stamps.js is exactly what tools/make_stamps.mjs makes', () => {
