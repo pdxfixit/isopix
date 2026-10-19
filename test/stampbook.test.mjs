@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import * as SB from '../web/stampbook.js';
+import { pack, unpack } from '../web/stamppack.js';
 import { placeStamp } from '../web/engine/density.js';
 import { Drawing } from '../web/engine/model.js';
 import * as L from '../web/engine/lattice.js';
@@ -13,10 +14,14 @@ import * as L from '../web/engine/lattice.js';
 test('the starter stamps, group by group: the eight the owner picked, the animals, and more', () => {
   const by = Object.fromEntries(SB.GROUPS.map((g) => [g.name, SB.STARTER.filter((s) => s.group === g.id).map((s) => s.name)]));
   assert.deepEqual(by, {
-    Shapes: ['Cube', 'Stairs', 'House', 'Wall', 'Pyramid', 'Star'],
-    Nature: ['Tree', 'Flower', 'Sun', 'Cloud', 'Rock', 'Mushroom', 'Pine tree', 'Bush', 'Rainbow'],
+    Shapes: ['Cube', 'Stairs', 'Pyramid', 'Star'],
+    Buildings: ['House', 'Wall', 'Castle', 'Tower', 'Bridge'],
+    Nature: ['Tree', 'Flower', 'Rock', 'Mushroom', 'Pine tree', 'Bush'],
+    Weather: ['Sun', 'Cloud', 'Rainbow', 'Rain cloud', 'Snowflake', 'Lightning'],
     Animals: ['Cat', 'Bunny', 'Duck', 'Fox', 'Snake', 'Frog', 'Pig', 'Dog', 'Fish', 'Bird'],
+    People: ['Smiley', 'Kid', 'Person'],
     Vehicles: ['Car', 'Truck', 'Train', 'Boat', 'Rocket', 'Plane'],
+    Space: ['Planet', 'Moon', 'Stars', 'UFO'],
     Food: ['Apple', 'Cake', 'Ice cream', 'Cupcake', 'Pizza', 'Carrot'],
     Letters: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
     Numbers: [...'0123456789'],
@@ -76,4 +81,14 @@ test('the drawer\'s sections: Mine first, then every group in order, each stamp 
   assert.equal(new Set(starters).size, SB.STARTER.length, 'no stamp twice');
   for (const sec of secs.slice(1)) assert.ok(sec.items.length, `${sec.name} is not empty`);
   for (const sec of secs) for (const it of sec.items) assert.equal(SB.chosen(it.choice, mine), it.s);
+});
+
+test('a packed stamp unpacks to exactly its cells: gaps, negative rows and columns, faces and none', () => {
+  const cells = [[0, -3, -2, 1, '#ff0000', 'L'], [0, -3, 1, 0, '#00ff00', null], [0, 2, -1, 0, '#ff0000', 'L'], [0, 2, 0, 1, '#0000ff', 'T'], [0, 0, 0, 0, '#00ff00', null]];
+  const p = pack({ base: 0, cells, edges: [] });
+  const sorted = (cs) => cs.map((c) => JSON.stringify(c)).sort();
+  assert.deepEqual(sorted(unpack(p).cells), sorted(cells));
+  assert.equal(p.pal.length, 3, 'one palette entry per color and face');
+  assert.throws(() => pack({ cells: [[1, 0, 0, 0, '#ff0000', null]] }), /own level/);
+  assert.deepEqual(unpack({ pal: [], rows: '' }).cells, []);
 });

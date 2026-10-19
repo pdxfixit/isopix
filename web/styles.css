@@ -376,6 +376,10 @@ dialog.drawer { margin: auto auto 0; border: 1px solid var(--border); border-bot
 dialog.drawer::backdrop { background: rgba(0, 0, 0, 0.25); }
 .stamp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 @media (min-width: 520px) { .stamp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* Small tiles (Letters, Numbers): five to a row on a phone, seven wider; still 44 px and more. */
+.stamp-grid.small { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 520px) { .stamp-grid.small { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+.stamp-grid.small .stamp-tile { min-height: 72px; padding: 4px 2px; font-size: 13px; }
 .stamp-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 112px; padding: 6px 4px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .stamp-tile img { width: 100%; max-width: 110px; aspect-ratio: 4 / 3; object-fit: contain; border-radius: 8px; }
 .stamp-tile span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

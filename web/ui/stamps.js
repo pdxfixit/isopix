@@ -91,7 +91,7 @@ function render() {
     body.hidden = !isOpen;
     if (isOpen && sec.items.length) {
       const grid = document.createElement('div');
-      grid.className = 'stamp-grid';
+      grid.className = sec.small ? 'stamp-grid small' : 'stamp-grid'; // Letters and Numbers: more to a row
       grid.append(...sec.items.map((it) => tile(it.s, it.choice, on)));
       body.append(grid);
     } else if (isOpen) {

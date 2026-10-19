@@ -212,32 +212,35 @@ VIEWS.selturn = { js: `window.isopix.settings.brush = 'triangle'; // a lone-tria
   if (snap() !== start) throw new Error('six turns did not give the drawing back');
   ${q('#sel-flip')} ${nap} if (snap() === start) throw new Error('Flip changed nothing');` };
 // Stamp in the brush picker opens Stamps: folding sections, all closed and none drawing its
-// pictures at first; Shapes opened holds its six; House, then a tap places it; opened
-// again, Shapes is still open and says it holds the stamp in use.
+// pictures at first; Buildings opened holds the House; it, then a tap places it; opened
+// again, Buildings is still open and says it holds the stamp in use.
 const STAMPS_OPEN = `${q('[data-tool="pencil"]')} ${q('#options')} document.querySelector('#popover [data-pick="stamp"]').click(); ${nap}`;
 const SECTION = (id) => `document.querySelector('#st-${id} .set-head').click(); ${nap}`;
 const TILE = (id, name) => `[...document.querySelectorAll('#st-${id} .stamp-tile')].find((t) => t.textContent === '${name}').click(); ${nap}`;
 VIEWS.stamps = { fresh: true, js: `${STAMPS_OPEN}
   if (!document.querySelector('#stamps').open) throw new Error('Stamp did not open Stamps');
   const heads = [...document.querySelectorAll('#stamps-sections .set-head')];
-  if (heads.map((h) => h.children[1].textContent).join() !== 'Mine,Shapes,Nature,Animals,Vehicles,Food,Letters,Numbers') throw new Error('the sections are ' + heads.map((h) => h.children[1].textContent));
+  if (heads.map((h) => h.children[1].textContent).join() !== 'Mine,Shapes,Buildings,Nature,Weather,Animals,People,Vehicles,Space,Food,Letters,Numbers') throw new Error('the sections are ' + heads.map((h) => h.children[1].textContent));
   if (heads.some((h) => h.getAttribute('aria-expanded') !== 'false') || document.querySelector('#stamps-sections .stamp-tile')) throw new Error('a section started open, or a closed one drew its tiles');
-  ${SECTION('shapes')}
-  const tiles = [...document.querySelectorAll('#st-shapes .stamp-tile')];
-  if (tiles.map((t) => t.textContent).join() !== 'Cube,Stairs,House,Wall,Pyramid,Star') throw new Error('Shapes holds ' + tiles.map((t) => t.textContent));
+  ${SECTION('buildings')}
+  const tiles = [...document.querySelectorAll('#st-buildings .stamp-tile')];
+  if (tiles.map((t) => t.textContent).join() !== 'House,Wall,Castle,Tower,Bridge') throw new Error('Buildings holds ' + tiles.map((t) => t.textContent));
   if (tiles.some((t) => !t.querySelector('img').src.startsWith('data:image/'))) throw new Error('a tile has no picture');
-  ${TILE('shapes', 'House')}
+  ${TILE('buildings', 'House')}
   if (document.querySelector('#stamps').open || window.isopix.settings.brush !== 'stamp') throw new Error('picking House did not close Stamps and pick the Stamp brush');
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
   const n = window.isopix.drawing.cells.size;
   if (n !== 88) throw new Error('a tap placed ' + n + ' cells, not 88 (the House)');
   ${STAMPS_OPEN}
-  const shapes = document.querySelector('#st-shapes .set-head');
-  if (shapes.getAttribute('aria-expanded') !== 'true' || shapes.children[2].textContent !== 'using House') throw new Error('Shapes was not remembered open, or does not say it holds the House');
-  ${SECTION('animals')}` };
+  const b = document.querySelector('#st-buildings .set-head');
+  if (b.getAttribute('aria-expanded') !== 'true' || b.children[2].textContent !== 'using House') throw new Error('Buildings was not remembered open, or does not say it holds the House');
+  if ([...document.querySelectorAll('#stamps-sections .set-head')].filter((h) => h.getAttribute('aria-expanded') === 'true').length !== 1) throw new Error('a section opened that was never opened');
+  ${SECTION('letters')}
+  const small = document.querySelector('#st-letters .stamp-grid.small .stamp-tile').getBoundingClientRect();
+  if (small.width > 80) throw new Error('Letters tiles are ' + small.width + ' px wide, not small');` };
 // A wall the other way: place the Wall, select it, Flip. Flip relights it, so its side faces
 // are lit from the left like the rest of the drawing, and one Undo takes the flip back.
-VIEWS['stamp-flip'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('shapes')} ${TILE('shapes', 'Wall')}
+VIEWS['stamp-flip'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('buildings')} ${TILE('buildings', 'Wall')}
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
   const a = window.isopix, sides = () => [...a.drawing.cells.values()].filter((v) => v.f && v.f !== 'T');
   const n = a.drawing.cells.size; if (!n) throw new Error('the Wall did not place');

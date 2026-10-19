@@ -3,9 +3,12 @@
 // 2026-10-16: "shapes belong to the user, across drawings"). Pure logic
 // (test/stampbook.test.mjs); app.js keeps Mine in IndexedDB at `stamps`.
 
-import { GROUPS, STARTER } from './stamps.js';
+import { GROUPS, PACKED } from './stamps.js';
+import { unpack } from './stamppack.js';
 
-export { GROUPS, STARTER };
+export { GROUPS };
+// The starter stamps, unpacked: {id, name, group, stamp}.
+export const STARTER = PACKED.map(({ pal, rows, ...s }) => ({ ...s, stamp: unpack({ pal, rows }) }));
 export const KEY = 'stamps';
 
 const okStamp = (s) => s && typeof s === 'object' && s.stamp && Array.isArray(s.stamp.cells)
