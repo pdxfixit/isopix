@@ -536,8 +536,10 @@ dialog.feedback { width: min(480px, calc(100vw - 24px)); max-height: calc(100dvh
 /* Short landscape phones: the open rail runs leftward along the screen instead,
    and the palette and tools share one row (the palette scrolls under its pinned
    buttons) so the side rails fit between the top buttons and the bottom. The
-   brush picker and selection bar sit between the two side rails. */
-@media (max-height: 559px) and (min-width: 540px) {
+   brush picker and selection bar sit between the two side rails. From 480 px
+   wide: at 480 × 320 two rows left the rails no room (owner, 2026-10-19: "One
+   row, as at 568"), though only about one ink shows there before it scrolls. */
+@media (max-height: 559px) and (min-width: 480px) {
   .bottom { flex-direction: row; align-items: flex-end; justify-content: center; gap: 6px; }
   .palette { margin: 0; flex: 0 1 auto; min-width: 0; }
   .tools { margin: 0; width: auto; flex: 0 0 auto; }

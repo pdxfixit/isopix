@@ -300,6 +300,9 @@ export function placeHandle() {
     // Keep the handle clear of the top buttons, the rail and the selection bar.
     const above = [$('#selbar'), $('#update-bar')].map((el) => el.getBoundingClientRect()).filter((r) => r.height);
     const floor = above.length ? Math.min(...above.map((r) => r.top)) - 30 : app.view.h - 200;
+    // No room between them (More open at 480 × 320): it hides, and Finer and
+    // Coarser on the bar do its job (owner, 2026-10-19: "Hide it").
+    if (floor < 80) { h.hidden = true; return; }
     const x = Math.max(30, Math.min(app.view.w - 90, best[0] + 18)), y = Math.max(80, Math.min(floor, best[1] + 18));
     h.style.left = `${x}px`; h.style.top = `${y}px`;
   }

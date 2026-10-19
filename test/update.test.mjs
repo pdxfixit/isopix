@@ -5,9 +5,9 @@ import assert from 'node:assert/strict';
 import { updateOffer, barFits, liveVersionOf, buildStamp, aboutVersion, versionURL, reportURL, REPO, SUPPORT, initUpdate, MIN_GAP_MS, CHECK_MS, TICK_MS } from '../web/update.js';
 
 test('barFits: the bar waits for Done where it and the handle cannot both fit above the selection bar', () => {
-  // Measured in just look: the selection bar's top at 320 px tall, and the bar's 60 px.
-  assert.equal(barFits({ selTop: 130, barH: 60, handle: true }), false); // 480 × 320
-  assert.equal(barFits({ selTop: 186, barH: 60, handle: true }), true);  // 568 × 320
+  // Measured in just look at 320 px tall: the selection bar's top, and the bar's 60 px.
+  assert.equal(barFits({ selTop: 130, barH: 60, handle: true }), false); // a bar this high: no room
+  assert.equal(barFits({ selTop: 186, barH: 60, handle: true }), true);  // 480 and 568 wide, More closed
   assert.equal(barFits({ selTop: 130, barH: 60, handle: false }), true); // no handle: only the top buttons
   assert.equal(barFits({ selTop: 120, barH: 60, handle: false }), false);
 });

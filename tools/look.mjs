@@ -454,7 +454,7 @@ VIEWS.update = { live: ['look-a', 'look-b'], js: `${DRAW} ${SETTLE} await window
 VIEWS.replay = { js: `${DRAW} document.querySelector('#replay').click(); ${nap}
   if (document.querySelector('#replay-bar').hidden) throw new Error('the replay bar did not appear');` };
 // With a selection open, the bar must sit above the selection bar; where it
-// and the handle cannot both fit there (480 × 320), it waits for Done.
+// and the handle cannot both fit there (More open at 320 px tall), it waits for Done.
 VIEWS.updatesel = { live: ['look-a', 'look-b'], js: `${VIEWS.select.js} ${nap} await window.isopix.update.ask(); ${nap}
   const crowded = window.isopix.updateBarCrowded(), hidden = document.querySelector('#update-bar').hidden;
   if (hidden && !crowded) throw new Error('the update bar did not appear');
