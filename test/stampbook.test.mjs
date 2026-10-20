@@ -35,6 +35,11 @@ test('web/stamps.js is exactly what tools/make_stamps.mjs makes', () => {
   assert.equal(r.status, 0, r.stderr + r.stdout);
 });
 
+test('docs/stamps/ is exactly what tools/stamp_sheets.mjs makes: every stamp from every side', () => {
+  const r = spawnSync(process.execPath, [fileURLToPath(new URL('../tools/stamp_sheets.mjs', import.meta.url)), '--check'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+});
+
 test('every starter stamp places at every level and keeps the one-cell-or-children rule', () => {
   for (const s of SB.STARTER) {
     for (let l = 0; l <= L.MAX_LEVEL; l++) {

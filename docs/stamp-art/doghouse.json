@@ -1,0 +1,21 @@
+{
+  "contract": 1,
+  "id": "doghouse",
+  "name": "Doghouse",
+  "group": "buildings",
+  "author": "Isopix example",
+  "tool": "by hand",
+  "parts": [
+    { "box": [0, 0, 0], "size": [4, 4, 3], "color": "#c9a27e" },
+    { "decal": "-y", "at": 0, "from": [1, 1], "to": [3, 2], "color": "#2b2d42" },
+    { "decal": "-x", "at": 0, "from": [1, 1], "to": [3, 2], "color": "#2b2d42" },
+    { "decal": "+y", "at": 4, "from": [1, 1], "to": [3, 2], "color": "#2b2d42" },
+    { "decal": "+x", "at": 4, "from": [1, 0], "to": [3, 2], "color": "#2b2d42" },
+    { "slope": [[0, 0, 3], [4, 0, 3], [2, 2, 5]], "faces": "-y", "color": "#e63946" },
+    { "slope": [[0, 0, 3], [0, 4, 3], [2, 2, 5]], "faces": "-x", "color": "#e63946" },
+    { "slope": [[0, 4, 3], [4, 4, 3], [2, 2, 5]], "faces": "+y", "color": "#e63946" },
+    { "slope": [[4, 0, 3], [4, 4, 3], [2, 2, 5]], "faces": "+x", "color": "#e63946" },
+    { "box": [5, 2, 0], "size": [1, 1, 1], "color": "#3a86ff" },
+    { "decal": "top", "at": 1, "from": [5, 2], "to": [6, 3], "color": "#8b5a2b" }
+  ]
+}
