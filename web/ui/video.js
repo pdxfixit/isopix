@@ -13,6 +13,7 @@ import * as store from '../storage.js';
 import { fileBase } from '../sheets.js';
 import { $, app, emit, toast } from '../app.js';
 import { sayResult } from './files.js';
+import { endLive } from './livestamp.js';
 
 const type = () => (typeof MediaRecorder === 'undefined' ? null : pickType((m) => MediaRecorder.isTypeSupported(m)));
 export const canRecord = () => typeof HTMLCanvasElement !== 'undefined' && !!HTMLCanvasElement.prototype.captureStream && !!type();
@@ -26,6 +27,8 @@ export function setBar(mode, say) {
   bar.hidden = !mode;
   bar.dataset.mode = mode || '';
   if (!mode) return;
+  // A stamp waiting for its ✓ is kept as it is: its bar and knobs would sit on this one (2026-10-20).
+  endLive();
   $('#replay-say').textContent = say || { playing: 'Replaying', ended: 'Done playing', ready: 'Video ready' }[mode] || '';
   $('#replay-stop').hidden = !(mode === 'playing' || mode === 'making');
   $('#replay-stop').textContent = mode === 'making' ? 'Cancel' : 'Stop';

@@ -400,6 +400,17 @@ VIEWS['stamp-move'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   // Both knobs can be tapped: nothing is drawn over either (on a short landscape phone the
   // third Cat runs off the screen and a notice is up, 2026-10-20).
   ${nap} for (const el of [h, ok]) { const k = el.getBoundingClientRect(), top = document.elementFromPoint(k.x + k.width / 2, k.y + k.height / 2); if (!el.contains(top)) throw new Error('#' + el.id + ' is covered by ' + (top?.id || top?.className)); }` };
+// A stamp waiting for its ✓ when a time-lapse video is made (2026-10-20): it is kept as it
+// is, and its bar and knobs go, or at 320 px they sat on Save video and ✕.
+VIEWS['stamp-video'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.4')} ${nap}
+  const a = window.isopix, n = a.drawing.cells.size;
+  if (!a.live) throw new Error('the Cat is not waiting for its ✓');
+  ${q('#drawing-open')} ${nap} ${q('#file-video')}
+  for (let i = 0; i < 150 && document.querySelector('#replay-bar').dataset.mode !== 'ready'; i++) await new Promise((r) => setTimeout(r, 100));
+  if (document.querySelector('#replay-bar').dataset.mode !== 'ready') throw new Error('the video was not made');
+  if (a.live || !document.querySelector('#stampbar').hidden || !document.querySelector('#stamp-check').hidden || !document.querySelector('#stamp-handle').hidden) throw new Error('the stamp bar or its knobs stayed up over the video bar');
+  if (a.drawing.cells.size !== n) throw new Error('making the video changed the Cat');` };
 // Floor or wall (owner, 2026-10-19, spec step 2): a Moon placed shows the plane button,
 // standing up; a tap lays it on the floor (every cell a top face), another on the left
 // wall, in the same undo step; + twice draws it anew at 1½×. Then an A, which goes
