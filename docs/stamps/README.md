@@ -1,7 +1,7 @@
 # Stamps from every side
 
 Made by `tools/stamp_sheets.mjs` (`just stamp-sheets`); edit the art, then run it, never these files. `just test` fails when they are stale.
-A 3D stamp is shown as drawn, then turned a quarter at a time (Spin); a flat picture upright and on the floor and walls; a letter or number on its walls and the floor.
+A 3D stamp is shown as drawn, then turned a quarter at a time (Spin); a flat picture upright and on the floor and walls; a letter or number on its walls and the floor. A box stamp with detail by size is also shown at 1×, 2× and 3×, where its detail comes in.
 New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ## Shapes
@@ -28,27 +28,51 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ![House from every side](house.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![House at 1×, 2× and 3×](house-sizes.svg)
+
 **Wall** (`wall`, 85 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Wall from every side](wall.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Wall at 1×, 2× and 3×](wall-sizes.svg)
 
 **Castle** (`castle`, 457 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Castle from every side](castle.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Castle at 1×, 2× and 3×](castle-sizes.svg)
+
 **Tower** (`tower`, 176 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Tower from every side](tower.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Tower at 1×, 2× and 3×](tower-sizes.svg)
+
 **Bridge** (`bridge`, 257 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Bridge from every side](bridge.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Bridge at 1×, 2× and 3×](bridge-sizes.svg)
 
 ## Nature
 
 **Tree** (`tree`, 118 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Tree from every side](tree.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Tree at 1×, 2× and 3×](tree-sizes.svg)
 
 **Flower** (`flower`, 54 cells): upright, on the floor, on the left wall, on the right wall
 
@@ -58,17 +82,33 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ![Rock from every side](rock.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Rock at 1×, 2× and 3×](rock-sizes.svg)
+
 **Mushroom** (`mushroom`, 128 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Mushroom from every side](mushroom.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Mushroom at 1×, 2× and 3×](mushroom-sizes.svg)
 
 **Pine tree** (`pine`, 128 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Pine tree from every side](pine.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Pine tree at 1×, 2× and 3×](pine-sizes.svg)
+
 **Bush** (`bush`, 114 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Bush from every side](bush.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Bush at 1×, 2× and 3×](bush-sizes.svg)
 
 ## Weather
 
@@ -80,6 +120,10 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ![Cloud from every side](cloud.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Cloud at 1×, 2× and 3×](cloud-sizes.svg)
+
 **Rainbow** (`rainbow`, 186 cells): upright, on the floor, on the left wall, on the right wall
 
 ![Rainbow from every side](rainbow.svg)
@@ -87,6 +131,10 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 **Rain cloud** (`raincloud`, 233 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Rain cloud from every side](raincloud.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Rain cloud at 1×, 2× and 3×](raincloud-sizes.svg)
 
 **Snowflake** (`snowflake`, 54 cells): upright, on the floor, on the left wall, on the right wall
 
@@ -102,41 +150,81 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ![Cat from every side](cat.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Cat at 1×, 2× and 3×](cat-sizes.svg)
+
 **Bunny** (`bunny`, 185 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Bunny from every side](bunny.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Bunny at 1×, 2× and 3×](bunny-sizes.svg)
 
 **Duck** (`duck`, 140 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Duck from every side](duck.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Duck at 1×, 2× and 3×](duck-sizes.svg)
+
 **Fox** (`fox`, 245 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Fox from every side](fox.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Fox at 1×, 2× and 3×](fox-sizes.svg)
 
 **Snake** (`snake`, 297 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Snake from every side](snake.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Snake at 1×, 2× and 3×](snake-sizes.svg)
+
 **Frog** (`frog`, 196 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Frog from every side](frog.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Frog at 1×, 2× and 3×](frog-sizes.svg)
 
 **Pig** (`pig`, 194 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Pig from every side](pig.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Pig at 1×, 2× and 3×](pig-sizes.svg)
+
 **Dog** (`dog`, 216 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Dog from every side](dog.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Dog at 1×, 2× and 3×](dog-sizes.svg)
 
 **Fish** (`fish`, 184 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Fish from every side](fish.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Fish at 1×, 2× and 3×](fish-sizes.svg)
+
 **Bird** (`bird`, 161 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Bird from every side](bird.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Bird at 1×, 2× and 3×](bird-sizes.svg)
 
 ## People
 
@@ -152,37 +240,69 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ![Person from every side](person.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Person at 1×, 2× and 3×](person-sizes.svg)
+
 ## Vehicles
 
 **Car** (`car`, 256 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Car from every side](car.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Car at 1×, 2× and 3×](car-sizes.svg)
+
 **Truck** (`truck`, 341 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Truck from every side](truck.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Truck at 1×, 2× and 3×](truck-sizes.svg)
 
 **Train** (`train`, 337 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Train from every side](train.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Train at 1×, 2× and 3×](train-sizes.svg)
+
 **Boat** (`boat`, 240 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Boat from every side](boat.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Boat at 1×, 2× and 3×](boat-sizes.svg)
 
 **Rocket** (`rocket`, 286 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Rocket from every side](rocket.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Rocket at 1×, 2× and 3×](rocket-sizes.svg)
+
 **Plane** (`plane`, 276 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Plane from every side](plane.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Plane at 1×, 2× and 3×](plane-sizes.svg)
 
 ## Space
 
 **Planet** (`planet`, 246 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Planet from every side](planet.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Planet at 1×, 2× and 3×](planet-sizes.svg)
 
 **Moon** (`moon`, 68 cells): upright, on the floor, on the left wall, on the right wall
 
@@ -196,23 +316,43 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ![UFO from every side](ufo.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![UFO at 1×, 2× and 3×](ufo-sizes.svg)
+
 ## Food
 
 **Apple** (`apple`, 202 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Apple from every side](apple.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Apple at 1×, 2× and 3×](apple-sizes.svg)
+
 **Cake** (`cake`, 214 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Cake from every side](cake.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Cake at 1×, 2× and 3×](cake-sizes.svg)
 
 **Ice cream** (`icecream`, 142 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Ice cream from every side](icecream.svg)
 
+At 1×, 2× and 3×, its detail growing:
+
+![Ice cream at 1×, 2× and 3×](icecream-sizes.svg)
+
 **Cupcake** (`cupcake`, 118 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Cupcake from every side](cupcake.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Cupcake at 1×, 2× and 3×](cupcake-sizes.svg)
 
 **Pizza** (`pizza`, 81 cells): upright, on the floor, on the left wall, on the right wall
 
@@ -221,6 +361,10 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 **Carrot** (`carrot`, 119 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Carrot from every side](carrot.svg)
+
+At 1×, 2× and 3×, its detail growing:
+
+![Carrot at 1×, 2× and 3×](carrot-sizes.svg)
 
 ## Letters
 

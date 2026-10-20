@@ -39,3 +39,24 @@ export function gridSVG(stamps) {
   return svg.replace(/width="(\d+)" height="(\d+)"/, (_, w, h) => `width="${WIDTH}" height="${Math.round((WIDTH * h) / w)}"`);
 }
 
+
+// A box stamp with detail by size as placed at 1×, 2× and 3×, each at its true size and
+// drawn for that size (engine/stampmodels.js drawAtSize): side by side, feet level. A view
+// drawn j levels finer sits on its own level, its place measured back in the page's steps.
+export function sizesSVG(id) {
+  const views = [[1, 1, 0], [2, 2, 0], [3, 3, 0]].map(([s, k, j]) => {
+    const r = M.spunAtSize(id, 0, { s, k, j }), f = 2 ** r.j;
+    const qs = r.stamp.cells.map((c) => c[2] / f), ys = r.stamp.cells.map((c) => (c[1] + c[2] / 2) / f);
+    return { ...r, q0: Math.min(...qs), q1: Math.max(...qs) + 1, y0: Math.min(...ys) };
+  });
+  const foot = Math.ceil(Math.max(...views.map((v) => -v.y0))) + 1, d = new Drawing();
+  let q = 0;
+  for (const v of views) {
+    const qq = 2 * Math.ceil((q - v.q0) / 2), pp = foot - qq / 2, f = 2 ** v.j;
+    const { cells } = placeStamp(v.stamp, { l: ART.LV + v.j, p: pp * f, q: qq * f });
+    d.begin(); for (const { cell, c, f: face } of cells) d.paint(cell, { c, f: face }); d.commit();
+    q = qq + v.q1 + 6;
+  }
+  const svg = toSVG(d, { background: '#f7f5f0' });
+  return svg.replace(/width="(\d+)" height="(\d+)"/, (_, w, h) => `width="${WIDTH}" height="${Math.round((WIDTH * h) / w)}"`);
+}

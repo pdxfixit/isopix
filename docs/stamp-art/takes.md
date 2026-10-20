@@ -1,6 +1,6 @@
 # Stamp takes waiting on the owner
 
-Other drawings made in the 2026-10-19 art pass, kept so one can replace the shipped stamp if the owner picks it (docs/decisions.md, "The box stamps, redrawn richer in 3D"). It is a model entry for `web/engine/models/vehicles.js` (it uses that file's helpers): to ship it, put it in place of the `planet` entry, renamed from `planet-gap`, then `just stamps` and `just test`. (The Starship rocket take was dropped: owner, "Drop the starship flavored one".)
+Other drawings made in the 2026-10-19 art pass, kept so one can replace the shipped stamp if the owner picks it (docs/decisions.md, "The box stamps, redrawn richer in 3D"). It is a model entry for `web/engine/models/vehicles.js`, with its detail by size (it uses that file's helpers): to ship it, put it in place of the `planet` entry, renamed from `planet-gap`, then `just stamps` and `just test`. (The Starship rocket take was dropped: owner, "Drop the starship flavored one".)
 
 ## Planet: the ring apart
 

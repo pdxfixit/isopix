@@ -64,33 +64,6 @@ export const MODELS = {
     face([[0, 0, 0], [2, 0, 0], [1, 1, 1]], SAND, 'l'), // the back, seen when spun
     face([[0, 0, 0], [0, 2, 0], [1, 1, 1]], SAND, 'r'),
   ],
-  // Buildings (House and Wall above).
-  // A square castle (owner, 2026-10-19: "boxier and have more features on the back.
-  // maybe even a drawbridge"): four walls with battlements, a red-capped tower at each
-  // corner, a keep flying a flag; at the front a gateway and its drawbridge, down over
-  // a moat; at the back a door, a banner, a hay bale and a bush; ivy up the left side.
-  // Back to front, so it paints the same as it draws by depth (test/stampmodels.test.mjs).
-  castle: () => [
-    ...hbox([1, -2, 0], [2, 2, 1], SAND), ...hbox([6, -2, 0], [2, 2, 2], GREEN), // behind: hay and a bush, clear of the door
-    ...hbox([2, 0, 0], [4, 1, 5], STONE), ...hbox([0, 2, 0], [1, 4, 5], STONE), // the back and left walls, between the towers
-    ...[2, 4].flatMap((a) => [...hbox([a, 0, 5], [1, 1, 1], STONE), ...hbox([0, a, 5], [1, 1, 1], STONE)]), // their battlements
-    ...hbox([0, 0, 0], [2, 2, 7], STONE), ...hbox([0, 0, 7], [2, 2, 1], RED), // the back-left tower
-    ...hbox([2, 2, 0], [4, 4, 9], STONE), // the keep
-    ...[[2, 2], [5, 2], [2, 5], [5, 5]].flatMap(([x, y]) => hbox([x, y, 9], [1, 1, 1], STONE)),
-    ...hbox([3, 3, 9], [1, 1, 4], BROWN), ...hbox([4, 3, 11], [2, 1, 2], RED), // its flag
-    ...hbox([6, 0, 0], [2, 2, 7], STONE), ...hbox([6, 0, 7], [2, 2, 1], RED), // the back-right tower
-    ...hbox([0, 6, 0], [2, 2, 7], STONE), ...hbox([0, 6, 7], [2, 2, 1], RED), // the front-left tower
-    ...hbox([7, 2, 0], [1, 4, 5], STONE), ...hbox([2, 7, 0], [4, 1, 5], STONE), // the right and front walls
-    ...[2, 4].flatMap((a) => [...hbox([7, a, 5], [1, 1, 1], STONE), ...hbox([a, 7, 5], [1, 1, 1], STONE)]),
-    patch('L', 8, [3, 5], [1, 4], INK), patch('L', 8, [1, 2], [4, 5], INK), // the open gateway, an arrow slit
-    ...hbox([6, 6, 0], [2, 2, 7], STONE), ...hbox([6, 6, 7], [2, 2, 1], RED), // the front-right tower
-    patch('L', 8, [6, 7], [4, 5], INK),
-    ...hbox([0, 8, 0], [8, 3, 1], BLUE), ...hbox([3, 8, 1], [2, 3, 1], BROWN), // the moat, and the drawbridge down over it
-    patch('R', 8, [3, 4], [2, 3], INK), patch('R', 6, [2, 3], [5, 8], RED), // a slit on the right, a banner on the keep
-    patch('l', 0, [3, 5], [0, 2], BROWN), patch('l', 2, [3, 4], [5, 8], YELLOW), // behind: a door, a banner
-    patch('l', 0, [1, 2], [4, 5], INK), patch('l', 0, [6, 7], [4, 5], INK),
-    patch('r', 0, [2, 3], [0, 4], GREEN), patch('r', 0, [3, 4], [1, 3], GREEN), patch('r', 0, [5, 6], [0, 2], GREEN), // ivy
-  ],
   // Stamps handed in under the art contract, as data (PARTS below); one of the same
   // id as a model above is new art for it.
   ...Object.fromEntries(Object.entries(PARTS).map(([id, parts]) => [id, () => fromParts(parts)])),

@@ -12,7 +12,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as SB from '../web/stampbook.js';
-import { sheetSVG, viewsOf } from './stampsheet.mjs';
+import { sheetSVG, sizesSVG, viewsOf } from './stampsheet.mjs';
+import * as M from '../web/engine/stampmodels.js';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const DIR = path.join(ROOT, 'docs/stamps');
@@ -22,7 +23,7 @@ function indexMD() {
     '# Stamps from every side',
     '',
     'Made by `tools/stamp_sheets.mjs` (`just stamp-sheets`); edit the art, then run it, never these files. `just test` fails when they are stale.',
-    'A 3D stamp is shown as drawn, then turned a quarter at a time (Spin); a flat picture upright and on the floor and walls; a letter or number on its walls and the floor.',
+    'A 3D stamp is shown as drawn, then turned a quarter at a time (Spin); a flat picture upright and on the floor and walls; a letter or number on its walls and the floor. A box stamp with detail by size is also shown at 1×, 2× and 3×, where its detail comes in.',
     'New stamps come in by [the stamp art contract](../stamp-art-contract.md).',
     '',
   ];
@@ -32,6 +33,7 @@ function indexMD() {
     for (const s of items) {
       const views = viewsOf(s).map(([label]) => label).join(', ');
       out.push(`**${s.name}** (\`${s.id}\`, ${s.stamp.cells.length} cells): ${views}`, '', `![${s.name} from every side](${s.id}.svg)`, '');
+      if (M.tiered(s.id)) out.push(`At 1×, 2× and 3×, its detail growing:`, '', `![${s.name} at 1×, 2× and 3×](${s.id}-sizes.svg)`, '');
     }
   }
   return out.join('\n');
@@ -39,7 +41,10 @@ function indexMD() {
 
 const files = new Map([['README.md', indexMD()]]);
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
-for (const s of SB.STARTER) if (!only || s.id === only) files.set(`${s.id}.svg`, sheetSVG(s));
+for (const s of SB.STARTER) if (!only || s.id === only) {
+  files.set(`${s.id}.svg`, sheetSVG(s));
+  if (M.tiered(s.id)) files.set(`${s.id}-sizes.svg`, sizesSVG(s.id)); // its detail by size
+}
 
 if (process.argv.includes('--check')) {
   const bad = [];
