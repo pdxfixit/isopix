@@ -321,7 +321,7 @@ VIEWS['stamp-bigger'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')}
 // A placed stamp stays live to be sized (owner, 2026-10-19, docs/spec-stamp-size-turn.md):
 // a Cat placed shows the stamp bar at 1× and the handle on screen; + twice makes it 1½×,
 // three times as many cells each way at one level finer, still one undo step; the handle
-// dragged half a reach toward its foot gives the Cat back exactly, unturned; ✓ keeps it, and the
+// dragged half a size toward the Cat's middle gives it back exactly, unturned; ✓ keeps it, and the
 // next tap places a Cat at the size in use; Undo takes the second away whole. Ends with the
 // third Cat live at 1¼×.
 VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
@@ -337,14 +337,15 @@ VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   ${q('#stamp-bigger')} ${nap} ${q('#stamp-bigger')} ${nap}
   if (a.drawing.cells.size !== 9 * n || size() !== '1½×' || a.drawing.undoStack.length !== 1) throw new Error('+ twice gave ' + a.drawing.cells.size + ' cells at ' + size() + ' in ' + a.drawing.undoStack.length + ' undo steps, not ' + 9 * n + ' at 1½× in 1');
   if ([...a.drawing.cells.keys()].some((k) => +k.split(',')[0] !== a.level + 1)) throw new Error('1½× is not made of cells one level finer');
-  // The handle dragged half a reach straight toward the Cat's foot, from wherever it sits.
-  const v = a.live, sc = 2 ** -v.A.l, r = document.querySelector('#stage').getBoundingClientRect();
-  const [fx, fy] = a.view.toScreen(v.A.q * Math.sqrt(3) / 2 * sc, (v.A.p + v.A.q / 2) * sc).map((n, i) => n + (i ? r.top : r.left));
+  // The handle dragged half a size straight toward the Cat's middle (one size is half the
+  // 1× outline's diagonal), from wherever it sits.
+  const v = a.live, r = document.querySelector('#stage').getBoundingClientRect(), LB = (await import('./ui/livestamp.js')).liveBox();
+  const [fx, fy] = a.view.toScreen((LB.x0 + LB.x1) / 2, (LB.y0 + LB.y1) / 2).map((n, i) => n + (i ? r.top : r.left)), half = Math.hypot(v.box.x1 - v.box.x0, v.box.y1 - v.box.y0) / 2;
   const fh = (type, x, y) => h.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 3, pointerType: 'touch', isPrimary: true, bubbles: true, buttons: type === 'pointerup' ? 0 : 1 }));
-  const h0 = h.getBoundingClientRect(), x0 = h0.x + 22, y0 = h0.y + 22, len = Math.hypot(fx - x0, fy - y0), step = 0.5 * v.reach * a.view.zoom;
+  const h0 = h.getBoundingClientRect(), x0 = h0.x + 22, y0 = h0.y + 22, len = Math.hypot(fx - x0, fy - y0), step = 0.5 * half * a.view.zoom;
   const dx = (fx - x0) / len * step, dy = (fy - y0) / len * step;
   fh('pointerdown', x0, y0); fh('pointermove', x0 + dx / 2, y0 + dy / 2); fh('pointermove', x0 + dx, y0 + dy); fh('pointerup', x0 + dx, y0 + dy); ${nap}
-  if (a.stampSpin !== 0) throw new Error('dragging the handle toward the foot turned the Cat');
+  if (a.stampSpin !== 0) throw new Error('dragging the handle toward the middle turned the Cat');
   if (snap() !== placed || size() !== '1×' || a.drawing.undoStack.length !== 1) throw new Error('dragging the handle half a size in did not give the Cat back exactly (' + size() + ')');
   ${q('#stamp-bigger')} ${nap} ${q('#stamp-check')} ${nap}
   ${TAP('innerWidth * 0.25', 'innerHeight * 0.3')} ${nap}
@@ -440,21 +441,22 @@ VIEWS['stamp-spin'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   if (!sb.hidden || pb.hidden) throw new Error('the Moon showed Spin, or no plane button');
   ${q('#undo')} ${nap} ${STAMPS_OPEN} ${TILE('animals', 'Cat')} a.stampSpin = 2; ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}` };
 // Turning by the handle, like Drag a face (owner, 2026-10-19): the Cat's handle dragged
-// round its foot to down-left faces it left, to up-left away to the left, in one undo
+// round its middle to down-left faces it left, to up-left away to the left, in one undo
 // step; a Moon's handle dragged sideways lays it on the floor, down-right on the left
 // wall, down-left on the right wall, straight up stands it again. Ends with the Moon
-// on the right wall, its pointer showing.
-const ROUND = `const sc2 = 2 ** -a.live.A.l, rr = document.querySelector('#stage').getBoundingClientRect(), hh = document.querySelector('#stamp-handle');
-  const foot = () => a.view.toScreen(a.live.A.q * Math.sqrt(3) / 2 * sc2, (a.live.A.p + a.live.A.q / 2) * sc2).map((n, i) => n + (i ? rr.top : rr.left));
+// on the right wall.
+const ROUND = `const rr = document.querySelector('#stage').getBoundingClientRect(), hh = document.querySelector('#stamp-handle'), LS2 = await import('./ui/livestamp.js');
+  // The middle the handle turns the stamp round (the outline's center).
+  const mid2 = () => { const b = LS2.liveBox(); return a.view.toScreen((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2).map((n, i) => n + (i ? rr.top : rr.left)); };
   const fire2 = (type, x, y) => hh.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 4, pointerType: 'touch', isPrimary: true, bubbles: true, buttons: type === 'pointerup' ? 0 : 1 }));
-  // Turn the stamp to face the angle deg: the finger goes round the foot from where it
+  // Turn the stamp to face the angle deg: the finger goes round the middle from where it
   // grabs the handle by deg less the pose's own angle (turning counts from the grab, so a
   // handle kept on screen away from its pose's line turns the same), as far out as it is.
   const poseDeg = () => { const live = a.live, id = a.stampChoice.id, plane = a.stampPlane;
     if (['moon', 'smiley', 'sun'].includes(id) || /^letter-|^number-/.test(id)) return ({ upright: 270, floor: 0, left: 60, right: 120 })[plane || (/^letter-|^number-/.test(id) ? 'left' : 'upright')] + 180 * (plane && plane !== 'upright' ? live.side || 0 : 0);
     return [30, 150, 210, 330][a.stampSpin % 4]; };
   const swing = async (deg) => {
-    const b = hh.getBoundingClientRect(), x0 = b.x + 22, y0 = b.y + 22, [fx, fy] = foot(), R = Math.hypot(x0 - fx, y0 - fy);
+    const b = hh.getBoundingClientRect(), x0 = b.x + 22, y0 = b.y + 22, [fx, fy] = mid2(), R = Math.hypot(x0 - fx, y0 - fy);
     const t = (Math.atan2(y0 - fy, x0 - fx) * 180 / Math.PI + (deg - poseDeg())) * Math.PI / 180;
     fire2('pointerdown', x0, y0); fire2('pointermove', fx + R * Math.cos(t), fy + R * Math.sin(t)); fire2('pointerup', fx + R * Math.cos(t), fy + R * Math.sin(t));
     await new Promise((res) => setTimeout(res, 150));
