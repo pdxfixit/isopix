@@ -219,31 +219,37 @@ export function updateStampbar() {
     pb.innerHTML = PLANE_ICONS[plane];
     pb.setAttribute('aria-label', `On ${PLANE_SAYS[plane]}. Tap for ${PLANE_SAYS[next]}.`);
   }
-  if (!h.classList.contains('dragging')) {
-    // Out from the foot the way the stamp faces or lies (or just outside the corner of
-    // one that does not turn), kept on screen, above the bars and off the buttons and
-    // rails (a big stamp's handle may be under them, or off the screen).
-    const [cx, cy] = app.view.toScreen(...handleAt(v, k)), [dx, dy] = handleDir(v), n = Math.hypot(dx, dy) || 1;
-    const above = [bar, $('#update-bar')].map((el) => el.getBoundingClientRect()).filter((r) => r.height);
-    const floor = above.length ? Math.min(...above.map((r) => r.top)) - 30 : app.view.h - 200;
-    let x = Math.max(30, Math.min(app.view.w - 30, cx + (16 * dx) / n)), y = Math.max(30, Math.min(floor, cy + (16 * dy) / n));
-    [x, y] = clearOf(['.topleft', '.topright', '#levels', '#zoom'], x, y);
-    h.style.left = `${x}px`; h.style.top = `${Math.min(floor, y)}px`;
-  }
+  placeStampHandle();
   h.setAttribute('aria-label', poseKind() ? 'Stamp size and turn: drag away from its foot or toward it to size it, round it to turn it; arrow keys up and down size it, left and right turn it' : 'Stamp size: drag away from the stamp for bigger, toward it for smaller');
   h.hidden = false;
 }
-// A 44 px knob centered at (x, y), moved to the nearest spot on screen that covers
+// The handle's place: out from the foot the way the stamp faces or lies (or just
+// outside the corner of one that does not turn), kept on screen, above the bars and
+// off the buttons, rails and notices (a big stamp's handle may be under them, or off
+// the screen). Called again after the notices move (app.js placeUpdateBar), as the
+// selection's handle is, since they stack above the stamp bar.
+export function placeStampHandle() {
+  const v = app.live, h = $('#stamp-handle');
+  if (!v || h.classList.contains('dragging')) return;
+  const k = stepAt(v.A.l).s, [cx, cy] = app.view.toScreen(...handleAt(v, k)), [dx, dy] = handleDir(v), n = Math.hypot(dx, dy) || 1;
+  // Above the stamp bar and the notices stacked over it (on a phone there is no room between them).
+  const tops = ['#stampbar', '#update-bar', '#protect-note', '#save-note', '#move-note'].map((sel) => $(sel).getBoundingClientRect()).filter((r) => r.height).map((r) => r.top);
+  const floor = Math.min(...tops, app.view.h) - 30;
+  let x = Math.max(30, Math.min(app.view.w - 30, cx + (16 * dx) / n)), y = Math.max(30, Math.min(floor, cy + (16 * dy) / n));
+  [x, y] = clearOf(['.topleft', '.topright', '#levels', '#zoom'], x, y, floor);
+  h.style.left = `${x}px`; h.style.top = `${y}px`;
+}
+// A 44 px knob centered at (x, y), moved to the nearest spot on screen, above floor, that covers
 // none of the controls: beside or below each one it would cover, three times over (a gap
 // between two clusters may be too narrow for it, so it goes below them).
-function clearOf(sels, x, y) {
+function clearOf(sels, x, y, floor = Infinity) {
   const rects = sels.map((sel) => document.querySelector(sel)?.getBoundingClientRect()).filter((r) => r && r.width && r.height);
   const covers = (cx, cy) => rects.filter((r) => !(cx + 26 < r.left || cx - 26 > r.right || cy + 26 < r.top || cy - 26 > r.bottom));
   let spots = [[x, y]];
   for (let pass = 0; pass < 3; pass++) {
     spots = spots.concat(spots.flatMap(([cx, cy]) => covers(cx, cy).flatMap((r) => [[r.right + 28, cy], [r.left - 28, cy], [cx, r.bottom + 28]])));
   }
-  const ok = spots.filter(([cx, cy]) => cx >= 26 && cx <= innerWidth - 26 && !covers(cx, cy).length);
+  const ok = spots.filter(([cx, cy]) => cx >= 26 && cx <= innerWidth - 26 && cy <= floor && !covers(cx, cy).length);
   return ok.length ? ok.reduce((b, c) => (Math.hypot(c[0] - x, c[1] - y) < Math.hypot(b[0] - x, b[1] - y) ? c : b)) : [x, y];
 }
 // The plane button's picture: a cube with the face in use filled, or a square facing you.
