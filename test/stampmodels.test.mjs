@@ -43,7 +43,7 @@ test('each spun view places at every level as a proper stamp: no two cells on on
 
 test('the light stays put: in every view a face is shaded as the side it now faces', () => {
   for (const id of IDS) {
-    const bases = [...new Set(MODELS[id]().map((face) => face.color))]; // the model's own colors
+    const bases = [...new Set(MODELS[id]().map((face) => face.color))]; // the model's own colors, every tier
     for (const n of [1, 2, 3]) {
       for (const [, , , , c, f] of spun(id, n).cells) assert.ok(bases.some((b) => shade(b, f) === c), `${id} ${n}: ${c} is none of its colors shaded as ${f}`);
     }
@@ -72,7 +72,7 @@ const ON_TOP = []; // the nine older ones were redrawn honest on 2026-10-19
 test('box art looks the same front on whether painted in order or drawn by depth', () => {
   const key = (cells) => JSON.stringify([...cells].map(([k, v]) => [k, v.c, v.f]).sort());
   for (const id of IDS) {
-    const same = key(paint(MODELS[id]())) === key(render(MODELS[id](), 0));
+    const one = atSize(MODELS[id](), 1), same = key(paint(one)) === key(render(one, 0));
     assert.equal(same, !ON_TOP.includes(id), same ? `${id} now draws the same by depth: take it off ON_TOP` : `${id} paints differently than it draws by depth: order its boxes back to front, and do not let boxes overlap`);
   }
 });
@@ -87,7 +87,7 @@ test('the Castle is a castle all round (owner: "boxier and have more features on
 });
 
 test('four quarter turns come back to the start', () => {
-  for (const id of IDS) assert.deepEqual([...render(MODELS[id](), 4)].sort(), [...render(MODELS[id](), 0)].sort(), id);
+  for (const id of IDS) { const one = atSize(MODELS[id](), 1); assert.deepEqual([...render(one, 4)].sort(), [...render(one, 0)].sort(), id); }
 });
 
 // Detail by size (owner, 2026-10-19: "less detail on the smaller version and more detail on the large versions").
