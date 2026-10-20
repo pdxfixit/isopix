@@ -214,6 +214,8 @@ body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left
   border: 3px solid var(--bg); background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow);
   display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: none;
 }
+/* A stamp knob that could only go on a notice's words is drawn above the notice (z 6). */
+.stamp-handle.over-note, .stamp-check.over-note { z-index: 7; }
 .stamp-check svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .stampbar #stamp-size { min-width: 52px; color: var(--ink); }
 .handle-track .tick { display: flex; align-items: center; gap: 6px; opacity: 0.5; }
