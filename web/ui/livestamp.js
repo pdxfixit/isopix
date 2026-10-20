@@ -99,9 +99,8 @@ export function startLive(A, erase, diff) {
   if (!app.session.stampTold) { app.session.stampTold = true; toast(poseKind() ? 'Drag the stamp to move it, its corner knob to size and turn it, then tap ✓' : 'Drag the stamp to move it, its corner knob to size it, then tap ✓'); }
   updateStampbar();
 }
-// The live stamp's 1× outline around its anchor on the plane in use, and its reach,
-// the farthest any of it is from the anchor (one reach of the handle is 1×); false
-// when it has no cells.
+// The live stamp's 1× outline around its anchor on the plane in use; false when it
+// has no cells.
 function outline(v) {
   const { cells } = D.placeStamp(base(), v.A), A = v.A;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -109,7 +108,6 @@ function outline(v) {
   if (!cells.length) return false;
   const a = L.vertexWorld(A.l, A.p, A.q), box = { x0: x0 - a.x, y0: y0 - a.y, x1: x1 - a.x, y1: y1 - a.y };
   v.box = box;
-  v.reach = Math.max(...[[box.x1, box.y0], [box.x0, box.y0], [box.x1, box.y1], [box.x0, box.y1]].map(([x, y]) => Math.hypot(x, y)));
   return true;
 }
 
@@ -317,15 +315,6 @@ const PLANE_ICONS = {
   left: FILL('M4 7.5 12 12v9l-8-4.5Z'),
   right: FILL('M12 12l8-4.5v9L12 21Z'),
 };
-// The line from the live stamp's foot to its handle while it is dragged, in world
-// units, for render.js: the pointer, which the stamp turns round.
-export function livePointer() {
-  const v = app.live, h = $('#stamp-handle');
-  if (!v || !poseKind() || h.hidden || !h.classList.contains('dragging')) return null;
-  const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), r = canvas.getBoundingClientRect(), hr = h.getBoundingClientRect();
-  const [x1, y1] = app.view.toWorld(hr.left + hr.width / 2 - r.left, hr.top + hr.height / 2 - r.top);
-  return { x0: a.x, y0: a.y, x1, y1 };
-}
 // The live stamp's outline at the size in use, in world units, for render.js.
 export function liveBox() {
   const v = app.live;
@@ -341,41 +330,43 @@ export function wireLiveStamp() {
   $('#stamp-check').addEventListener('click', endLive);
   $('#stamp-plane').addEventListener('click', nextPlane);
   $('#stamp-spin').addEventListener('click', spinStamp);
-  // The handle. Size: moving the finger one reach farther from the foot is 1× more,
-  // counted from where it was grabbed (a handle kept on screen or off a rail is not
-  // where its size would put it); the size is the step nearest that. Turn: the way
-  // the finger is from the foot picks the pose (poseAt), as a drag picks Drag a face's face.
+  // The handle turns and sizes the stamp round its middle, the outline's center when it
+  // was grabbed, as a corner knob does in any drawing app (owner, 2026-10-20: "the corner
+  // knob sizes and turns around the stamp's middle, with no line"). Size: moving the
+  // finger one 1× half-diagonal of the outline farther from the middle is 1× more, counted
+  // from where it was grabbed (a handle kept on screen or off a rail is not where its size
+  // would put it); the size is the step nearest that. Turn: the way the finger has gone
+  // round the middle picks the pose (poseAt), as a drag picks Drag a face's face. The
+  // stamp itself stays standing on its foot.
   const h = $('#stamp-handle');
   let grab = null;
-  const at = (e) => {
-    const v = app.live, r = canvas.getBoundingClientRect(), a = L.vertexWorld(v.A.l, v.A.p, v.A.q);
-    const [wx, wy] = app.view.toWorld(e.clientX - r.left, e.clientY - r.top), dx = wx - a.x, dy = wy - a.y;
-    const along = Math.hypot(dx, dy) / v.reach;
-    return { along, angle: (Math.atan2(dy, dx) * 180) / Math.PI, px: Math.hypot(dx, dy) * app.view.zoom };
+  const at = (e, c, R) => {
+    const r = canvas.getBoundingClientRect(), [wx, wy] = app.view.toWorld(e.clientX - r.left, e.clientY - r.top), dx = wx - c.x, dy = wy - c.y;
+    return { along: Math.hypot(dx, dy) / R, angle: (Math.atan2(dy, dx) * 180) / Math.PI, px: Math.hypot(dx, dy) * app.view.zoom };
   };
   h.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     if (!stillLive()) return;
     try { h.setPointerCapture(e.pointerId); } catch { /* synthetic */ }
     h.classList.add('dragging');
-    const kind = poseKind(), g = at(e);
-    // Turning counts from where the handle was grabbed: the finger turned round the foot,
-    // added to the pose's own direction, so a handle kept on screen or off a rail (not on
-    // its pose's line) does not turn the stamp until the finger really goes round.
-    grab = { t: g.along, s: stepAt(app.live.A.l).s, a0: g.angle, p0: kind ? poseAngle(kind, poseNow(), app.live.side || 0) : 0 };
+    const v = app.live, b = liveBox(), c = { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 };
+    const R = Math.hypot(v.box.x1 - v.box.x0, v.box.y1 - v.box.y0) / 2 || 1, kind = poseKind(), g = at(e, c, R);
+    // Turning counts from where the handle was grabbed: the finger turned round the middle,
+    // added to the pose's own direction, so the handle's place on the corner does not turn
+    // the stamp until the finger really goes round.
+    grab = { c, R, t: g.along, s: stepAt(v.A.l).s, a0: g.angle, p0: kind ? poseAngle(kind, poseNow(), v.side || 0) : 0 };
   });
   h.addEventListener('pointermove', (e) => {
     if (!app.live || !grab || !h.classList.contains('dragging')) return;
     h.style.left = `${e.clientX}px`; h.style.top = `${e.clientY}px`;
-    const { along, angle: raw, px } = at(e), kind = poseKind(), s = grab.s + along - grab.t;
+    const { along, angle: raw, px } = at(e, grab.c, grab.R), kind = poseKind(), s = grab.s + along - grab.t;
     const angle = grab.p0 + ((((raw - grab.a0) % 360) + 540) % 360) - 180;
-    // Within a finger's width of the foot the direction means nothing: the pose holds.
+    // Within a finger's width of the middle the direction means nothing: the pose holds.
     if (!kind || px < 44) { setStampSize(s); return; }
     const pose = poseAt(kind, angle, poseNow(), planes());
     // Which of a plane's two slices the finger is in, so the handle stays on that side.
     if (kind === 'plane' && pose !== 'upright') app.live.side = Math.cos(((angle - poseAngle(kind, pose, 0)) * Math.PI) / 180) < 0 ? 1 : 0;
     setPoseAndSize(pose, s);
-    requestRender(); // the pointer line follows the finger
   });
   const drop = () => { grab = null; h.classList.remove('dragging'); updateStampbar(); requestRender(); };
   h.addEventListener('pointerup', drop);
