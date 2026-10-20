@@ -662,14 +662,20 @@ const STROKE = `const st = document.querySelector('#stage');
 const STEP = `const tour = () => window.isopix.tour.state(); const say = () => document.querySelector('#tour .tour-say').textContent;
   const at = (i) => { if (tour()?.index !== i) throw new Error('lesson at step ' + (tour()?.index) + ', not ' + i + ': ' + say()); };`;
 // Show me around: Basics starts in a practice drawing; a stroke moves it to the cube step.
-VIEWS.lesson = { js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${nap} ${q('#welcome-tour')} ${nap} ${STROKE} ${STEP}
+// The lesson views start fresh: a lesson keeps the size and view it starts in,
+// and an earlier view can leave a coarser one, where their short first stroke
+// makes fewer than the 3 cells Basics asks for. Found when `--shards 4` changed
+// the order (2026-10-20): after `rail` the size was 1, not 3, at the same zoom;
+// after `stamp-move`, then `lesson-end` at 320 px, the zoom was 132 and the size 0.
+VIEWS.lesson = { fresh: true, js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${nap} ${q('#welcome-tour')} ${nap} ${STROKE} ${STEP}
   if (window.isopix.drawingName !== 'Practice') throw new Error('not a practice drawing: ' + window.isopix.drawingName);
   at(0); await stroke(innerWidth * 0.4, innerHeight * 0.4); at(1);
   if (window.isopix.settings.brush !== 'hexagon') throw new Error('the cube step did not pick the Hexagon brush');
   if (!document.querySelector('#options').classList.contains('tour-target')) throw new Error('the cube step does not point at the shapes button');` };
 // All of Basics over a drawing of one's own: Back to my drawing gives it back
 // untouched; a second run, kept, asks first (that drawing is in no file).
-VIEWS['lesson-end'] = { js: `${DRAW} ${STROKE} ${STEP} const a = window.isopix; const mine = a.drawing.cells.size, name = a.drawingName;
+// Fresh, like `lesson`: see there.
+VIEWS['lesson-end'] = { fresh: true, js: `${DRAW} ${STROKE} ${STEP} const a = window.isopix; const mine = a.drawing.cells.size, name = a.drawingName;
   const run = async () => {
     a.tour.start('basics'); await new Promise((r) => setTimeout(r, 150)); at(0);
     await stroke(innerWidth * 0.4, innerHeight * 0.45); at(1);
