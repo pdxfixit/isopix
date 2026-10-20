@@ -25,7 +25,7 @@ import { buildNotches, buildPalette, buildZoom, computeLevel, fitView, openColor
 import { afterChange, closePopover, commit, cycleMode, openPopover, placeHandle, preview, previewEnd, previewStart, previewTo, redo, scaleSelection, selDensity, setDensity, setMoveMode, setTool, toggleCoarsen, undo, updateModeChip, updateOptionsButton, updateSelbar } from './ui/tools.js';
 import { addDrawing, openAtStart } from './ui/gallery.js';
 import { loadMine, saveMine } from './ui/stamps.js';
-import { liveBox, livePointer, updateStampbar, wireLiveStamp } from './ui/livestamp.js';
+import { liveBox, livePointer, placeStampHandle, updateStampbar, wireLiveStamp } from './ui/livestamp.js';
 import { loadPalettes, savePalettes, wirePalettes } from './ui/palettes.js';
 import { setBar, isMaking, cancelVideo, videoButton } from './ui/video.js';
 import { cancelGesture, gesture, onDown, onKey, onMove, onUp, onWheel } from './ui/input.js';
@@ -194,6 +194,7 @@ function placeUpdateBar() {
     top = r.top;
   }
   placeHandle();
+  placeStampHandle();
 }
 // The update bar's height when it last showed (hidden, it measures 0).
 let updateBarH = 60;
