@@ -53,6 +53,7 @@ land-continue worktree:
 #   just look                     the drawing screen at 320, 375, 700, 900 and 1100 px
 #   just look drawn select selmore rail settings drawing-sheet brushes   several views (just look --help lists them all)
 #   just look --all --light       every view (CI also runs a short landscape pass: just look-ci)
+#   just look --all --shards 4    every view, as 4 processes at once (--shard 2/4: one of them; --list: which views)
 #   just look --widths 375 --js 'document.querySelector("#lock").click()'    runs JS first
 #   just look --height 400        a short landscape phone
 #   just look --light             light mode (--dark for dark; default follows this Mac)
@@ -61,16 +62,18 @@ land-continue worktree:
 look *args:
     @node tools/look.mjs "$@"
 
-#   just look-ci          both of CI's look steps, in order: every view in light mode, then on short landscape phones
-#   just look-ci wide     only the first; short: only the second (test.yml runs each as its own step)
-# 🔎 The look checks exactly as CI runs them (2026-10-20: CI's short landscape pass found what a local --all missed)
+#   just look-ci          both of CI's look passes, in order: every view in light mode, then on short landscape phones
+#   just look-ci wide     only the first; short: only the second (test.yml runs each as its own job)
+#   LOOK_SHARDS=2 just look-ci    fewer processes at once (default 4: one per vCPU of GitHub's runner)
+# 🔎 The look checks exactly as CI runs them, each pass split into shards that run at once (2026-10-20: CI's short landscape pass found what a local --all missed)
 [positional-arguments]
 look-ci pass="both":
     #!/usr/bin/env bash
     set -euo pipefail
     case "$1" in wide|short|both) ;; *) echo "🛑 look-ci takes wide, short or nothing (both), not '$1'" >&2; exit 2 ;; esac
-    [ "$1" = short ] || node tools/look.mjs --all --light --out shots/look
-    [ "$1" = wide ] || node tools/look.mjs --all --light --widths 480,568,844 --height 320 --out shots/short
+    n=${LOOK_SHARDS:-4}
+    [ "$1" = short ] || node tools/look.mjs --all --light --shards "$n" --out shots/look
+    [ "$1" = wide ] || node tools/look.mjs --all --light --widths 480,568,844 --height 320 --shards "$n" --out shots/short
 
 #   just version          1.0.41 -> 1.0.43: PATCH is always the commit count after this release's commit
 #   just version minor    1.1.43 (major: 2.0.43)

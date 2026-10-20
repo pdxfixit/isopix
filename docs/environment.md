@@ -30,8 +30,10 @@ Check them all: `node --version; python3 --version; just --version; gh auth stat
 - `just look` and `just export-check` save screenshots and files in a new
   temporary folder and print its path on the last line (`📸 screenshots: …`).
   `--out DIR` puts them somewhere you choose. Open the PNGs and look at them.
-- CI uploads the same screenshots as the `screenshots` artifact of each `test`
-  run: `gh run download <run-id> -n screenshots`.
+  With `--shards N` (as `just look-ci` runs it), each shard's go in `DIR/1` to `DIR/N`.
+- CI uploads the same screenshots as artifacts of each `test` run:
+  `screenshots-wide` and `screenshots-short` (the look passes) and
+  `screenshots-export`: `gh run download <run-id> -n screenshots-wide`.
 - Fonts differ: the app's `system-ui` is Inter in a cloud session's Chromium
   and the wider DejaVu Sans in CI's Chrome on Ubuntu, so a row of buttons that
   fits locally with a few px to spare can wrap in CI (the selection bar at
