@@ -321,8 +321,8 @@ VIEWS['stamp-bigger'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')}
 // A placed stamp stays live to be sized (owner, 2026-10-19, docs/spec-stamp-size-turn.md):
 // a Cat placed shows the stamp bar at 1× and the handle on screen; + twice makes it 1½×,
 // three times as many cells each way at one level finer, still one undo step; the handle
-// dragged half a reach toward its foot gives the Cat back exactly, unturned; the next tap places a Cat at the size
-// in use and ends the first one's sizing; Undo takes the second away whole. Ends with the
+// dragged half a reach toward its foot gives the Cat back exactly, unturned; ✓ keeps it, and the
+// next tap places a Cat at the size in use; Undo takes the second away whole. Ends with the
 // third Cat live at 1¼×.
 VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
   window.isopix.view.zoom /= 2; // room for the Cat at 1½× and its handle, even 320 px tall
@@ -346,14 +346,53 @@ VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   fh('pointerdown', x0, y0); fh('pointermove', x0 + dx / 2, y0 + dy / 2); fh('pointermove', x0 + dx, y0 + dy); fh('pointerup', x0 + dx, y0 + dy); ${nap}
   if (a.stampSpin !== 0) throw new Error('dragging the handle toward the foot turned the Cat');
   if (snap() !== placed || size() !== '1×' || a.drawing.undoStack.length !== 1) throw new Error('dragging the handle half a size in did not give the Cat back exactly (' + size() + ')');
-  ${q('#stamp-bigger')} ${nap}
+  ${q('#stamp-bigger')} ${nap} ${q('#stamp-check')} ${nap}
   ${TAP('innerWidth * 0.25', 'innerHeight * 0.3')} ${nap}
-  if (a.drawing.undoStack.length !== 2) throw new Error('the next tap did not place a second Cat');
+  if (a.drawing.undoStack.length !== 2) throw new Error('the next tap after ✓ did not place a second Cat');
   if (a.live.A === v.A || size() !== '1¼×') throw new Error('the second Cat is not the live one, at 1¼×');
   const both = snap(); ${q('#undo')} ${nap}
   if (a.drawing.undoStack.length !== 1 || !bar.hidden) throw new Error('Undo did not take the second Cat away whole, or left the stamp bar up');
   ${q('#redo')} ${nap} if (snap() !== both) throw new Error('Redo did not bring the second Cat back');
   ${TAP('innerWidth * 0.6', 'innerHeight * 0.4')} ${nap}` };
+// Moving a stamp before its ✓ (owner, 2026-10-20): a Cat placed has the handle on its
+// dashed outline's top-right corner and the ✓ on its bottom-right, apart; dragging the
+// Cat moves it, a tap elsewhere brings it there, each in its one undo step with no cell
+// lost; ✓ keeps it and hides both; the next tap places a second Cat. A grid size picked
+// keeps that one too, so a tap places a third (the Stamps lesson's last step). Ends with
+// the third Cat live, its handle and ✓ showing.
+VIEWS['stamp-move'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
+  const a = window.isopix; a.view.zoom /= 2;
+  ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
+  const LS = await import('./ui/livestamp.js'), st = document.querySelector('#stage'), r = st.getBoundingClientRect();
+  const h = document.querySelector('#stamp-handle'), ok = document.querySelector('#stamp-check'), mid = (el) => { const b = el.getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; };
+  const corner = (x, y) => a.view.toScreen(x, y).map((n, i) => n + (i ? r.top : r.left));
+  const b = LS.liveBox(), [tx, ty] = corner(b.x1, b.y0), [, by] = corner(b.x1, b.y1), [hx, hy] = mid(h), [cx, cy] = mid(ok);
+  if (h.hidden || ok.hidden) throw new Error('the handle or the ✓ is hidden');
+  // On the corner, unless a control covers the corner (the handle is kept off the rails).
+  const under = (x, y) => ['.topleft', '.topright', '#levels', '#zoom'].some((sel) => { const R = document.querySelector(sel)?.getBoundingClientRect(); return R && R.width && x + 26 > R.left && x - 26 < R.right && y + 26 > R.top && y - 26 < R.bottom; });
+  if (Math.hypot(hx - tx - 6, hy - ty + 6) > 2 && !under(tx + 6, ty - 6)) throw new Error("the handle is not on the outline's top-right corner");
+  if (Math.hypot(cx - tx - 6, cy - by - 6) > 2 && Math.hypot(cx - hx, cy - hy) < 50) throw new Error('the ✓ is not on the bottom-right corner, or sits on the handle');
+  if (Math.hypot(cx - hx, cy - hy) < 44) throw new Error('the ✓ and the handle overlap');
+  const n = a.drawing.cells.size, A0 = { ...a.live.A }, fire = (t, x, y) => st.dispatchEvent(new PointerEvent(t, { clientX: x, clientY: y, pointerId: 8, pointerType: 'touch', isPrimary: true, bubbles: true, button: 0, buttons: t === 'pointerup' ? 0 : 1 }));
+  // Drag the Cat by its middle, 60 px right and 40 down.
+  const [mx, my] = corner((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2);
+  fire('pointerdown', mx, my); for (let i = 1; i <= 6; i++) fire('pointermove', mx + 10 * i, my + 6.67 * i); fire('pointerup', mx + 60, my + 40); ${nap}
+  if (!a.live || (a.live.A.p === A0.p && a.live.A.q === A0.q)) throw new Error('dragging the Cat did not move it');
+  if (a.drawing.cells.size !== n || a.drawing.undoStack.length !== 1) throw new Error('the moved Cat has ' + a.drawing.cells.size + ' of ' + n + ' cells in ' + a.drawing.undoStack.length + ' undo steps, not 1');
+  // A tap elsewhere brings its foot there.
+  ${TAP('innerWidth * 0.3', 'innerHeight * 0.35')} ${nap}
+  const there = (await import('./engine/lattice.js')).nearestVertex(a.live.A.l, ...a.view.toWorld(innerWidth * 0.3 - r.left, innerHeight * 0.35 - r.top));
+  if (a.live.A.p !== there.p || a.live.A.q !== there.q) throw new Error('a tap elsewhere did not bring the Cat there');
+  if (a.drawing.cells.size !== n || a.drawing.undoStack.length !== 1) throw new Error('a tap elsewhere made a second Cat');
+  ${q('#stamp-check')} ${nap}
+  if (a.live || !ok.hidden || !h.hidden || !document.querySelector('#stampbar').hidden) throw new Error('✓ did not keep the Cat and put the handle, ✓ and bar away');
+  ${TAP('innerWidth * 0.6', 'innerHeight * 0.5')} ${nap}
+  if (a.drawing.undoStack.length !== 2 || !a.live || ok.hidden) throw new Error('the tap after ✓ did not place a second Cat, live with its ✓');
+  const other = document.querySelector('#notches .notch:not([aria-checked="true"])');
+  other.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); ${nap}
+  if (a.live) throw new Error('picking a grid size left the second Cat waiting for its ✓');
+  ${TAP('innerWidth * 0.45', 'innerHeight * 0.4')} ${nap}
+  if (a.drawing.undoStack.length !== 3) throw new Error('the tap after picking a grid size did not place a third Cat');` };
 // Floor or wall (owner, 2026-10-19, spec step 2): a Moon placed shows the plane button,
 // standing up; a tap lays it on the floor (every cell a top face), another on the left
 // wall, in the same undo step; + twice draws it anew at 1½×. Then an A, which goes

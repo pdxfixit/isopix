@@ -171,7 +171,7 @@ body.moving .tools .btn[aria-pressed="true"] { background: transparent; border-c
 /* ---- Clean view (body.clean): the drawing, Undo and Show tools only ---- */
 .show-tools { display: none; }
 body.clean .topleft > :not(#undo), body.clean .topright, body.clean .levels, body.clean .readout, body.clean .zoom,
-body.clean .bottom, body.clean .selbar, body.clean .handle, body.clean .popover, body.clean .build-stamp { display: none !important; }
+body.clean .bottom, body.clean .selbar, body.clean .handle, body.clean .stamp-check, body.clean .popover, body.clean .build-stamp { display: none !important; }
 body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left: 0; right: 0; margin: 0 auto; width: max-content;
   bottom: calc(14px + env(safe-area-inset-bottom)); gap: 8px; padding: 0 16px 0 12px; box-shadow: var(--shadow); }
 
@@ -208,6 +208,13 @@ body.clean .show-tools { display: inline-flex; position: fixed; z-index: 4; left
 .stamp-handle { cursor: nesw-resize; margin: -22px 0 0 -22px; }
 .stamp-handle::after { content: none; }
 .stamp-handle svg { position: absolute; inset: 0; margin: auto; width: 22px; height: 22px; fill: none; stroke: var(--accent-ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+/* The live stamp's ✓ (web/ui/livestamp.js), on its outline's bottom-right corner: the handle's knob, with a check. */
+.stamp-check {
+  position: fixed; z-index: 4; width: 44px; height: 44px; margin: -22px 0 0 -22px; padding: 0; border-radius: 50%;
+  border: 3px solid var(--bg); background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: none;
+}
+.stamp-check svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .stampbar #stamp-size { min-width: 52px; color: var(--ink); }
 .handle-track .tick { display: flex; align-items: center; gap: 6px; opacity: 0.5; }
 .handle-track .tick.on { opacity: 1; font-weight: 800; color: var(--accent); }

@@ -96,25 +96,20 @@ export function sizeLabel(s) {
 export function startLive(A, erase, diff) {
   app.live = { drawing: app.drawing, A, erase, diff, depth: app.drawing.undoStack.length, choice: JSON.stringify(app.stampChoice) };
   if (!outline(app.live)) { app.live = null; return; }
-  if (!app.session.stampTold) { app.session.stampTold = true; toast(poseKind() ? 'Drag the round handle out or in to size the stamp, round its foot to turn it' : 'Drag the round handle to make the stamp bigger or smaller'); }
+  if (!app.session.stampTold) { app.session.stampTold = true; toast(poseKind() ? 'Drag the stamp to move it, its corner knob to size and turn it, then tap ✓' : 'Drag the stamp to move it, its corner knob to size it, then tap ✓'); }
   updateStampbar();
 }
-// The live stamp's 1× outline around its anchor on the plane in use, the handle's
-// corner of it (for a stamp that does not turn), and its reach, the farthest any of
-// it is from the anchor (the handle of one that turns sits that far out per 1×);
-// false when it has no cells.
+// The live stamp's 1× outline around its anchor on the plane in use, and its reach,
+// the farthest any of it is from the anchor (one reach of the handle is 1×); false
+// when it has no cells.
 function outline(v) {
   const { cells } = D.placeStamp(base(), v.A), A = v.A;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const { cell } of cells) for (const w of L.cellWorldVerts(cell)) { x0 = Math.min(x0, w.x); y0 = Math.min(y0, w.y); x1 = Math.max(x1, w.x); y1 = Math.max(y1, w.y); }
   if (!cells.length) return false;
   const a = L.vertexWorld(A.l, A.p, A.q), box = { x0: x0 - a.x, y0: y0 - a.y, x1: x1 - a.x, y1: y1 - a.y };
-  // The handle's corner: the outline's top right, unless another corner is clearly
-  // farther from the anchor (a stamp of one's own may be anchored at its top right).
-  const corners = [[box.x1, box.y0], [box.x0, box.y0], [box.x1, box.y1], [box.x0, box.y1]], len = ([x, y]) => Math.hypot(x, y);
   v.box = box;
-  v.u = corners.reduce((b, c) => (len(c) > len(b) * 1.05 ? c : b));
-  v.reach = Math.max(...corners.map(len));
+  v.reach = Math.max(...[[box.x1, box.y0], [box.x0, box.y0], [box.x1, box.y1], [box.x0, box.y1]].map(([x, y]) => Math.hypot(x, y)));
   return true;
 }
 
@@ -144,7 +139,7 @@ export function setStampSize(s) {
   repaint();
 }
 // The live stamp painted again in place of its undo step, at the size and on the plane in use.
-function repaint() {
+function repaint({ quiet = false } = {}) {
   const v = app.live, d = app.drawing;
   if (v.diff) { d.undo(); d.redoStack.pop(); }
   app.strokeSkips.clear();
@@ -155,9 +150,32 @@ function repaint() {
   v.diff = commit(); // afterChange: autosave, Undo's state, a render
   v.depth = d.undoStack.length;
   reportSkips();
-  if (navigator.vibrate) navigator.vibrate(10);
+  if (!quiet && navigator.vibrate) navigator.vibrate(10);
   updateStampbar();
 }
+
+// Moving the live stamp (owner, 2026-10-20: place it, "rotate it and resize it and do
+// all the things you need to do before confirming its location"): a press on the stamp
+// drags it by where it was grabbed; a press anywhere else brings its foot there. Each
+// vertex it crosses paints it again in its one undo step. moveFrom returns the offset
+// from the finger to the foot, or null when no stamp is live (ui/input.js places a new one).
+export function moveFrom(wx, wy) {
+  if (!stillLive()) return null;
+  const v = app.live, a = L.vertexWorld(v.A.l, v.A.p, v.A.q), b = liveBox(), pad = 6 / app.view.zoom;
+  if (wx >= b.x0 - pad && wx <= b.x1 + pad && wy >= b.y0 - pad && wy <= b.y1 + pad) return { dx: a.x - wx, dy: a.y - wy };
+  moveTo({ dx: 0, dy: 0 }, wx, wy);
+  return { dx: 0, dy: 0 };
+}
+export function moveTo(off, wx, wy) {
+  const v = app.live;
+  if (!v || !stillLive()) return;
+  const A = L.nearestVertex(v.A.l, wx + off.dx, wy + off.dy);
+  if (A.p === v.A.p && A.q === v.A.q) return;
+  v.A = A;
+  repaint({ quiet: true });
+}
+// Whether a stamp is live (input.js: no ghost of a new one while it is).
+export const isLive = () => stillLive();
 
 // The next plane the stamp goes on (floor, a wall, upright), for it and the next ones.
 const PLANE_SAYS = { upright: 'standing up, facing you', floor: 'the floor', left: 'the left wall', right: 'the right wall' };
@@ -213,7 +231,7 @@ export function updateStampbar() {
   if (app.live && !stillLive()) app.live = null;
   const v = app.live, bar = $('#stampbar'), h = $('#stamp-handle');
   if (bar.hidden !== !v) bar.hidden = !v;
-  if (!v) { h.hidden = true; return; }
+  if (!v) { h.hidden = true; $('#stamp-check').hidden = true; return; }
   const list = steps(v.A.l), k = stepAt(v.A.l).s, label = sizeLabel(k);
   if ($('#stamp-size').textContent !== label) {
     $('#stamp-size').textContent = label;
@@ -239,22 +257,28 @@ export function updateStampbar() {
   placeStampHandle();
   h.setAttribute('aria-label', poseKind() ? 'Stamp size and turn: drag away from its foot or toward it to size it, round it to turn it; arrow keys up and down size it, left and right turn it' : 'Stamp size: drag away from the stamp for bigger, toward it for smaller');
   h.hidden = false;
+  $('#stamp-check').hidden = false;
 }
-// The handle's place: out from the foot the way the stamp faces or lies (or just
-// outside the corner of one that does not turn), kept on screen, above the bars and
-// off the buttons, rails and notices (a big stamp's handle may be under them, or off
-// the screen). Called again after the notices move (app.js placeUpdateBar), as the
+// The handle and the ✓ sit on the live stamp's dashed outline (owner, 2026-10-20: "let
+// the control be fixed to the edge of the shape"): the handle on its top-right corner,
+// the ✓ on its bottom-right, kept on screen, above the bars and off the buttons, rails
+// and notices (a big stamp's corners may be under them, or off the screen), and never
+// on each other. Called again after the notices move (app.js placeUpdateBar), as the
 // selection's handle is, since they stack above the stamp bar.
 export function placeStampHandle() {
-  const v = app.live, h = $('#stamp-handle');
+  const v = app.live, h = $('#stamp-handle'), ok = $('#stamp-check');
   if (!v || h.classList.contains('dragging')) return;
-  const k = stepAt(v.A.l).s, [cx, cy] = app.view.toScreen(...handleAt(v, k)), [dx, dy] = handleDir(v), n = Math.hypot(dx, dy) || 1;
+  const b = liveBox(), [x0, y0] = app.view.toScreen(b.x1, b.y0), [, y1] = app.view.toScreen(b.x1, b.y1);
   // Above the stamp bar and the notices stacked over it (on a phone there is no room between them).
   const tops = ['#stampbar', '#update-bar', '#protect-note', '#save-note', '#move-note'].map((sel) => $(sel).getBoundingClientRect()).filter((r) => r.height).map((r) => r.top);
-  const floor = Math.min(...tops, app.view.h) - 30;
-  let x = Math.max(30, Math.min(app.view.w - 30, cx + (16 * dx) / n)), y = Math.max(30, Math.min(floor, cy + (16 * dy) / n));
-  [x, y] = clearOf(['.topleft', '.topright', '#levels', '#zoom'], x, y, floor);
-  h.style.left = `${x}px`; h.style.top = `${y}px`;
+  const floor = Math.min(...tops, app.view.h) - 30, keep = (x, y) => [Math.max(30, Math.min(app.view.w - 30, x)), Math.max(30, Math.min(floor, y))];
+  const avoid = ['.topleft', '.topright', '#levels', '#zoom'];
+  const [hx, hy] = clearOf(avoid, ...keep(x0 + 6, y0 - 6), floor);
+  let [cx, cy] = clearOf(avoid, ...keep(x0 + 6, y1 + 6), floor);
+  // A small stamp's corners are closer than two knobs: the ✓ goes below the handle, or beside it.
+  if (Math.hypot(cx - hx, cy - hy) < 50) [cx, cy] = hy + 50 <= floor ? [hx, hy + 50] : [hx - 50, hy];
+  h.style.left = `${hx}px`; h.style.top = `${hy}px`;
+  ok.style.left = `${cx}px`; ok.style.top = `${cy}px`;
 }
 // A 44 px knob centered at (x, y), moved to the nearest spot on screen, above floor, that covers
 // none of the controls: beside or below each one it would cover, three times over (a gap
@@ -278,23 +302,11 @@ const PLANE_ICONS = {
   left: FILL('M4 7.5 12 12v9l-8-4.5Z'),
   right: FILL('M12 12l8-4.5v9L12 21Z'),
 };
-// Which way the handle sits from the foot, in world units per 1×: the pose's
-// direction at the stamp's reach, or the outline's corner for one that does not turn.
-function handleDir(v) {
-  const kind = poseKind();
-  if (!kind) return v.u;
-  const a = (poseAngle(kind, poseNow(), v.side || 0) * Math.PI) / 180;
-  return [v.reach * Math.cos(a), v.reach * Math.sin(a)];
-}
-// The handle's place at size k (any number), in world units.
-function handleAt(v, k) {
-  const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), [dx, dy] = handleDir(v);
-  return [a.x + k * dx, a.y + k * dy];
-}
-// The line from the live stamp's foot to its handle, in world units, for render.js: the pointer.
+// The line from the live stamp's foot to its handle while it is dragged, in world
+// units, for render.js: the pointer, which the stamp turns round.
 export function livePointer() {
   const v = app.live, h = $('#stamp-handle');
-  if (!v || !poseKind() || h.hidden) return null;
+  if (!v || !poseKind() || h.hidden || !h.classList.contains('dragging')) return null;
   const a = L.vertexWorld(v.A.l, v.A.p, v.A.q), r = canvas.getBoundingClientRect(), hr = h.getBoundingClientRect();
   const [x1, y1] = app.view.toWorld(hr.left + hr.width / 2 - r.left, hr.top + hr.height / 2 - r.top);
   return { x0: a.x, y0: a.y, x1, y1 };
@@ -311,10 +323,10 @@ export function wireLiveStamp() {
   $('#stamp-smaller').addEventListener('click', () => stepStampSize(-1));
   $('#stamp-bigger').addEventListener('click', () => stepStampSize(1));
   $('#stamp-done').addEventListener('click', endLive);
+  $('#stamp-check').addEventListener('click', endLive);
   $('#stamp-plane').addEventListener('click', nextPlane);
   $('#stamp-spin').addEventListener('click', spinStamp);
-  // The handle. Size: moving the finger one reach farther from the foot (one corner's
-  // length along the line through it, for a stamp that does not turn) is 1× more,
+  // The handle. Size: moving the finger one reach farther from the foot is 1× more,
   // counted from where it was grabbed (a handle kept on screen or off a rail is not
   // where its size would put it); the size is the step nearest that. Turn: the way
   // the finger is from the foot picks the pose (poseAt), as a drag picks Drag a face's face.
@@ -323,7 +335,7 @@ export function wireLiveStamp() {
   const at = (e) => {
     const v = app.live, r = canvas.getBoundingClientRect(), a = L.vertexWorld(v.A.l, v.A.p, v.A.q);
     const [wx, wy] = app.view.toWorld(e.clientX - r.left, e.clientY - r.top), dx = wx - a.x, dy = wy - a.y;
-    const [ux, uy] = v.u, along = poseKind() ? Math.hypot(dx, dy) / v.reach : (dx * ux + dy * uy) / (ux * ux + uy * uy);
+    const along = Math.hypot(dx, dy) / v.reach;
     return { along, angle: (Math.atan2(dy, dx) * 180) / Math.PI, px: Math.hypot(dx, dy) * app.view.zoom };
   };
   h.addEventListener('pointerdown', (e) => {

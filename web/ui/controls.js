@@ -11,6 +11,7 @@ import { toolAfterColorPick } from '../palette.js';
 import { paperOf, paperName, inkName, matchInk } from '../engine/paper.js';
 import { $, app, emit, palette, requestRender, set, toast } from '../app.js';
 import { closePopover, setTool } from './tools.js';
+import { endLive } from './livestamp.js';
 import { zoomBy } from './input.js';
 import { syncMenu } from './screens.js';
 import { currentPalette, openPalettes, pickAny } from './palettes.js';
@@ -112,6 +113,7 @@ function closeRail(ms) {
   }, ms);
 }
 export function chooseNotch(n) {
+  endLive(); // a grid size picked by hand keeps a stamp waiting for its ✓, as picking a tool does
   if (app.settings.locked) set('lockedLevel', n); else set('notch', n);
   computeLevel(true);
   showReadout();

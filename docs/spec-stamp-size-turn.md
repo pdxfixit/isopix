@@ -112,9 +112,11 @@ Place it as today: tap, or press and slide to aim. The stamp then stays
   (− 3× +), **Spin** (3D stamps) or **Turn** (flat ones and Mine), **Flip**,
   the three planes for flat pictures, and **Done**.
 
-The next tap places another stamp, at the same size and facing, and commits
-the last one. So does picking a tool, Undo, or opening a sheet. One Undo takes
-the whole stamp away, however much it was adjusted.
+Since 2026-10-20 (owner) the stamp stays live until its **✓** (on the
+outline's bottom-right corner; the handle is on its top-right): dragging the
+stamp moves it, and a tap elsewhere brings it there. Picking a tool or Undo
+also ends it. One Undo takes the whole stamp away, however much it was
+adjusted.
 
 - ✅ Slide-to-aim stays. You size it where it stands, so you see it against
   your drawing.
