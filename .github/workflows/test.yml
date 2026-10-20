@@ -36,11 +36,11 @@ jobs:
       - name: Autosave copies (just autosave-check)
         run: just autosave-check
       - name: Width check (just look)
-        run: just look --all --light --out shots/look
+        run: just look-ci wide
       # A landscape phone with the browser bars showing: the side rails must clear
       # the bottom row, and the update bar must keep between the rails and under the handle.
       - name: Short landscape check (just look)
-        run: just look --all --light --widths 480,568,844 --height 320 --out shots/short
+        run: just look-ci short
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v7

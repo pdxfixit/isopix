@@ -140,14 +140,16 @@ test('every repo path the docs name in backticks exists', () => {
   assert.deepEqual(bad, [], `named in the docs but not in the repo:\n${bad.join('\n')}`);
 });
 
-test('CI runs every `just look` view', () => {
+test('CI runs every `just look` view, in both passes, through just look-ci', () => {
+  // test.yml runs each pass as its own step; `just look-ci` runs both, so a local run is CI's (2026-10-20).
   const yml = read('.github/workflows/test.yml');
-  const m = /run: just look ([^\n]+)/.exec(yml);
-  assert.ok(m, 'no `just look` step in .github/workflows/test.yml');
-  const run = new Set(m[1].split(/\s+/));
-  if (run.has('--all')) return; // look.mjs runs every view
-  const missing = [...lookViews()].filter((v) => !run.has(v));
-  assert.deepEqual(missing, [], `views CI does not run: ${missing.join(', ')}`);
+  for (const pass of ['wide', 'short']) assert.match(yml, new RegExp(`run: just look-ci ${pass}\\n`), `test.yml does not run just look-ci ${pass}`);
+  const recipe = /^look-ci [^\n]*:\n((?:    [^\n]*\n)+)/m.exec(read('justfile'));
+  assert.ok(recipe, 'no look-ci recipe in the justfile');
+  const runs = recipe[1].split('\n').filter((l) => l.includes('node tools/look.mjs'));
+  assert.equal(runs.length, 2, 'look-ci runs two passes');
+  for (const l of runs) assert.match(l, / --all /, `a look-ci pass does not run every view: ${l.trim()}`);
+  assert.ok(runs.some((l) => / --height /.test(l)), 'look-ci has no short landscape pass');
 });
 
 test('CLAUDE.md only imports AGENTS.md, and AGENTS.md stays a short contract', () => {
