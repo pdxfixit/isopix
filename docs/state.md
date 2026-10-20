@@ -181,7 +181,6 @@ Before that:
 
 ## In flight
 
-**One version string** (2026-10-20): flarepress `d7c8021` adds `release=` to `site.conf`, and with `release=web/version.js` a deploy is labelled `v1.2.174-dce9c71` instead of `v1.0.1-173-gdce9c71` (decisions.md, Shipping). Isopix's `site/site.conf` sets it, but **that commit waits until the owner moves flarepress's `v1` tag**: GitHub's deploy uses `v1`, whose `check` refuses an unknown key, so landing it first would turn every deploy red at `check` (nothing published). Then `just land` it and `just ci-wait`; `just live` shows the new label.
 
 **Stamps you size and turn** (2026-10-19): all three steps of [spec-stamp-size-turn.md](spec-stamp-size-turn.md) are built (above): size in quarter steps, floor or wall with round stamps drawn anew, and Spin. Since then: turning by the handle, every box stamp redrawn with something on every side (the nine that drew a feature on top now draw the same by depth, so turned and front views match), detail by size, the mock-ups and the art contract. Nothing waits on the owner.
 
@@ -197,7 +196,7 @@ Before that:
 
 Earlier, the same release: saving on every device, the Move hand, the pinch fixes and the offline fix (release 1.1.9). Its ideas list is [release-plan.md](release-plan.md); the owner chose the gallery and two-finger-tap undo, and on 2026-10-16 added the app.js split, starter stamps, rotate and flip, the time-lapse video and drawing prompts; pen mode is deferred ([TODO.md](../TODO.md)).
 
-**Live** (checked 2026-10-20 with `just live`): `v1.0.1-173-gdce9c71`, release 1.2.174 (every stamp sized and turned by its handle, the box stamps redrawn with detail by size, the Planet's ring apart), deployed by GitHub on the push ([run 39371989041](https://github.com/pdxfixit/isopix/actions/runs/39371989041)), CI green.
+**Live** (checked 2026-10-20 with `just live`): `v1.2.174-dc082ab`, release 1.2.174 (stamps sized and turned by the handle, the box stamps redrawn with detail by size, the Planet's ring apart), deployed by GitHub on the push ([run 39379528898](https://github.com/pdxfixit/isopix/actions/runs/39379528898)), CI green. The label is `v<release>-<short commit>` since `dc082ab` (`release=web/version.js` in `site/site.conf`, flarepress v1.2.1; decisions.md, Shipping); it was `git describe`, which read one less than the release.
 
 **First GitHub deploy** (2026-10-15): release 1.2.50 (`9bcc304`, the build stamp at 11 px, the strip's height) is live at https://isopix.app, deployed by GitHub ([run 38708715250](https://github.com/pdxfixit/isopix/actions/runs/38708715250)), with everything on `main` since 1.2.20, the usage counts included. The run went red after the upload: flarepress's verify read `version.js` 3 s after the push and got the old copy ("live version.js differs"); a minute later it served 1.2.50. That check needs a retry like the daily live check has; flarepress is the owner's, outside this repo.
 
