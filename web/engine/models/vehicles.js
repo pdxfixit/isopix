@@ -65,7 +65,9 @@ export const MODELS = {
   ],
   rocket: () => [
     // A Falcon: a tall slim first stage on four landing legs, grid fins under a black interstage, the second stage, a red fairing.
-    ...hbox([1, -2, 0], [1, 1, 1], INK), ...hbox([1, -1, 0], [1, 1, 3], INK), ...hbox([-2, 1, 0], [1, 1, 1], INK), ...hbox([-1, 1, 0], [1, 1, 3], INK), // legs behind
+    // Landing legs bowed out: the knee a half unit further out than the hip and the foot.
+    ...hbox([1, -2, 1], [1, 1, 3], INK), ...hbox([1, -1, 0], [1, 1, 1], INK), ...hbox([1, -1, 4], [1, 1, 1], INK), // legs behind
+    ...hbox([-2, 1, 1], [1, 1, 3], INK), ...hbox([-1, 1, 0], [1, 1, 1], INK), ...hbox([-1, 1, 4], [1, 1, 1], INK),
     ...hbox([1, 1, 0], [1, 1, 1], ORANGE), ...hbox([0, 0, 1], [3, 3, 1], STONE), // the flame, the engines
     ...hbox([1, -1, 12], [1, 1, 1], INK), ...hbox([-1, 1, 12], [1, 1, 1], INK), // grid fins behind
     ...hbox([0, 0, 2], [3, 3, 11], WHITE), patch('L', 3, [1, 2], [4, 10], RED), patch('R', 3, [1, 2], [4, 10], RED), patch('l', 0, [1, 2], [4, 10], RED), patch('r', 0, [1, 2], [4, 10], RED), // the first stage, striped
@@ -73,7 +75,8 @@ export const MODELS = {
     ...hbox([0, 0, 14], [3, 3, 4], WHITE),
     ...hbox([0, 0, 18], [3, 3, 2], RED), ...hbox([1, 1, 20], [1, 1, 1], RED), // the fairing
     ...hbox([3, 1, 12], [1, 1, 1], INK), ...hbox([1, 3, 12], [1, 1, 1], INK),
-    ...hbox([3, 1, 0], [1, 1, 3], INK), ...hbox([4, 1, 0], [1, 1, 1], INK), ...hbox([1, 3, 0], [1, 1, 3], INK), ...hbox([1, 4, 0], [1, 1, 1], INK), // legs in front
+    ...hbox([3, 1, 0], [1, 1, 1], INK), ...hbox([3, 1, 4], [1, 1, 1], INK), ...hbox([4, 1, 1], [1, 1, 3], INK), // legs in front
+    ...hbox([1, 3, 0], [1, 1, 1], INK), ...hbox([1, 3, 4], [1, 1, 1], INK), ...hbox([1, 4, 1], [1, 1, 3], INK),
   ],
   plane: () => [
     ...hbox([4, -6, 2], [3, 1, 1], RED), ...hbox([5, -3, 0], [1, 1, 2], INK), ...hbox([4, -5, 2], [3, 5, 1], BLUE), // the far wing, a red tip, a wheel under it

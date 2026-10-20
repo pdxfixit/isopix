@@ -170,7 +170,7 @@ New stamps come in by [the stamp art contract](../stamp-art-contract.md).
 
 ![Boat from every side](boat.svg)
 
-**Rocket** (`rocket`, 274 cells): as drawn, a quarter turn, half a turn, three quarters
+**Rocket** (`rocket`, 286 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Rocket from every side](rocket.svg)
 
