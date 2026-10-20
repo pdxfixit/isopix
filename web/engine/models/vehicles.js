@@ -160,17 +160,18 @@ export const MODELS = {
     ...big(top(3, [4.5, 6.5], [4.5, 6.5], WHITE), top(3, [5, 6], [5, 6], RED)),
     ...hbox([4, 8, 2], [3, 1, 1], RED),
   ],
+  // The ring apart from the ball, a gap on every side (owner: "ring apart").
   planet: () => [
-    ...hbox([-1, -1, 4], [9, 1, 1], SAND), ...big(top(5, [-1, 8], [-1, -0.5], GOLD)), // the ring behind, two-tone from 2×
-    ...hbox([-1, 0, 4], [1, 7, 1], SAND), ...big(top(5, [-1, -0.5], [0, 7], GOLD)),
+    ...hbox([-2, -2, 4], [11, 1, 1], SAND), ...big(top(5, [-2, 9], [-2, -1.5], GOLD)), // the ring behind, two-tone from 2×
+    ...hbox([-2, -1, 4], [1, 9, 1], SAND), ...big(top(5, [-2, -1.5], [-1, 8], GOLD)),
     ...hbox([2, 2, 0], [3, 3, 1], PLANET), ...hbox([1, 1, 1], [5, 5, 1], PLANET),
     ...banded([1, 0, 2], [5, 1, 5], PLANET, [6, 7], VIOLET), ...bandBig([1, 0], [5, 1], [5, 5.5], PURPLE),
     ...banded([0, 1, 2], [7, 5, 5], PLANET, [6, 7], VIOLET), ...bandBig([0, 1], [7, 5], [5, 5.5], PURPLE),
     ...banded([1, 6, 2], [5, 1, 5], PLANET, [6, 7], VIOLET), ...bandBig([1, 6], [5, 1], [5, 5.5], PURPLE), // a band round it, a thin cloud band from 2×
     ...hbox([1, 1, 7], [5, 5, 1], PLANET), ...crater('L', 6, [2, 7]), ...crater('R', 6, [3.5, 7]), ...crater('l', 1, [3.5, 7]), ...crater('r', 1, [2, 7]), // craters from 2×
     ...hbox([2, 2, 8], [3, 3, 1], PLANET), ...big(top(9, [3, 4], [2.5, 3.5], PURPLE), top(9, [3, 3.5], [2.5, 3], VIOLET)),
-    ...hbox([7, 0, 4], [1, 7, 1], SAND), ...big(top(5, [7.5, 8], [0, 7], GOLD)),
-    ...hbox([-1, 7, 4], [9, 1, 1], SAND), ...big(top(5, [-1, 8], [7.5, 8], GOLD)), // and in front
+    ...hbox([8, -1, 4], [1, 9, 1], SAND), ...big(top(5, [8.5, 9], [-1, 8], GOLD)),
+    ...hbox([-2, 8, 4], [11, 1, 1], SAND), ...big(top(5, [-2, 9], [8.5, 9], GOLD)), // and in front
   ],
   ufo: () => [
     // The same above and below the rim, every layer a half unit tall.

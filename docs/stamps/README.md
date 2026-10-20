@@ -296,7 +296,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ## Space
 
-**Planet** (`planet`, 246 cells): as drawn, a quarter turn, half a turn, three quarters
+**Planet** (`planet`, 278 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Planet from every side](planet.svg)
 
