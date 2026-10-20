@@ -113,8 +113,13 @@ export function check(stamp, { replace = false } = {}) {
 }
 
 // The stamp from every side, as docs/stamps/ draws one.
+// Square, so a square thumbnail (a phone's preview, a file browser's) shows all four views.
 export function sheetOf(faces) {
-  return gridSVG([0, 1, 2, 3].map((n) => { const c = n ? ART.render(faces, n) : ART.paint(faces); return ART.stampFrom(c, ART.anchorOf(c)); }));
+  const svg = gridSVG([0, 1, 2, 3].map((n) => { const c = n ? ART.render(faces, n) : ART.paint(faces); return ART.stampFrom(c, ART.anchorOf(c)); }));
+  return svg.replace(/width="(\d+)" height="(\d+)" viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"><rect x="[-\d.]+" y="[-\d.]+" width="[\d.]+" height="[\d.]+"/, (_, w, h, x, y, vw, vh) => {
+    const s = Math.max(+vw, +vh), X = +x - (s - vw) / 2, Y = +y - (s - vh) / 2;
+    return `width="${Math.max(+w, +h)}" height="${Math.max(+w, +h)}" viewBox="${X} ${Y} ${s} ${s}"><rect x="${X}" y="${Y}" width="${s}" height="${s}"`;
+  });
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
