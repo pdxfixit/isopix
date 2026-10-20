@@ -117,7 +117,7 @@ const GROUPS = [
   { id: 'sacred', name: 'Sacred geometry' }, // last (owner, 2026-10-19)
 ];
 const out = GROUPS.flatMap((g) => SHAPES.filter((s) => s.group === g.id))
-  .map((s) => ({ id: s.id, name: s.name, group: s.group, stamp: stampOf(s.faces ? paint(s.faces()) : s.cells()) }));
+  .map((s) => ({ id: s.id, name: s.name, group: s.group, stamp: stampOf(s.faces ? paint(ART.atSize(s.faces(), 1)) : s.cells()) }));
 if (out.length !== SHAPES.length) throw new Error('a shape has no group in GROUPS');
 // Packed for web/stamps.js (web/stamppack.js); unpacking must give every cell back.
 const sorted = (cells) => JSON.stringify(cells.map((c) => JSON.stringify(c)).sort());

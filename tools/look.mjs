@@ -325,6 +325,7 @@ VIEWS['stamp-bigger'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')}
 // in use and ends the first one's sizing; Undo takes the second away whole. Ends with the
 // third Cat live at 1¼×.
 VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
+  window.isopix.view.zoom /= 2; // room for the Cat at 1½× and its handle, even 320 px tall
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.5')} ${nap}
   const a = window.isopix, n = a.drawing.cells.size;
   const snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort()), placed = snap();
@@ -401,9 +402,15 @@ VIEWS['stamp-spin'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
 const ROUND = `const sc2 = 2 ** -a.live.A.l, rr = document.querySelector('#stage').getBoundingClientRect(), hh = document.querySelector('#stamp-handle');
   const foot = () => a.view.toScreen(a.live.A.q * Math.sqrt(3) / 2 * sc2, (a.live.A.p + a.live.A.q / 2) * sc2).map((n, i) => n + (i ? rr.top : rr.left));
   const fire2 = (type, x, y) => hh.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 4, pointerType: 'touch', isPrimary: true, bubbles: true, buttons: type === 'pointerup' ? 0 : 1 }));
-  // Drag the handle to the angle deg, as far from the foot as it is now.
+  // Turn the stamp to face the angle deg: the finger goes round the foot from where it
+  // grabs the handle by deg less the pose's own angle (turning counts from the grab, so a
+  // handle kept on screen away from its pose's line turns the same), as far out as it is.
+  const poseDeg = () => { const live = a.live, id = a.stampChoice.id, plane = a.stampPlane;
+    if (['moon', 'smiley', 'sun'].includes(id) || /^letter-|^number-/.test(id)) return ({ upright: 270, floor: 0, left: 60, right: 120 })[plane || (/^letter-|^number-/.test(id) ? 'left' : 'upright')] + 180 * (plane && plane !== 'upright' ? live.side || 0 : 0);
+    return [30, 150, 210, 330][a.stampSpin % 4]; };
   const swing = async (deg) => {
-    const b = hh.getBoundingClientRect(), x0 = b.x + 22, y0 = b.y + 22, [fx, fy] = foot(), R = Math.hypot(x0 - fx, y0 - fy), t = deg * Math.PI / 180;
+    const b = hh.getBoundingClientRect(), x0 = b.x + 22, y0 = b.y + 22, [fx, fy] = foot(), R = Math.hypot(x0 - fx, y0 - fy);
+    const t = (Math.atan2(y0 - fy, x0 - fx) * 180 / Math.PI + (deg - poseDeg())) * Math.PI / 180;
     fire2('pointerdown', x0, y0); fire2('pointermove', fx + R * Math.cos(t), fy + R * Math.sin(t)); fire2('pointerup', fx + R * Math.cos(t), fy + R * Math.sin(t));
     await new Promise((res) => setTimeout(res, 150));
   };`;

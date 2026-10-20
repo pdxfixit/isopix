@@ -1,6 +1,6 @@
 # Isopix stamp art contract
 
-Version 2, 2026-10-19.
+Version 3, 2026-10-19.
 
 This document is the whole handoff for drawing a stamp for Isopix. It is written for an artist, an agent or an image or language model that knows nothing about the app or its code. A stamp that follows it, and passes the check, comes into the app with no code written by you.
 
@@ -24,13 +24,15 @@ Words used here:
 | Decal | A flat patch of color on one side of a block: an eye, a window, a door. |
 | Slope | A slanted face: a roof. |
 | Spin | The app's button that turns a placed stamp a quarter turn, so a child sees every side of it. |
+| Size | How big a placed stamp is, as a multiple of its own size: 1 as drawn, 2 twice as big. A child drags it from ¼ to many times. |
+| Detail | Parts shown only from size 2 up: the small things found when a stamp is made big. |
 
 ## Contents
 
 1. What a stamp is
 2. The space
 3. The parts
-4. Drawing rules (rules 1 to 9)
+4. Drawing rules (rules 1 to 10)
 5. The palette
 6. The file
 7. The check: every REJECT and WARN
@@ -88,6 +90,8 @@ Parts are numbered from 1, in the order you list them; the check's messages use 
 
 `from` is the low corner, `to` the high one: an eye one half unit square on the +y side of a block at y = 4, from x = 6 to 7 and z = 3 to 4, is `{"decal": "+y", "at": 4, "from": [6, 3], "to": [7, 4], "color": "#2b2d42"}`.
 
+**Size, on any part.** `"minSize": 2` makes it **detail**: shown only from twice the stamp's size up, and only detail may use halves of a half unit (`3.5`, a quarter of a cube) in any of its numbers, with sizes down to `0.5`. `"minSize": 1` hides a part below the stamp's own size (a speck that is noise when tiny). `"maxSize": 1` shows a part only below its own size: a plainer stand-in for something too fine to read small. A part with neither shows at every size. See rule 10.
+
 **Slope.** `{"slope": [[x, y, z], [x, y, z], [x, y, z]], "faces": side, "color": "#rrggbb"}`. A flat slanted face of 3 or 4 corners, shaded as the side it faces (`"+x"`, `"-x"`, `"+y"`, `"-y"` or `"up"`). Its edges must follow the grid (rule 7): a roof rises one half unit for every half unit it runs in from its edge, so a pyramid roof on a base 4 wide has its peak 2 up. The doghouse example has a full four-sided roof.
 
 ## 4. Drawing rules
@@ -101,6 +105,7 @@ Parts are numbered from 1, in the order you list them; the check's messages use 
 7. **Straight edges.** Slopes only at the grid's own slope (section 3). Blocks and decals are always straight. Round things are made by stepping: wide in the middle, narrower above and below (see the Apple and the Cloud in `docs/stamps/`).
 8. **The palette.** Use the palette (section 5). A color outside it is allowed when none will do; the check warns.
 9. **Same character.** A new drawing of a stamp that ships keeps what children know it by: its main colors, its shape, the way it faces.
+10. **Detail by size.** A child makes stamps big, and a big stamp should reward a close look: give every stamp detail for size 2 and up (`"minSize": 2`), drawn in quarter units: eye glints, whiskers, window panes and sills, a door knob, bricks, rivets, buttons, petals, a ladybird on a leaf. Cute and lovely, not cluttered: it adds to the stamp, never changes what it is. Small, the opposite: anything that turns into a speck below its own size gets `"minSize": 1`, or a plainer stand-in with `"maxSize": 1`. Detail follows rules 1 and 2 like any part: a detail block touches the block it stands on, a detail decal sits on a face and is listed after its block. The app shows detail from twice the size up, in half steps (2, 2½, 3 …), where quarter units land on the grid. The check warns when a stamp has no detail.
 
 ## 5. The palette
 
@@ -139,7 +144,7 @@ One JSON object, nothing before or after it:
 
 | Field | Rule |
 |---|---|
-| `contract` | `1`, the version of this contract. |
+| `contract` | `1`, the version of the file's format (it stays 1 while this document only adds optional fields). |
 | `id` | Lowercase letters and digits, single dashes between words, at most 24 long: `fire-truck`. Permanent once it ships. A new drawing of a stamp that ships uses its id (`docs/stamps/README.md` lists them; the check says when an id is taken). |
 | `name` | What a child would call it, 1 to 20 characters: `Fire truck`. |
 | `group` | The Stamps drawer section: `shapes`, `buildings`, `nature`, `weather`, `animals`, `people`, `vehicles`, `space` or `food`. |
@@ -164,12 +169,15 @@ One JSON object, nothing before or after it:
 | R10 | Two blocks overlap. | Rule 2. |
 | R11 | Painted out of order: a part is listed after a part in front of it. | Rule 1: move the named part before the other. |
 | R12 | More than 600 cells. | Rule 6. |
+| R13 | A size field that is not one of `"minSize": 2`, `"minSize": 1`, `"maxSize": 1` (and not both), or halves (`.5`) in a part that is not detail. | Section 3, rule 10. |
 
-Warnings do not stop a stamp; read them: a color outside the palette, more than 450 cells, a side with no decal.
+Warnings do not stop a stamp; read them: a color outside the palette, more than 450 cells, a side with no decal, no detail for size 2 and up, a part never seen from any side (usually a decal listed before its block: on one face the later part wins).
+
+The check proves every size tier: as drawn, below its own size (`½×`) and with its detail (`2×`); a REJECT about one tier says `at ½×` or `at 2×`. It also draws `<id>-sizes.svg`: the stamp at 1×, 2× and 4×, its detail showing.
 
 ## 8. Deliver and bring in
 
-**To deliver:** the one JSON file that passes the check, and its `<id>.svg`.
+**To deliver:** the one JSON file that passes the check, and its `<id>.svg` and `<id>-sizes.svg`.
 
 **To bring it in** (for the agent working in the Isopix repo; the steps change the app):
 
@@ -181,7 +189,7 @@ Warnings do not stop a stamp; read them: a color outside the palette, more than 
 
 ## 9. A prompt for another model
 
-Paste this, then the whole of sections 2 to 6, into a model with no access to the repo. Send its answer to the check; paste REJECT lines back into the same conversation.
+Paste this, then the whole of sections 2 to 6 (rules 1 to 10), into a model with no access to the repo. Send its answer to the check; paste REJECT lines back into the same conversation.
 
 ```
 You are drawing one stamp for Isopix, a children's drawing app on an isometric
@@ -189,8 +197,10 @@ grid. A stamp is a small 3D object built only of blocks, flat colored decals on
 blocks, and roof slopes, written as one JSON object (no prose, no code). The
 rules and the format follow. Draw: <WHAT, e.g. "a fire truck">.
 Make it read clearly at a small size, give every one of its four sides
-something to see (it can be spun), list parts strictly back to front, never let
-blocks overlap, and use the palette. Reply with the JSON object only.
+something to see (it can be spun), and give it lovely small detail for when a
+child makes it big ("minSize": 2, in quarter units). List parts strictly back
+to front, never let blocks overlap, and use the palette. Reply with the JSON
+object only.
 ```
 
 ## 10. Lessons from drawing the starter stamps
@@ -208,5 +218,6 @@ Add a line when an art round teaches something; say which stamp and when.
 
 ## 11. Changelog
 
+- **Version 3, 2026-10-19.** Detail by size: `minSize` and `maxSize` on any part, quarter units for detail, rule 10, R13, the never-seen warning and the sizes picture; the example has detail. Owner: "for the various sizes of these new stamps there should be less detail on the smaller version and more detail on the large versions so that something like the house grows in detail when you expand it to the largest setting … all this lovely detail that can be found when they're zoomed in."
 - **Version 2, 2026-10-19.** After a cold read (a fresh agent drew a fire truck from this document alone and got an ACCEPT in four rounds, then listed where it had to guess): parts numbered from 1; how to order blocks that are apart in more than one direction, with a wheel under a body; what a cell is and how to count them; the wheel recipe; what counts as a bare side; the view order and turn direction; decals stay on one block; every limit as a number. The check's picture is square.
 - **Version 1, 2026-10-19.** First version: blocks, decals and slopes as JSON; rules 1 to 9; the check R1 to R12. Owner: "produce an art contract as well so that just like [Arrow-Rama] does, so that we can talk to other agents and other models to create art that we can bring back to you for integration as new stamps."

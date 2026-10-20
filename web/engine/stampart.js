@@ -62,6 +62,20 @@ export const patch = (side, at, [a0, a1], [z0, z1], color) => face(
 // A patch on a box's top (the plane z = at), half units: stripes, a saddle, spots.
 export const top = (at, [x0, x1], [y0, y1], color) => face([[x0, y0, at], [x1, y0, at], [x1, y1, at], [x0, y1, at]].map((v) => v.map((n) => n / 2)), color, 'T');
 
+// Detail by size (owner, 2026-10-19: "less detail on the smaller version and more
+// detail on the large versions … all this lovely detail that can be found when
+// they're zoomed in"). A part may show only from a size up (detail, which may be
+// drawn in quarter units: half of a half unit, on the grid from twice the size) or
+// only below one (a plainer stand-in, or a speck too small to read). Sizes are the
+// stamp's own size: 1 as drawn, 2 twice as big.
+export const DETAIL = 2; // where the fine detail comes in
+export const fromSize = (min, faces) => faces.map((f) => ({ ...f, lod: { ...f.lod, min } }));
+export const belowSize = (max, faces) => faces.map((f) => ({ ...f, lod: { ...f.lod, max } }));
+export const atSize = (faces, s) => faces.filter((f) => !f.lod || ((f.lod.min ?? 0) <= s && s < (f.lod.max ?? Infinity)));
+// Faces k times as big about the origin (k a whole number).
+export const scaled = (faces, k) => (k === 1 ? faces : faces.map((f) => ({ ...face(f.pts.map((v) => v.map((n) => n * k)), f.color, f.f), lod: f.lod })));
+export const onGrid = (faces) => faces.every((f) => f.poly.flat().every(Number.isInteger));
+
 // Paint faces in order into cells at LV: Map key → {cell, c, f}. Each face fills
 // the cells whose centers it holds; a later face covers an earlier one.
 export function paint(faces) {

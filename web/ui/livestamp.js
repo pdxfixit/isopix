@@ -60,14 +60,31 @@ function steps(l) {
   const st = base();
   if (!memo.has(st)) memo.set(st, new Map());
   const m = memo.get(st);
-  if (!m.has(l)) m.set(l, D.sizeSteps(st, l, MAX_CELLS));
+  // A stamp with detail by size goes in half steps from ART.DETAIL up, the sizes its
+  // fine detail lands on the grid at (quarter steps between would drop it).
+  if (!m.has(l)) m.set(l, D.sizeSteps(st, l, MAX_CELLS).filter((x) => !detailed() || x.s < ART.DETAIL || Number.isInteger(x.s * 2)));
   return m.get(l);
+}
+// Whether the chosen stamp is a box stamp with detail by size (engine/stampmodels.js tiered).
+const detailed = () => !!starterId() && !planeNow() && M.tiered(starterId());
+// A box stamp with detail at a size step, drawn for that size: {stamp, j}, made once each.
+const tieredOf = new Map();
+function tieredAt(step, l) {
+  const key = `${starterId()} ${spinNow()} ${step.s} ${l}`;
+  if (!tieredOf.has(key)) {
+    let got = M.spunAtSize(starterId(), spinNow(), step, Math.max(step.j, Math.min(2, L.MAX_LEVEL - l)));
+    // Detail on finer cells multiplies them by 4 a level: past twice the cap, the plainer tier.
+    if (got.stamp.cells.length > 2 * MAX_CELLS) got = M.spunAtSize(starterId(), spinNow(), step, step.j);
+    tieredOf.set(key, got);
+  }
+  return tieredOf.get(key);
 }
 const stepAt = (l) => D.nearestStep(steps(l), app.stampSize);
 // What the Stamp brush paints with its anchor at vertex A, at the size and on the plane in use.
 export function stampAt(A) {
-  const { k, j } = stepAt(A.l);
-  return D.placeSized(sizedAt(k), A, { k: 1, j });
+  const step = stepAt(A.l);
+  if (detailed()) { const { stamp, j } = tieredAt(step, A.l); return D.placeSized(stamp, A, { k: 1, j }); }
+  return D.placeSized(sizedAt(step.k), A, { k: 1, j: step.j });
 }
 // A size as the bar says it: 1×, 1½×, 2¼×, ¾×.
 export function sizeLabel(s) {
@@ -307,20 +324,26 @@ export function wireLiveStamp() {
     const v = app.live, r = canvas.getBoundingClientRect(), a = L.vertexWorld(v.A.l, v.A.p, v.A.q);
     const [wx, wy] = app.view.toWorld(e.clientX - r.left, e.clientY - r.top), dx = wx - a.x, dy = wy - a.y;
     const [ux, uy] = v.u, along = poseKind() ? Math.hypot(dx, dy) / v.reach : (dx * ux + dy * uy) / (ux * ux + uy * uy);
-    return { along, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+    return { along, angle: (Math.atan2(dy, dx) * 180) / Math.PI, px: Math.hypot(dx, dy) * app.view.zoom };
   };
   h.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     if (!stillLive()) return;
     try { h.setPointerCapture(e.pointerId); } catch { /* synthetic */ }
     h.classList.add('dragging');
-    grab = { t: at(e).along, s: stepAt(app.live.A.l).s };
+    const kind = poseKind(), g = at(e);
+    // Turning counts from where the handle was grabbed: the finger turned round the foot,
+    // added to the pose's own direction, so a handle kept on screen or off a rail (not on
+    // its pose's line) does not turn the stamp until the finger really goes round.
+    grab = { t: g.along, s: stepAt(app.live.A.l).s, a0: g.angle, p0: kind ? poseAngle(kind, poseNow(), app.live.side || 0) : 0 };
   });
   h.addEventListener('pointermove', (e) => {
     if (!app.live || !grab || !h.classList.contains('dragging')) return;
     h.style.left = `${e.clientX}px`; h.style.top = `${e.clientY}px`;
-    const { along, angle } = at(e), kind = poseKind(), s = grab.s + along - grab.t;
-    if (!kind) { setStampSize(s); return; }
+    const { along, angle: raw, px } = at(e), kind = poseKind(), s = grab.s + along - grab.t;
+    const angle = grab.p0 + ((((raw - grab.a0) % 360) + 540) % 360) - 180;
+    // Within a finger's width of the foot the direction means nothing: the pose holds.
+    if (!kind || px < 44) { setStampSize(s); return; }
     const pose = poseAt(kind, angle, poseNow(), planes());
     // Which of a plane's two slices the finger is in, so the handle stays on that side.
     if (kind === 'plane' && pose !== 'upright') app.live.side = Math.cos(((angle - poseAngle(kind, pose, 0)) * Math.PI) / 180) < 0 ? 1 : 0;
