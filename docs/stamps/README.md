@@ -186,7 +186,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Snake at 1×, 2× and 3×](snake-sizes.svg)
 
-**Frog** (`frog`, 196 cells): as drawn, a quarter turn, half a turn, three quarters
+**Frog** (`frog`, 220 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Frog from every side](frog.svg)
 

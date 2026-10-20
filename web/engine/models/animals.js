@@ -136,25 +136,26 @@ export const MODELS = {
       ...fromSize(2, [...hbox([15, 6, 0], [1, 1, 0.5], RED), ...hbox([16, 5.5, 0], [1, 0.5, 0.5], RED), ...hbox([16, 7, 0], [1, 0.5, 0.5], RED)]), // finer, zoomed in
     ];
   },
-  // Fat and wide, with a round back, big eyes on top, a smile and a pale throat,
-  // spots, and folded legs on both sides. Zoomed in: a curved smile, rosy cheeks,
+  // Fat, wide and a little tall (owner: "make these frogs slightly taller"), with a
+  // round back, big eyes on top, a smile and a pale throat, spots, and folded legs
+  // on both sides. Zoomed in: a curved smile, rosy cheeks,
   // nostrils, small freckles, glints in its eyes.
   frog: () => [
     ...hbox([0, -1, 0], [3, 1, 2], LIME), ...hbox([3, -1, 0], [1, 1, 1], LIME), ...hbox([5, -1, 0], [1, 1, 1], LIME),
-    ...hbox([0, 0, 0], [7, 7, 2], GREEN),
-    ...fromSize(1, [top(2, [5, 6], [3, 4], PINE),
-      patch('L', 7, [4, 5], [1, 2], PINE), patch('l', 0, [4, 5], [1, 2], PINE), patch('r', 0, [2, 3], [0, 1], PINE)]),
-    patch('R', 7, [2, 5], [1, 2], SMILE), ...fromSize(1, [patch('R', 7, [1, 6], [0, 1], LIME)]),
-    ...fromSize(2, [patch('R', 7, [2, 2.5], [1, 1.5], GREEN), patch('R', 7, [4.5, 5], [1, 1.5], GREEN), patch('R', 7, [2.5, 4.5], [1.5, 2], GREEN), // the smile curves up
-      patch('R', 7, [0.5, 1.5], [1, 1.5], PINK), patch('R', 7, [5.5, 6.5], [1, 1.5], PINK), // rosy cheeks
-      top(2, [6.5, 7], [2.5, 3], INK), top(2, [6.5, 7], [4, 4.5], INK)]), // nostrils
-    ...hbox([0, 1, 2], [4, 5, 1], GREEN), // its round back
-    ...fromSize(1, [top(3, [1, 2], [2, 3], PINE), top(3, [2, 3], [4, 5], PINE), patch('r', 0, [3, 4], [2, 3], PINE)]),
-    ...fromSize(2, [top(3, [0.5, 1], [4, 4.5], PINE), top(3, [3, 3.5], [1.5, 2], PINE), top(3, [2.5, 3], [3, 3.5], PINE)]), // freckles
-    ...hbox([4, 0, 2], [2, 2, 2], WHITE), patch('R', 6, [0, 1], [3, 4], INK), patch('l', 0, [5, 6], [3, 4], INK),
-    ...fromSize(2, [patch('R', 6, [0, 0.5], [3.5, 4], WHITE)]), // a glint at the corner
-    ...hbox([4, 5, 2], [2, 2, 2], WHITE), patch('R', 6, [6, 7], [3, 4], INK), patch('L', 7, [5, 6], [3, 4], INK),
-    ...fromSize(2, [patch('R', 6, [6.5, 7], [3.5, 4], WHITE)]),
+    ...hbox([0, 0, 0], [7, 7, 3], GREEN),
+    ...fromSize(1, [top(3, [5, 6], [3, 4], PINE),
+      patch('L', 7, [4, 5], [2, 3], PINE), patch('l', 0, [4, 5], [2, 3], PINE), patch('r', 0, [2, 3], [1, 2], PINE)]),
+    patch('R', 7, [2, 5], [2, 3], SMILE), ...fromSize(1, [patch('R', 7, [1, 6], [0, 1], LIME)]),
+    ...fromSize(2, [patch('R', 7, [2, 2.5], [2, 2.5], GREEN), patch('R', 7, [4.5, 5], [2, 2.5], GREEN), patch('R', 7, [2.5, 4.5], [2.5, 3], GREEN), // the smile curves up
+      patch('R', 7, [0.5, 1.5], [2, 2.5], PINK), patch('R', 7, [5.5, 6.5], [2, 2.5], PINK), // rosy cheeks
+      top(3, [6.5, 7], [2.5, 3], INK), top(3, [6.5, 7], [4, 4.5], INK)]), // nostrils
+    ...hbox([0, 1, 3], [4, 5, 1], GREEN), // its round back
+    ...fromSize(1, [top(4, [1, 2], [2, 3], PINE), top(4, [2, 3], [4, 5], PINE), patch('r', 0, [3, 4], [3, 4], PINE)]),
+    ...fromSize(2, [top(4, [0.5, 1], [4, 4.5], PINE), top(4, [3, 3.5], [1.5, 2], PINE), top(4, [2.5, 3], [3, 3.5], PINE)]), // freckles
+    ...hbox([4, 0, 3], [2, 2, 2], WHITE), patch('R', 6, [0, 1], [4, 5], INK), patch('l', 0, [5, 6], [4, 5], INK),
+    ...fromSize(2, [patch('R', 6, [0, 0.5], [4.5, 5], WHITE)]), // a glint at the corner
+    ...hbox([4, 5, 3], [2, 2, 2], WHITE), patch('R', 6, [6, 7], [4, 5], INK), patch('L', 7, [5, 6], [4, 5], INK),
+    ...fromSize(2, [patch('R', 6, [6.5, 7], [4.5, 5], WHITE)]),
     ...hbox([0, 7, 0], [3, 1, 2], LIME), ...hbox([3, 7, 0], [1, 1, 1], LIME), ...hbox([5, 7, 0], [1, 1, 1], LIME),
   ],
   // A fat pig: a belly bulging out both sides, a round back, a curly tail, a
