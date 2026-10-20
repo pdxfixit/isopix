@@ -3,7 +3,9 @@
 #
 # Two jobs run at once on their own runners: `test` (just test, the version
 # checks and the other headless-Chrome checks) and `look` (the look checks, wide
-# and short, each split into 4 shards at once by just look-ci).
+# and short, each split into 4 shards at once by just look-ci). A push or pull
+# request that changes only docs (tools/ci_scope.py) runs just test and the
+# version checks and skips the browser checks (owner, 2026-10-20).
 name: test
 on:
   push:
@@ -19,7 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # the version-bump rule reads history
+          fetch-depth: 0  # the version-bump rule and the docs-only check read history
+      - name: Docs only? (tools/ci_scope.py)
+        id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 tools/ci_scope.py "$BASE"
       - uses: actions/setup-node@v7
         with:
           node-version: 22.11.0
@@ -32,15 +39,19 @@ jobs:
       - name: web/version.js PATCH is the commit count of its commit
         run: python3 tools/bump_version.py --check
       - name: Output round trip (just export-check)
+        if: steps.scope.outputs.browser == 'true'
         run: just export-check --out shots/export
       - name: Moving house (just move-check)
+        if: steps.scope.outputs.browser == 'true'
         run: just move-check
       - name: Installable as an app (just install-check)
+        if: steps.scope.outputs.browser == 'true'
         run: just install-check
       - name: Autosave copies (just autosave-check)
+        if: steps.scope.outputs.browser == 'true'
         run: just autosave-check
       - name: Upload screenshots
-        if: always()
+        if: always() && steps.scope.outputs.browser == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: screenshots-export
@@ -62,15 +73,25 @@ jobs:
       CHROME: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # the docs-only check reads history
+      - name: Docs only? (tools/ci_scope.py)
+        id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 tools/ci_scope.py "$BASE"
       - uses: actions/setup-node@v7
+        if: steps.scope.outputs.browser == 'true'
         with:
           node-version: 22.11.0
       - name: Install just (pinned release; Ubuntu's is too old for [positional-arguments])
+        if: steps.scope.outputs.browser == 'true'
         run: curl -sSfL https://github.com/casey/just/releases/download/1.36.0/just-1.36.0-x86_64-unknown-linux-musl.tar.gz | sudo tar xz -C /usr/local/bin just && just --version
       - name: Look checks, 4 shards at once (just look-ci)
+        if: steps.scope.outputs.browser == 'true'
         run: just look-ci ${{ matrix.pass }}
       - name: Upload screenshots
-        if: always()
+        if: always() && steps.scope.outputs.browser == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: screenshots-${{ matrix.pass }}
