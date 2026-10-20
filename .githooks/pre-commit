@@ -12,3 +12,10 @@ fi
 # A staged web/version.js must carry this commit's number (2026-10-15: a docs
 # commit landed between 'just version' and the release, and CI went red).
 python3 tools/bump_version.py --staged || exit 1
+# A commit that changes web/ carries its version bump (2026-10-20: a stamp commit
+# without one passed here and was refused only at just land, by version_bumped.sh).
+staged=$(git diff --cached --name-only -- web/)
+if [ -n "$staged" ] && ! grep -qx 'web/version.js' <<<"$staged"; then
+  echo "🛑 this commit changes web/ without bumping web/version.js: run just version, then git add web/version.js" >&2
+  exit 1
+fi
