@@ -22,7 +22,7 @@ setup:
 # 🧪 Syntax-check every module, then run the engine tests (Node's built-in runner; nothing to install)
 test:
     @for f in web/*.js web/engine/*.js web/ui/*.js worker/*.js tools/*.mjs test/*.mjs; do node --check "$f" || exit 1; done
-    @python3 -m py_compile tools/serve.py tools/bump_version.py tools/live_check.py
+    @python3 -m py_compile tools/serve.py tools/bump_version.py tools/live_check.py tools/ci_scope.py
     @for f in tools/*.sh .githooks/*; do bash -n "$f" || exit 1; done
     node --test test/*.test.mjs
     python3 -m unittest discover -s tools -p 'test_*.py'

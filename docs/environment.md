@@ -33,7 +33,8 @@ Check them all: `node --version; python3 --version; just --version; gh auth stat
   With `--shards N` (as `just look-ci` runs it), each shard's go in `DIR/1` to `DIR/N`.
 - CI uploads the same screenshots as artifacts of each `test` run:
   `screenshots-wide` and `screenshots-short` (the look passes) and
-  `screenshots-export`: `gh run download <run-id> -n screenshots-wide`.
+  `screenshots-export`: `gh run download <run-id> -n screenshots-wide`. A
+  docs-only push skips the browser checks, so it has none.
 - Fonts differ: the app's `system-ui` is Inter in a cloud session's Chromium
   and the wider DejaVu Sans in CI's Chrome on Ubuntu, so a row of buttons that
   fits locally with a few px to spare can wrap in CI (the selection bar at
