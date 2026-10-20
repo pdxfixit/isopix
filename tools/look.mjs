@@ -8,14 +8,18 @@
 // controls under 44 px tall or wide, controls that overlap or are cut off by
 // the side of the screen, and saves a screenshot. Exits 1 when a check fails.
 //
-//   node tools/look.mjs [VIEW ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]
+//   node tools/look.mjs [VIEW ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark] [--shards N | --shard I/N] [--list]
 //   views: draw (default) drawn settings settings-open-all drawing-sheet drawing-new brushes select selmore rail update updatesel updatedone protect hoverskip help move pinchpan save-file welcome welcome-first feedback-gate feedback name-roll loading loading-slow replay
 //   console.log() in --js prints under the table (📝).
+//   --shards N runs the views as N processes at once (their own server, Chrome
+//   and DIR/1..N) and fails if any does; --shard I/N runs only shard I's views
+//   (tools/look_shard.mjs); --list prints the views it would run and stops.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { launchChrome, connect, evaluate as evaluateIn, waitFor, sleep, freePort, skipWelcome } from './chrome.mjs';
+import { parseShard, shard } from './look_shard.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const MIN_TAP = 44;
@@ -756,40 +760,93 @@ VIEWS['save-file'] = { js: `window.isopix.file = { name: null, at: null, via: nu
 function usage(msg) {
   if (msg) console.error(`❌ ${msg}`);
   // Built from VIEWS, so the list cannot fall behind the views (test/docs.test.mjs reads it).
-  console.error(`usage: just look [${Object.keys(VIEWS).join('|')} ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark]`);
+  console.error(`usage: just look [${Object.keys(VIEWS).join('|')} ...] [--all] [--js CODE] [--url URL] [--out DIR] [--widths 320,375] [--height PX] [--light|--dark] [--shards N | --shard I/N] [--list]`);
   process.exit(msg ? 2 : 0);
 }
-const opts = { screens: [], widths: [320, 375, 700, 900, 1100], js: '', url: null, out: null, height: 800, scheme: null };
+const opts = { screens: [], widths: [320, 375, 700, 900, 1100], js: '', url: null, out: null, height: 800, scheme: null, shard: null, shards: 1, list: false };
 const argv = process.argv.slice(2);
+const pass = []; // the arguments each shard of --shards gets, besides its own --shard and --out
 for (let i = 0; i < argv.length; i++) {
-  const a = argv[i];
+  const a = argv[i], at = i;
   if (a === '--help' || a === '-h') usage();
+  else if (a === '--out') { opts.out = argv[++i]; continue; }
+  else if (a === '--list') { opts.list = true; continue; }
+  else if (a === '--shard') { try { opts.shard = parseShard(argv[++i]); } catch (e) { usage(e.message); } continue; }
+  else if (a === '--shards') {
+    opts.shards = Number(argv[++i]);
+    if (!(Number.isInteger(opts.shards) && opts.shards >= 1)) usage(`--shards takes a count, like 4, not '${argv[i]}'`);
+    continue;
+  }
   else if (a === '--all') opts.screens.push(...Object.keys(VIEWS)); // every view, as CI runs it
   else if (a === '--js') opts.js = argv[++i];
   else if (a === '--url') opts.url = argv[++i];
-  else if (a === '--out') opts.out = argv[++i];
   else if (a === '--height') opts.height = Number(argv[++i]);
   else if (a === '--widths') opts.widths = argv[++i].split(',').map(Number);
   else if (a === '--light' || a === '--dark') opts.scheme = a.slice(2);
   else if (VIEWS[a]) opts.screens.push(a);
   else usage(`unknown argument: ${a}`);
+  pass.push(...argv.slice(at, i + 1));
 }
 if (!opts.screens.length) opts.screens = ['draw'];
+if (opts.shard && opts.shards > 1) usage('--shard and --shards do not go together');
+if (opts.shard) opts.screens = shard(opts.screens, opts.shard.i, opts.shard.n);
+if (opts.list) { for (const v of opts.screens) console.log(v); process.exit(0); }
+if (opts.shard && !opts.screens.length) { console.log(`no views in shard ${opts.shard.i}/${opts.shard.n}`); process.exit(0); }
 
 const children = [];
 process.on('exit', () => { for (const c of children) try { c.kill(); } catch { /* gone */ } });
 process.on('SIGINT', () => process.exit(130));
+process.on('SIGTERM', () => process.exit(143)); // --shards stops its shards this way: each then stops its own server and Chrome
+
+// --shards N: this process runs none itself. Each shard is a whole `just look`
+// (its own dev server, Chrome profile and screenshot folder); the output of
+// every shard is printed in shard order once all have finished.
+if (opts.shards > 1) {
+  const n = opts.shards, t0 = Date.now();
+  const runs = await Promise.all(Array.from({ length: n }, (_, k) => new Promise((resolve) => {
+    const out = opts.out ? ['--out', path.join(opts.out, String(k + 1))] : [];
+    const c = spawn(process.execPath, [new URL(import.meta.url).pathname, ...pass, '--shard', `${k + 1}/${n}`, ...out], { stdio: ['ignore', 'pipe', 'pipe'] });
+    children.push(c);
+    let text = '';
+    c.stdout.on('data', (d) => { text += d; });
+    c.stderr.on('data', (d) => { text += d; });
+    c.on('close', (code, signal) => {
+      const s = Math.round((Date.now() - t0) / 1000);
+      console.log(`${code === 0 ? '✅' : '❌'} shard ${k + 1}/${n} ${code === 0 ? 'passed' : `failed (${signal || `exit ${code}`})`} in ${s} s`);
+      resolve({ code, text });
+    });
+  })));
+  runs.forEach((r, k) => console.log(`\n━━ shard ${k + 1}/${n}: ${shard(opts.screens, k + 1, n).join(' ')}\n${r.text.trimEnd()}`));
+  const bad = runs.map((r, k) => r.code === 0 ? null : k + 1).filter(Boolean);
+  const took = Math.round((Date.now() - t0) / 1000);
+  console.log(bad.length ? `\n❌ shard${bad.length > 1 ? 's' : ''} ${bad.map((k) => `${k}/${n}`).join(', ')} failed (${took} s); each one's failures are under its heading above`
+    : `\n✅ all ${n} shards passed in ${took} s (${opts.screens.length} views)`);
+  process.exit(bad.length ? 1 : 0);
+}
 
 let base = opts.url;
 const liveFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'look-live-')), 'version.json');
 const setLive = (v) => fs.writeFileSync(liveFile, v ? JSON.stringify({ version: v, date: 'look' }) : JSON.stringify({ version: 'dev' }));
-setLive(null);
 if (!base) {
-  const port = await freePort();
-  children.push(spawn('python3', [path.join(ROOT, 'tools/serve.py'), String(port), '--quiet'], { stdio: 'ignore', env: { ...process.env, ISOPIX_LIVE_VERSION: liveFile } }));
-  base = `http://localhost:${port}/`;
-  await waitFor('the dev server', async () => (await fetch(base)).ok);
+  // Shards start their servers at once: a port another one took between
+  // freePort() and the bind would leave this run talking to that server (and its
+  // live version). So this server must answer with this run's own token.
+  const token = path.basename(path.dirname(liveFile));
+  for (let tries = 1; ; tries++) {
+    fs.writeFileSync(liveFile, JSON.stringify({ version: 'dev', token }));
+    const port = await freePort();
+    const server = spawn('python3', [path.join(ROOT, 'tools/serve.py'), String(port), '--quiet'], { stdio: 'ignore', env: { ...process.env, ISOPIX_LIVE_VERSION: liveFile } });
+    children.push(server);
+    let gone = false;
+    server.on('exit', () => { gone = true; });
+    base = `http://localhost:${port}/`;
+    const who = await waitFor('the dev server', async () => gone ? 'gone' : (await (await fetch(`${base}version.json`)).json()).token === token ? 'ours' : 'theirs').catch(() => 'none');
+    if (who === 'ours') break;
+    server.kill();
+    if (tries === 5) { console.error(`🛑 the dev server did not start (5 ports tried; python3 tools/serve.py ${port} shows why)`); process.exit(1); }
+  }
 }
+setLive(null);
 
 const chrome = await launchChrome();
 const { send, listeners } = await connect(await chrome.page());

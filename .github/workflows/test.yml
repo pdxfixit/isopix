@@ -1,5 +1,9 @@
 # Tests on every push and pull request. No secrets. Deploys are deploy.yml's,
-# which waits for this run to be green on its commit.
+# which waits for this run (every job) to be green on its commit.
+#
+# Two jobs run at once on their own runners: `test` (just test, the version
+# checks and the other headless-Chrome checks) and `look` (the look checks, wide
+# and short, each split into 4 shards at once by just look-ci).
 name: test
 on:
   push:
@@ -9,7 +13,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 20
     env:
       CHROME: /usr/bin/google-chrome
     steps:
@@ -35,16 +39,40 @@ jobs:
         run: just install-check
       - name: Autosave copies (just autosave-check)
         run: just autosave-check
-      - name: Width check (just look)
-        run: just look-ci wide
-      # A landscape phone with the browser bars showing: the side rails must clear
-      # the bottom row, and the update bar must keep between the rails and under the handle.
-      - name: Short landscape check (just look)
-        run: just look-ci short
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: screenshots
+          name: screenshots-export
+          path: shots/
+          if-no-files-found: ignore
+
+  # wide: every view at 320, 375, 700, 900 and 1100 px in light mode. short: a
+  # landscape phone with the browser bars showing (480, 568, 844 × 320), where the
+  # side rails must clear the bottom row and the update bar keep between the rails.
+  look:
+    name: look (${{ matrix.pass }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false  # a red wide pass still shows what short finds
+      matrix:
+        pass: [wide, short]
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.11.0
+      - name: Install just (pinned release; Ubuntu's is too old for [positional-arguments])
+        run: curl -sSfL https://github.com/casey/just/releases/download/1.36.0/just-1.36.0-x86_64-unknown-linux-musl.tar.gz | sudo tar xz -C /usr/local/bin just && just --version
+      - name: Look checks, 4 shards at once (just look-ci)
+        run: just look-ci ${{ matrix.pass }}
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-${{ matrix.pass }}
           path: shots/
           if-no-files-found: ignore

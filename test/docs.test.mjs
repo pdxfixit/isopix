@@ -141,14 +141,17 @@ test('every repo path the docs name in backticks exists', () => {
 });
 
 test('CI runs every `just look` view, in both passes, through just look-ci', () => {
-  // test.yml runs each pass as its own step; `just look-ci` runs both, so a local run is CI's (2026-10-20).
+  // test.yml runs each pass as its own job (a matrix); `just look-ci` runs both, so a local run is CI's (2026-10-20).
   const yml = read('.github/workflows/test.yml');
-  for (const pass of ['wide', 'short']) assert.match(yml, new RegExp(`run: just look-ci ${pass}\\n`), `test.yml does not run just look-ci ${pass}`);
+  assert.match(yml, /^ {6}- name: [^\n]*\n(?: {8}if: [^\n]*\n)? {8}run: just look-ci \$\{\{ matrix\.pass \}\}\n/m, 'test.yml does not run just look-ci for each pass');
+  assert.match(yml, /^ {8}pass: \[wide, short\]\n/m, 'test.yml\'s look matrix is not both passes, wide and short');
   const recipe = /^look-ci [^\n]*:\n((?:    [^\n]*\n)+)/m.exec(read('justfile'));
   assert.ok(recipe, 'no look-ci recipe in the justfile');
   const runs = recipe[1].split('\n').filter((l) => l.includes('node tools/look.mjs'));
   assert.equal(runs.length, 2, 'look-ci runs two passes');
   for (const l of runs) assert.match(l, / --all /, `a look-ci pass does not run every view: ${l.trim()}`);
+  // Sharded, every view still runs: test/look-shard.test.mjs checks the split.
+  for (const l of runs) assert.doesNotMatch(l, / --shard /, `a look-ci pass runs one shard, not all: ${l.trim()}`);
   assert.ok(runs.some((l) => / --height /.test(l)), 'look-ci has no short landscape pass');
 });
 

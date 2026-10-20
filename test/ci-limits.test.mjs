@@ -8,9 +8,11 @@ import { readFileSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const minutes = (p) => Number(read(p).match(/^\s+timeout-minutes: (\d+)$/m)?.[1]);
+// test.yml has jobs that run at once; the run ends with the longest one.
+const longest = (p) => Math.max(...[...read(p).matchAll(/^\s+timeout-minutes: (\d+)$/gm)].map((m) => Number(m[1])));
 
 test("the deploy's wait for CI outlasts CI's own limit, and the deploy job outlasts its wait", () => {
-  const ci = minutes('.github/workflows/test.yml');
+  const ci = longest('.github/workflows/test.yml');
   const deployJob = minutes('.github/workflows/deploy.yml');
   const wait = Number(read('tools/deploy.sh').match(/^CI_WAIT_MIN=(\d+)$/m)?.[1]);
   assert.ok(ci > 0 && deployJob > 0 && wait > 0, `read ci=${ci} wait=${wait} deploy=${deployJob}`);
