@@ -53,6 +53,15 @@ export function box([x0, y0, z0], [sx, sy, sz], color) {
 }
 // Boxes in half units, for small features (ears, eyes, a beak, a letter's pixel).
 export const hbox = (o, sz, color) => box(o.map((v) => v / 2), sz.map((v) => v / 2), color);
+// A patch on a box's side: on the L side (the plane y = at) from x0 to x1, or
+// the R side (x = at) from y0 to y1; z0 to z1 up. Half units. l and r are the
+// same planes seen from behind (the back of a box), shown only when spun.
+export const patch = (side, at, [a0, a1], [z0, z1], color) => face(
+  (side === 'L' || side === 'l' ? [[a0, at, z0], [a1, at, z0], [a1, at, z1], [a0, at, z1]] : [[at, a0, z0], [at, a1, z0], [at, a1, z1], [at, a0, z1]]).map((v) => v.map((n) => n / 2)),
+  color, side);
+// A patch on a box's top (the plane z = at), half units: stripes, a saddle, spots.
+export const top = (at, [x0, x1], [y0, y1], color) => face([[x0, y0, at], [x1, y0, at], [x1, y1, at], [x0, y1, at]].map((v) => v.map((n) => n / 2)), color, 'T');
+
 // Paint faces in order into cells at LV: Map key → {cell, c, f}. Each face fills
 // the cells whose centers it holds; a later face covers an earlier one.
 export function paint(faces) {
