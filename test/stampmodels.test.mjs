@@ -3,7 +3,9 @@
 // (web/engine/stampart.js render), the light staying where it is.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MODELS, spins, spun } from '../web/engine/stampmodels.js';
+import { MODELS, spins, spun, drawAtSize } from '../web/engine/stampmodels.js';
+import { scaleStamp } from '../web/engine/density.js';
+import { hbox, fromSize, belowSize, atSize, scaled, onGrid, DETAIL } from '../web/engine/stampart.js';
 import { render, paint, COLORS } from '../web/engine/stampart.js';
 import { shade } from '../web/engine/color.js';
 import { placeStamp } from '../web/engine/density.js';
@@ -86,4 +88,48 @@ test('the Castle is a castle all round (owner: "boxier and have more features on
 
 test('four quarter turns come back to the start', () => {
   for (const id of IDS) assert.deepEqual([...render(MODELS[id](), 4)].sort(), [...render(MODELS[id](), 0)].sort(), id);
+});
+
+// Detail by size (owner, 2026-10-19: "less detail on the smaller version and more detail on the large versions").
+const block = () => hbox([0, 0, 0], [4, 4, 4], '#3a86ff');
+const knob = () => fromSize(DETAIL, hbox([4, 1.5, 1.5], [0.5, 1, 1], '#2b2d42')); // a quarter-unit knob on the +x side
+const speck = () => fromSize(1, hbox([4, 0, 0], [1, 1, 1], '#e63946'));
+const stand = () => belowSize(1, hbox([4, 1, 0], [1, 2, 1], '#2b2d42'));
+const model = () => [...block(), ...speck(), ...stand(), ...knob()];
+const cellsOf = (r) => r.stamp.cells.length;
+
+test('a part shows only at its sizes: detail from 2× up, specks from 1×, a stand-in below 1×', () => {
+  assert.equal(atSize(model(), 0.5).length, block().length + stand().length);
+  assert.equal(atSize(model(), 1).length, block().length + speck().length);
+  assert.equal(atSize(model(), 2).length, block().length + speck().length + knob().length);
+});
+
+test('detail in quarter units is drawn a level finer when its size alone would put it off the grid, and grows in place', () => {
+  const at2 = drawAtSize(model, 0, { s: 2, k: 2, j: 0 });
+  assert.equal(at2.j, 0, 'at 2× a quarter unit is a whole step');
+  const at3 = drawAtSize(model, 0, { s: 3, k: 3, j: 0 });
+  assert.equal(at3.j, 1, 'at 3× it needs cells one level finer');
+  const plain3 = drawAtSize(() => [...block(), ...speck()], 0, { s: 3, k: 3, j: 0 });
+  assert.equal(plain3.j, 0);
+  assert.ok(cellsOf(at3) > 4 * cellsOf(plain3) - 1, 'the same size, on cells a quarter as big, plus the knob');
+  const one = spun('cube', 0);
+  assert.deepEqual(new Set(drawAtSize(MODELS.cube, 0, { s: 3, k: 3, j: 0 }).stamp.cells.map(String)), new Set(scaleStamp(one, 3).cells.map(String)), 'with no detail, the stamp scaled');
+});
+
+test('detail that cannot land on the grid, even finer, falls back to the stamp without it', () => {
+  const fine = () => [...block(), ...fromSize(DETAIL, hbox([4, 1.25, 1], [0.25, 1, 1], '#2b2d42'))];
+  const r = drawAtSize(fine, 0, { s: 2, k: 2, j: 0 }, 0), plain = drawAtSize(block, 0, { s: 2, k: 2, j: 0 });
+  assert.equal(r.j, 0);
+  assert.deepEqual(new Set(r.stamp.cells.map(String)), new Set(plain.stamp.cells.map(String)));
+});
+
+test('every tier of every box stamp is on the grid and paints back to front the same as by depth', () => {
+  const key = (cells) => JSON.stringify([...cells].map(([k, v]) => [k, v.c, v.f]).sort());
+  for (const id of IDS) for (const s of [0.5, 1, 2, 3]) {
+    // The tier at s, at the smallest whole multiple that puts every corner on the grid.
+    const faces = atSize(MODELS[id](), s), k = [1, 2, 4].find((m) => onGrid(scaled(faces, m)));
+    assert.ok(k, `${id} at ${s}×: detail off the grid even at 4 times (quarter units only)`);
+    const big = scaled(faces, k);
+    assert.equal(key(paint(big)), key(render(big, 0)), `${id} at ${s}×: paints differently than it draws by depth`);
+  }
 });

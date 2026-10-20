@@ -20,9 +20,14 @@ const SIDES = ['+x', '-x', '+y', '-y', 'top'], FACES = ['+x', '-x', '+y', '-y', 
 const GROUPS = SB.GROUPS.map((g) => g.id).filter((g) => !['letters', 'numbers', 'sacred'].includes(g));
 const PALETTE = new Set(Object.values(ART.COLORS).map((c) => c.toLowerCase()));
 
-const isInt = (n) => Number.isInteger(n) && Math.abs(n) <= LIMIT.coord;
+// Whole half units; a detail part (shown from 2× up) may also use halves of them (.5).
+let isInt;
+const halves = (n) => Number.isInteger(n * 2) && Math.abs(n) <= LIMIT.coord;
 const isTriple = (v) => Array.isArray(v) && v.length === 3 && v.every(isInt);
 const isPair = (v) => Array.isArray(v) && v.length === 2 && v.every(isInt);
+// The sizes a part shows at: from minSize (1 or 2) up, below maxSize (1).
+const shownAt = (p, s) => (p.minSize ?? 0) <= s && s < (p.maxSize ?? Infinity);
+const TIERS = [{ s: 1, k: 1, at: '' }, { s: 0.5, k: 1, at: ' at ½×' }, { s: 2, k: 2, at: ' at 2×' }];
 const isColor = (c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
 
 // Every problem in a stamp object: [{code, msg}] rejections and [msg] warnings.
@@ -43,9 +48,12 @@ export function check(stamp, { replace = false } = {}) {
     const kinds = ['box', 'decal', 'slope'].filter((k) => p && typeof p === 'object' && k in p);
     if (kinds.length !== 1) { R('R7', `${at} must have exactly one of "box", "decal" or "slope"`); return; }
     if (!isColor(p.color)) R('R7', `${at}: "color" must be "#rrggbb"`);
+    if (p.minSize !== undefined && ![1, 2].includes(p.minSize)) R('R13', `${at}: "minSize" is 2 (detail, from twice the size up) or 1 (hidden below its own size)`);
+    if (p.maxSize !== undefined && (p.maxSize !== 1 || p.minSize !== undefined)) R('R13', `${at}: "maxSize" is 1 (a stand-in shown only below its own size), and not with "minSize"`);
+    isInt = halves; // halves pass here; R13 below says they are only for detail
     if (kinds[0] === 'box') {
       if (!isTriple(p.box)) R('R7', `${at}: "box" is the corner nearest the back, [x, y, z], three whole numbers in half units from -${LIMIT.coord} to ${LIMIT.coord}`);
-      if (!isTriple(p.size) || p.size.some((n) => n < 1)) R('R7', `${at}: "size" is [width along x, depth along y, height], three whole numbers of at least 1, in half units`);
+      if (!isTriple(p.size) || p.size.some((n) => n < (p.minSize === 2 ? 0.5 : 1))) R('R7', `${at}: "size" is [width along x, depth along y, height], in half units, each at least 1 (½ for detail)`);
     } else if (kinds[0] === 'decal') {
       if (!SIDES.includes(p.decal)) R('R7', `${at}: "decal" is the side it is on: ${SIDES.join(', ')}`);
       if (!isInt(p.at) || !isPair(p.from) || !isPair(p.to)) R('R7', `${at}: a decal needs "at" (a whole number) and "from" and "to" ([a, b] whole numbers), in half units`);
@@ -65,41 +73,64 @@ export function check(stamp, { replace = false } = {}) {
         }
       }
     }
+    const nums = [p.box, p.size, p.at, p.from, p.to, p.slope].flat(2).filter((v) => typeof v === 'number');
+    if ([undefined, 1].includes(p.minSize) && nums.some((v) => !Number.isInteger(v) && Number.isInteger(v * 2))) R('R13', `${at}: halves (.5) are only for detail, a part with "minSize": 2; elsewhere whole half units`);
     if (isColor(p.color) && !PALETTE.has(p.color.toLowerCase())) warn.push(`${at}: ${p.color} is not in the palette (section 5); fine if no palette color will do`);
   });
   if (rej.length) return { rej, warn };
 
-  // Built and drawn: on the grid, painted in order the same as by depth, not too big.
-  const each = parts.map((p) => fromParts([p]));
-  let painted;
-  try { painted = ART.paint(each.flat()); } catch (e) {
-    const i = each.findIndex((f) => { try { ART.paint(f); return false; } catch { return true; } });
-    R('R9', `part ${i + 1}: a corner falls between grid points; a slope must rise one half unit for every half unit it runs in from its edge (its peak half its base's width up), so its edges follow the grid`);
-    return { rej, warn };
-  }
-  // Boxes may touch, never overlap: overlapping blocks have no order that draws right from every side.
-  const boxes = parts.map((p, i) => (p.box ? { i, a: p.box, b: p.box.map((v, k) => v + p.size[k]) } : null)).filter(Boolean);
-  for (let m = 0; m < boxes.length; m++) for (let n = m + 1; n < boxes.length; n++) {
-    const P = boxes[m], Q = boxes[n];
-    if ([0, 1, 2].every((k) => P.a[k] < Q.b[k] && Q.a[k] < P.b[k])) R('R10', `parts ${P.i + 1} and ${Q.i + 1} overlap: blocks may touch but not share space; split one so they meet face to face`);
-  }
+  // Built and drawn at each size tier (its own size, ½×, 2× with its detail): on the
+  // grid, no blocks overlapping, painted in order the same as by depth.
   const key = (cells) => JSON.stringify([...cells].map(([k, v]) => [k, v.c, v.f]).sort());
-  if (!rej.length && key(painted) !== key(ART.render(each.flat(), 0))) {
+  const seen = new Set(), say = (code, msg) => { if (!seen.has(msg)) { seen.add(msg); R(code, msg); } };
+  let painted, faces1;
+  for (const { s, k, at } of TIERS) {
+    const idx = parts.map((p, i) => (shownAt(p, s) ? i : -1)).filter((i) => i >= 0);
+    const each = idx.map((i) => ART.scaled(fromParts([parts[i]]), k));
+    let tierPaint;
+    try { tierPaint = ART.paint(each.flat()); } catch {
+      const n = each.findIndex((f) => { try { ART.paint(f); return false; } catch { return true; } });
+      say('R9', `part ${idx[n] + 1}${at}: a corner falls between grid points; a slope must rise one half unit for every half unit it runs in from its edge (its peak half its base's width up), and only detail ("minSize": 2) may use halves (.5)`);
+      continue;
+    }
+    if (s === 1) { painted = tierPaint; faces1 = each.flat(); }
+    // Blocks may touch, never overlap: overlapping blocks have no order that draws right from every side.
+    const boxes = idx.filter((i) => parts[i].box).map((i) => ({ i, a: parts[i].box, b: parts[i].box.map((v, m) => v + parts[i].size[m]) }));
+    for (let m = 0; m < boxes.length; m++) for (let n = m + 1; n < boxes.length; n++) {
+      const P = boxes[m], Q = boxes[n];
+      if ([0, 1, 2].every((d) => P.a[d] < Q.b[d] && Q.a[d] < P.b[d])) say('R10', `parts ${P.i + 1} and ${Q.i + 1} overlap: blocks may touch but not share space; split one so they meet face to face`);
+    }
+    if (rej.length || key(tierPaint) === key(ART.render(each.flat(), 0))) continue;
     // Which parts: for each cell that comes out wrong, the part painted there last
     // against the part that is really in front there.
-    const depthOf = ART.render(each.flat(), 0), mine = each.map((f) => ART.paint(f)), seen = new Set();
+    const depthOf = ART.render(each.flat(), 0), mine = each.map((f) => ART.paint(f)), pairs = new Set();
     let shown = 0;
-    for (const [k, v] of painted) {
-      const want = depthOf.get(k);
+    for (const [c, v] of tierPaint) {
+      const want = depthOf.get(c);
       if (!want || (want.c === v.c && want.f === v.f)) continue;
-      const last = mine.map((m, n) => (m.has(k) ? n : -1)).reduce((a2, b2) => Math.max(a2, b2));
-      const front = mine.findIndex((m, n) => n !== last && m.get(k)?.c === want.c && m.get(k)?.f === want.f);
-      const pair = `${last} ${front}`;
-      if (front < 0 || seen.has(pair) || shown >= 3) continue;
-      seen.add(pair); shown++;
-      R('R11', `part ${last + 1} is painted over part ${front + 1}, which is in front of it: move part ${last + 1} before part ${front + 1} (back to front: far x and y first, low z first)`);
+      const last = mine.map((m, n) => (m.has(c) ? n : -1)).reduce((a2, b2) => Math.max(a2, b2));
+      const front = mine.findIndex((m, n) => n !== last && m.get(c)?.c === want.c && m.get(c)?.f === want.f);
+      if (front < 0 || pairs.has(`${last} ${front}`) || shown >= 3) continue;
+      pairs.add(`${last} ${front}`); shown++;
+      say('R11', `part ${idx[last] + 1} is painted over part ${idx[front] + 1}${at}, which is in front of it: move part ${idx[last] + 1} before part ${idx[front] + 1} (back to front: far x and y first, low z first)`);
     }
-    if (!shown) R('R11', 'the parts are not in back-to-front order: far x and y first, low z first, each decal right after its block');
+    if (!shown) say('R11', `the parts are not in back-to-front order${at}: far x and y first, low z first, each decal right after its block`);
+  }
+  if (!painted) return { rej, warn };
+  // A part never seen from any side at any of its sizes is a mistake, most often a decal
+  // listed before the block it sits on (a tie on one face goes to the later part).
+  if (!rej.length) {
+    const seenPart = new Set();
+    for (const { s, k } of TIERS) {
+      const idx = parts.map((p, i) => (shownAt(p, s) ? i : -1)).filter((i) => i >= 0);
+      const each = idx.map((i) => ART.scaled(fromParts([parts[i]]), k));
+      for (const n of [0, 1, 2, 3]) {
+        const all = n ? ART.render(each.flat(), n) : ART.paint(each.flat());
+        each.forEach((f, m) => { const own = n ? ART.render(f, n) : ART.paint(f); for (const [c, v] of own) if (all.get(c)?.c === v.c && all.get(c)?.f === v.f) { seenPart.add(idx[m]); break; } });
+      }
+    }
+    const hidden = parts.map((_, i) => i).filter((i) => !seenPart.has(i));
+    if (hidden.length) warn.push(`part${hidden.length > 1 ? 's' : ''} ${hidden.map((i) => i + 1).join(', ')} never seen from any side: a decal goes after the block it sits on; a block inside another is wasted`);
   }
   const n = painted.size;
   if (n > LIMIT.cells) R('R12', `${n} cells at its own size: at most ${LIMIT.cells}; make it smaller or plainer`);
@@ -109,7 +140,8 @@ export function check(stamp, { replace = false } = {}) {
   for (const p of parts) { const s = p.decal || p.faces; if (s === '+x') sideHas.R++; if (s === '+y') sideHas.L++; if (s === '-x') sideHas.r++; if (s === '-y') sideHas.l++; }
   const bare = Object.entries({ '+x': sideHas.R, '+y': sideHas.L, '-x': sideHas.r, '-y': sideHas.l }).filter(([, c]) => !c).map(([s]) => s);
   if (bare.length) warn.push(`no decal on the ${bare.join(', ')} side${bare.length > 1 ? 's' : ''}: Spin shows every side, so give each one something (rule 4), unless the shape alone says it`);
-  return { rej, warn, cells: n, faces: each.flat() };
+  if (!parts.some((p) => p.minSize === 2)) warn.push('no detail for 2× and up ("minSize": 2): the stamp looks the same, only bigger, when a child makes it big (rule 10)');
+  return { rej, warn, cells: n, faces: faces1, parts };
 }
 
 // The stamp from every side, as docs/stamps/ draws one.
@@ -120,6 +152,14 @@ export function sheetOf(faces) {
     const s = Math.max(+vw, +vh), X = +x - (s - vw) / 2, Y = +y - (s - vh) / 2;
     return `width="${Math.max(+w, +h)}" height="${Math.max(+w, +h)}" viewBox="${X} ${Y} ${s} ${s}"><rect x="${X}" y="${Y}" width="${s}" height="${s}"`;
   });
+}
+
+// The stamp as placed at its own size, twice and four times: its detail by size.
+export function sizesOf(parts) {
+  return gridSVG([[1, 1], [2, 2], [2, 4]].map(([s, k]) => {
+    const c = ART.paint(ART.scaled(fromParts(parts.filter((p) => shownAt(p, s))), k));
+    return ART.stampFrom(c, ART.anchorOf(c));
+  }));
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -134,5 +174,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const outDir = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : path.dirname(path.resolve(file));
   const sheet = path.join(outDir, `${id}.svg`);
   fs.writeFileSync(sheet, sheetOf(res.faces));
-  console.log(`ACCEPT ${id}: ${res.cells} cells at its own size; every side drawn in ${sheet} (look at it: the check cannot judge the art)`);
+  fs.writeFileSync(path.join(outDir, `${id}-sizes.svg`), sizesOf(res.parts));
+  console.log(`ACCEPT ${id}: ${res.cells} cells at its own size; every side drawn in ${sheet}, and its sizes (1×, 2×, 4×) in ${id}-sizes.svg beside it (look at both: the check cannot judge the art)`);
 }

@@ -4,7 +4,7 @@
 // them spun (stampart.js render) for the stamp bar's Spin (owner, 2026-10-19,
 // docs/spec-stamp-size-turn.md step 3). Sizes are in cube units: x runs down to
 // the right, y down to the left, z up; half units through hbox. Pure, no DOM.
-import { COLORS, anchorOf, box, face, hbox, patch, paint, render, stampFrom } from './stampart.js';
+import { COLORS, anchorOf, atSize, box, face, hbox, onGrid, patch, paint, render, scaled, stampFrom } from './stampart.js';
 import { MODELS as ANIMALS } from './models/animals.js';
 import { MODELS as VEHICLES } from './models/vehicles.js';
 import { MODELS as BUILDINGS } from './models/buildings.js';
@@ -22,10 +22,20 @@ const { BLUE, YELLOW, RED, GREEN, BROWN, STONE, SAND, INK } = COLORS;
 //       '+y' / '-y' on y = at, from (x, z) to (x, z); 'top' on z = at, from (x, y) to (x, y)
 //   {slope: [[x, y, z], …3 or 4 corners], faces: '+x' | '-x' | '+y' | '-y' | 'up', color}
 //       a slanted face (a roof), shaded as the side it faces
+// Any part may add "minSize": 2 (detail, shown from twice the size up; it may use
+// halves, .5, of a half unit) or 1 (hidden below the stamp's own size), or
+// "maxSize": 1 (a plainer stand-in, shown only below it).
 // tools/stamp_check.mjs checks a file of them before it comes in (shape, grid, order).
 const SIDE_TAG = { '+x': 'R', '-x': 'r', '+y': 'L', '-y': 'l', top: 'T', up: 'T' };
 export function fromParts(parts) {
   return parts.flatMap((p) => {
+    const faces = partFaces(p);
+    if (p.minSize === undefined && p.maxSize === undefined) return faces;
+    return faces.map((f) => ({ ...f, lod: { ...(p.minSize !== undefined && { min: p.minSize }), ...(p.maxSize !== undefined && { max: p.maxSize }) } }));
+  });
+}
+function partFaces(p) {
+  return (() => {
     if (p.box) return hbox(p.box, p.size, p.color);
     if (p.decal) {
       const [a0, b0] = p.from, [a1, b1] = p.to, t = p.at, side = p.decal;
@@ -36,7 +46,7 @@ export function fromParts(parts) {
     }
     if (p.slope) return [face(p.slope.map((v) => v.map((n) => n / 2)), p.color, SIDE_TAG[p.faces])];
     return [];
-  });
+  })();
 }
 
 // Stamps handed in under the stamp art contract (docs/stamp-art-contract.md), each its
@@ -94,6 +104,25 @@ export const spins = (id) => (MODELS[id] ? [0, 1, 2, 3] : []);
 // (stampart.js render). Box art paints the same as it draws by depth
 // (test/stampmodels.test.mjs), so all four views match.
 export function spun(id, n) {
-  const cells = n ? render(MODELS[id](), n) : paint(MODELS[id]());
+  const cells = draw(atSize(MODELS[id](), 1), n);
   return stampFrom(cells, anchorOf(cells));
+}
+const draw = (faces, n) => (n ? render(faces, n) : paint(faces));
+// Whether a model has parts for some sizes only (stampart.js fromSize, belowSize).
+export const tiered = (id) => !!MODELS[id] && MODELS[id]().some((f) => f.lod);
+// A box stamp spun n quarter turns at a size step {s, k, j} (engine/density.js
+// sizeSteps): the parts for size s, drawn k times as big at j levels finer, or
+// finer still (up to jmax levels) when its detail needs it, so every corner lands
+// on the grid; failing that, the stamp as drawn, scaled. Around its foot: k times
+// its foot as drawn, so it grows in place. {stamp, j}: the levels finer it is.
+export const spunAtSize = (id, n, step, jmax = 2) => drawAtSize(MODELS[id], n, step, jmax);
+// The same for any model (a function giving its faces).
+export function drawAtSize(model, n, { s, k, j }, jmax = 2) {
+  const faces = atSize(model(), s), a = anchorOf(draw(atSize(model(), 1), n));
+  for (let jj = j; jj <= jmax; jj++) {
+    const kk = k * 2 ** (jj - j), big = scaled(faces, kk);
+    if (onGrid(big)) return { stamp: stampFrom(draw(big, n), { p: kk * a.p, q: kk * a.q }), j: jj };
+  }
+  const plain = scaled(atSize(model(), Math.min(s, 1.5)), k); // no fine detail: whole half units
+  return { stamp: stampFrom(draw(plain, n), { p: k * a.p, q: k * a.q }), j };
 }
