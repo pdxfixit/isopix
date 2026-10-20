@@ -15,6 +15,37 @@ const patch = (side, at, [a0, a1], [z0, z1], color) => face(
   (side === 'L' || side === 'l' ? [[a0, at, z0], [a1, at, z0], [a1, at, z1], [a0, at, z1]] : [[at, a0, z0], [at, a1, z0], [at, a1, z1], [at, a0, z1]]).map((v) => v.map((n) => n / 2)),
   color, side);
 
+// A stamp's parts as data, from the stamp art contract (docs/stamp-art-contract.md):
+// what an artist or another model hands in, never code. All in half units, whole
+// numbers; x runs down to the right on screen, y down to the left, z up.
+//   {box: [x, y, z], size: [sx, sy, sz], color}            a block
+//   {decal: '+x' | '-x' | '+y' | '-y' | 'top', at, from: [a, b], to: [a, b], color}
+//       a flat color on one side: '+x' / '-x' on the plane x = at, from (y, z) to (y, z);
+//       '+y' / '-y' on y = at, from (x, z) to (x, z); 'top' on z = at, from (x, y) to (x, y)
+//   {slope: [[x, y, z], …3 or 4 corners], faces: '+x' | '-x' | '+y' | '-y' | 'up', color}
+//       a slanted face (a roof), shaded as the side it faces
+// tools/stamp_check.mjs checks a file of them before it comes in (shape, grid, order).
+const SIDE_TAG = { '+x': 'R', '-x': 'r', '+y': 'L', '-y': 'l', top: 'T', up: 'T' };
+export function fromParts(parts) {
+  return parts.flatMap((p) => {
+    if (p.box) return hbox(p.box, p.size, p.color);
+    if (p.decal) {
+      const [a0, b0] = p.from, [a1, b1] = p.to, t = p.at, side = p.decal;
+      const pts = side === 'top' ? [[a0, b0, t], [a1, b0, t], [a1, b1, t], [a0, b1, t]]
+        : side === '+x' || side === '-x' ? [[t, a0, b0], [t, a1, b0], [t, a1, b1], [t, a0, b1]]
+          : [[a0, t, b0], [a1, t, b0], [a1, t, b1], [a0, t, b1]];
+      return [face(pts.map((v) => v.map((n) => n / 2)), p.color, SIDE_TAG[side])];
+    }
+    if (p.slope) return [face(p.slope.map((v) => v.map((n) => n / 2)), p.color, SIDE_TAG[p.faces])];
+    return [];
+  });
+}
+
+// Stamps handed in under the stamp art contract (docs/stamp-art-contract.md), each its
+// checked JSON parts (tools/stamp_check.mjs), pasted in as they came: id → parts.
+export const PARTS = {
+};
+
 export const MODELS = {
   cube: () => box([0, 0, 0], [1, 1, 1], BLUE),
   stairs: () => [...box([0, 0, 0], [3, 1, 1], TEAL), ...box([0, 0, 1], [2, 1, 1], TEAL), ...box([0, 0, 2], [1, 1, 1], TEAL)],
@@ -273,6 +304,9 @@ export const MODELS = {
     ...[[1, 1], [4, 2], [2, 3], [5, 0]].flatMap(([x, y]) => [...hbox([x, y, -3], [1, 1, 1], BLUE), ...hbox([x + 1, y, -6], [1, 1, 1], BLUE)]),
     ...hbox([0, 0, 0], [7, 4, 2], RAIN), ...hbox([1, 0, 2], [3, 4, 2], RAIN), ...hbox([4, 1, 2], [2, 3, 1], RAIN),
   ],
+  // Stamps handed in under the art contract, as data (PARTS below); one of the same
+  // id as a model above is new art for it.
+  ...Object.fromEntries(Object.entries(PARTS).map(([id, parts]) => [id, () => fromParts(parts)])),
 };
 
 // The views a box stamp has for Spin: as drawn (0), then a quarter turn at a

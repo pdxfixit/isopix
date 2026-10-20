@@ -121,4 +121,19 @@ live-check *args:
 icons:
     node tools/make_icons.mjs
 
+# 🎨 Rebuild the starter stamps (web/stamps.js) from their art, then their sheets from every side
+stamps:
+    node tools/make_stamps.mjs
+    node tools/stamp_sheets.mjs
+
+# 🔎 Check a stamp handed in under docs/stamp-art-contract.md: ACCEPT, or REJECT lines to send back; draws it from every side: just stamp-check <file.json> [--replace]
+[positional-arguments]
+stamp-check *args:
+    @node tools/stamp_check.mjs "$@"
+
+# 🎨 Redraw every starter stamp from every side into docs/stamps/ (one SVG each and an index): just stamp-sheets [--only ID]
+[positional-arguments]
+stamp-sheets *args:
+    @node tools/stamp_sheets.mjs "$@"
+
 import? 'deploy.just'

@@ -54,6 +54,8 @@ LAN gets the app, but not the install.
   stamp bar (`,` and `.` on a keyboard). The cube button lays a flat stamp or
   a letter on the floor or a wall; Spin (`R`) turns a 3D stamp a quarter turn. The next stamps keep that size and place; the
   next tap, another tool or Undo finishes it.
+  Every stamp from every side: [docs/stamps/](docs/stamps/README.md). New ones come in by
+  [the stamp art contract](docs/stamp-art-contract.md).
 - **Line**: drag; it locks to the three grid directions. Styles: Strip (a strip
   of cells) and Edge (a bold line on the grid lines).
 - **Fill**: fills at the current grid size, only what you can see.
