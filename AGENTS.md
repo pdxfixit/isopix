@@ -70,7 +70,7 @@ Rules:
 - **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go. Isopix's first publish, at isopix.pdxfixit.com, was approved on 2026-10-13 for release 1.0.1; the move to isopix.app, on 2026-10-15 (its first deploy there may need `FIRST_PUBLISH=1`).
 - **Never delete or edit a DNS record without the owner's approval.** If the domain will not attach, show him the exact record (see the doc).
 - Only `web/` is uploaded, configured by `site/`, so both must be committed (`ALLOW_DIRTY=1` overrides on the Mac, and stamps the version `-dirty`).
-- `web/version.json` is the deploy's label (git describe), written by `deploy-stamp` and gitignored; `web/version.js` is the app's release stamp. They are different files.
+- `web/version.json` is the deploy's label (`v1.2.174-dce9c71`: release, commit), from `deploy-stamp`, gitignored; `web/version.js` is the release stamp.
 - Never force-push `main`.
 - **Auth fails at push** (`push` fails on auth): nothing was published. On GitHub the repo secret `CLOUDFLARE_API_TOKEN` needs the owner; on his Mac, `npx wrangler login`. Details: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
 
