@@ -124,6 +124,7 @@ Before that:
 
 ## CI gaps closed
 
+- 2026-10-20: flarepress's `check` and `stamp` printed and wrote an empty version when computing it failed: `version` ran inside `$(…)`, where bash turns `set -e` off. They now stop on it (flarepress `d7c8021`, `tests/site_test.sh`, red on the old code), so a `release=` file with no release fails before a deploy, not after.
 - 2026-10-19: the deploy waited 20 minutes for GitHub's test run, the same as CI's job limit, with no room for GitHub's lag: run 39275482898 gave up on a green test run (job 18m49s, run marked done 5 minutes later) and shipped nothing. CI's job limit is now 30 minutes, the deploy waits up to 40 (`CI_WAIT_MIN` in `tools/deploy.sh`), its job is allowed 50, and `test/ci-limits.test.mjs` fails if those fall out of step.
 - 2026-10-19: `tools/make_stamps.mjs` filled a face whose corners fell between grid points (a half unit at an odd size) with cells off the lattice, and only failed later in the packer with `RangeError: Invalid count value`. It now stops at the face, naming its corners, so finer stamp art (quarter units) fails loudly and at the right place.
 - 2026-10-19: CI never looked at a short landscape phone, where the side rails meet the bottom row (the clean-view eye made the zoom rail reach it at 320 px tall, caught only by hand). `test.yml` now runs `just look draw drawn clean fold fold-open select brushes` at 568 and 844 px wide, 320 px tall. To make that possible, `just look` no longer calls a control "cut off by the side of the screen" when a parent clips it on purpose (the closed level rail's notches failed every short-screen run).
@@ -179,6 +180,8 @@ Before that:
 - 2026-10-12: `test/help.test.mjs` fails when a bound key, a tool, a brush shape or any button on the page or in the Drawing sheet has no Help line, or when Help borrows an icon that no longer exists; keys are bound from the same table Help lists.
 
 ## In flight
+
+**One version string** (2026-10-20): flarepress `d7c8021` adds `release=` to `site.conf`, and with `release=web/version.js` a deploy is labelled `v1.2.174-dce9c71` instead of `v1.0.1-173-gdce9c71` (decisions.md, Shipping). Isopix's `site/site.conf` sets it, but **that commit waits until the owner moves flarepress's `v1` tag**: GitHub's deploy uses `v1`, whose `check` refuses an unknown key, so landing it first would turn every deploy red at `check` (nothing published). Then `just land` it and `just ci-wait`; `just live` shows the new label.
 
 **Stamps you size and turn** (2026-10-19): all three steps of [spec-stamp-size-turn.md](spec-stamp-size-turn.md) are built (above): size in quarter steps, floor or wall with round stamps drawn anew, and Spin. Since then: turning by the handle, every box stamp redrawn with something on every side (the nine that drew a feature on top now draw the same by depth, so turned and front views match), detail by size, the mock-ups and the art contract. Nothing waits on the owner.
 

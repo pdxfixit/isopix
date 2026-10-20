@@ -21,7 +21,7 @@ deploy-check:
 deploy-plan: deploy-check
     @tools/deploy.sh plan
 
-# 🏷️ Write web/version.json (gitignored): git describe, plus -dirty for uncommitted edits in web/
+# 🏷️ Write web/version.json (gitignored): v<release>-<short commit>, plus -dirty for uncommitted edits in web/
 deploy-stamp:
     @tools/deploy.sh stamp
 

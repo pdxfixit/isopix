@@ -61,7 +61,8 @@ a clone at `~/src/flarepress`). The site's config lives here:
 - `site/harvest.conf`: what flarepress's harvest copies (Cloudflare's stats).
 - `web/_headers` (when present) sets response headers. `web/.assetsignore` keeps
   `.DS_Store` out of uploads. Neither file is served.
-- `web/version.json` is the deploy's label (git describe, plus `-dirty`),
+- `web/version.json` is the deploy's label, `v<release>-<short commit>` such as
+  `v1.2.174-dce9c71` (`release=web/version.js` in `site/site.conf`; plus `-dirty`),
   written by `just deploy-stamp` and gitignored; the app shows it in its
   corner. `web/version.js` is the app's own release stamp (`just version`);
   the service worker names its cache after it. `deploy-verify` checks both:
