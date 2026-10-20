@@ -48,24 +48,26 @@ test('the light stays put: in every view a face is shaded as the side it now fac
   }
 });
 
-test('turned the way it should: the Cat\'s eye (on its left side) shows facing right and toward the right, not from behind or the far side', () => {
-  const eye = (n) => colorsOf(spun('cat', n)).has(shade(COLORS.INK, n === 0 ? 'L' : 'R'));
-  assert.deepEqual([0, 1, 2, 3].map(eye), [true, false, false, true]);
+test('turned the way it should: the Cat, an eye on each side, shows one from every side, and its left eye on the side it now faces', () => {
+  const eye = (n, f) => colorsOf(spun('cat', n)).has(shade(COLORS.INK, f));
+  assert.deepEqual([0, 1, 2, 3].map((n) => eye(n, 'L') || eye(n, 'R')), [true, true, true, true]);
+  assert.ok(eye(0, 'L') && eye(1, 'R'), 'as drawn its +y side (lit, L) faces you; a quarter turn takes it to +x (R)');
 });
 
 test('a model the same from every side looks the same spun; the House shows its roof from behind', () => {
   for (const id of ['cube', 'pyramid']) for (const n of [1, 2, 3]) assert.ok(same(spun(id, n), spun(id, 0)), `${id} ${n}`);
   for (const n of [1, 2, 3]) {
     const st = spun('house', n);
-    assert.ok(st.cells.some((c) => c[4] === shade(COLORS.RED, 'L') || c[4] === shade(COLORS.RED, 'R')), `house ${n}: its roof`);
-    assert.ok(!st.cells.some((c) => c[4] === shade(COLORS.YELLOW, 'T')), `house ${n}: no wall top showing through the roof`);
+    const ROOF = '#5b4a4f', WALLS = '#f4a582'; // web/engine/models/buildings.js
+    assert.ok(st.cells.some((c) => c[4] === shade(ROOF, 'L') || c[4] === shade(ROOF, 'R')), `house ${n}: its roof`);
+    assert.ok(!st.cells.some((c) => c[4] === shade(WALLS, 'T')), `house ${n}: no wall top showing through the roof`);
   }
 });
 
-// The nine older stamps draw a feature on top (decisions.md, Spin); any other box
-// art must paint as drawn the same as by depth, or its turned views would not match.
-const ON_TOP = ['rock', 'bunny', 'duck', 'car', 'truck', 'train', 'plane', 'planet', 'carrot'];
-test('box art looks the same front on whether painted in order or drawn by depth (but the nine older ones)', () => {
+// Box art must paint as drawn the same as by depth, or its turned views would not
+// match (the nine older stamps that drew a feature on top were redrawn, 2026-10-19).
+const ON_TOP = []; // the nine older ones were redrawn honest on 2026-10-19
+test('box art looks the same front on whether painted in order or drawn by depth', () => {
   const key = (cells) => JSON.stringify([...cells].map(([k, v]) => [k, v.c, v.f]).sort());
   for (const id of IDS) {
     const same = key(paint(MODELS[id]())) === key(render(MODELS[id](), 0));

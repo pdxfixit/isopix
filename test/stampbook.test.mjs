@@ -115,7 +115,7 @@ test('at every size step a stamp is exactly s times its 1x self about its anchor
 });
 
 test('size steps: quarters while small, then halves, then whole steps, under the cell cap and never past the finest level', () => {
-  const cat = SB.STARTER.find((s) => s.id === 'cat').stamp; // 111 cells
+  const cat = { base: 0, cells: Array.from({ length: 111 }, (_, i) => [0, i, 0, 1, '#000000', null]), edges: [] }; // a stamp of 111 cells
   const steps = sizeSteps(cat, 3), ss = steps.map((x) => x.s);
   assert.deepEqual(ss.slice(0, 8), [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]);
   assert.ok(ss.includes(3.25) && !ss.includes(3.75) && ss.includes(6.5) && !ss.includes(7.5) && ss.at(-1) === 13, ss.join());

@@ -261,7 +261,8 @@ VIEWS.stamps = { fresh: true, js: `${STAMPS_OPEN}
   if (document.querySelector('#stamps').open || window.isopix.settings.brush !== 'stamp') throw new Error('picking House did not close Stamps and pick the Stamp brush');
   ${TAP('innerWidth * 0.5', 'innerHeight * 0.45')} ${nap}
   const n = window.isopix.drawing.cells.size;
-  if (n !== 80) throw new Error('a tap placed ' + n + ' cells, not 80 (the House)');
+  const house = (await import('./stampbook.js')).STARTER.find((x) => x.id === 'house').stamp.cells.length;
+  if (n !== house) throw new Error('a tap placed ' + n + ' cells, not ' + house + ' (the House)');
   ${STAMPS_OPEN}
   const b = document.querySelector('#st-buildings .set-head');
   if (b.getAttribute('aria-expanded') !== 'true' || b.children[2].textContent !== 'using House') throw new Error('Buildings was not remembered open, or does not say it holds the House');
@@ -328,7 +329,8 @@ VIEWS['stamp-size'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   const a = window.isopix, n = a.drawing.cells.size;
   const snap = () => JSON.stringify([...a.drawing.cells].map(([k, v]) => [k, v.c, v.f || null]).sort()), placed = snap();
   const bar = document.querySelector('#stampbar'), h = document.querySelector('#stamp-handle'), size = () => document.querySelector('#stamp-size').textContent;
-  if (n !== 111 || bar.hidden || size() !== '1×') throw new Error('placing the Cat (' + n + ' cells) did not show the stamp bar at 1× (' + size() + ')');
+  const catN = (await import('./stampbook.js')).STARTER.find((x) => x.id === 'cat').stamp.cells.length;
+  if (n !== catN || bar.hidden || size() !== '1×') throw new Error('placing the Cat (' + n + ' of ' + catN + ' cells) did not show the stamp bar at 1× (' + size() + ')');
   const hr = h.getBoundingClientRect();
   if (h.hidden || hr.left < 0 || hr.right > innerWidth || hr.top < 0 || hr.bottom > innerHeight) throw new Error('the size handle is hidden or off the screen');
   ${q('#stamp-bigger')} ${nap} ${q('#stamp-bigger')} ${nap}
@@ -374,7 +376,7 @@ VIEWS['stamp-plane'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('space')} ${
   ${q('#stamp-plane')} ${nap}
   if (most() !== 'R') throw new Error('a tap did not stand the A on the right wall (' + most() + ')');` };
 // Spin (owner, 2026-10-19, spec step 3): a Cat placed shows Spin (and no plane button);
-// a tap turns it to face left, in the same undo step, its eye now out of sight; three
+// a tap turns it to face left, in the same undo step, its other eye showing; three
 // more give the placed Cat back exactly. A Moon shows the plane button, not Spin. Ends
 // with a Cat live, facing away to the left.
 VIEWS['stamp-spin'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} ${TILE('animals', 'Cat')}
@@ -384,7 +386,7 @@ VIEWS['stamp-spin'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   const dark = () => [...a.drawing.cells.values()].some((v) => v.c === '#2b2d42' || v.c === '#070819' || v.c === '#4a4c63'); // the eye, any side
   if (sb.hidden || !pb.hidden || !sb.getAttribute('aria-label').includes('facing right') || !dark()) throw new Error('the Cat did not show Spin facing right, with its eye');
   ${q('#stamp-spin')} ${nap}
-  if (snap() === placed || a.drawing.undoStack.length !== 1 || dark() || !sb.getAttribute('aria-label').includes('facing left')) throw new Error('a tap did not turn the Cat to face left, eye hidden, in one undo step');
+  if (snap() === placed || a.drawing.undoStack.length !== 1 || !dark() || !sb.getAttribute('aria-label').includes('facing left')) throw new Error('a tap did not turn the Cat to face left, its other eye showing, in one undo step');
   ${q('#stamp-spin')} ${nap} ${q('#stamp-spin')} ${nap} ${q('#stamp-spin')} ${nap}
   if (snap() !== placed) throw new Error('four quarter turns did not give the placed Cat back');
   ${q('#stamp-spin')} ${nap} ${q('#stamp-spin')} ${nap} ${q('#stamp-done')} ${nap} ${q('#undo')} ${nap} a.stampSpin = 0;
