@@ -142,14 +142,15 @@ export const SECTIONS = [
   },
   {
     title: 'Stamp bar',
-    intro: 'Shows under a stamp you just placed, until you draw something else.',
+    intro: 'Shows under a stamp you just placed, until you tap ✓. Until then the stamp is still moving: drag it, or tap where it should go.',
     items: [
-      { name: 'Handle', from: '#stamp-handle', says: 'The round knob out from the stamp\'s foot, on a line. Drag it away from the foot or toward it to make the stamp bigger or smaller: quarter steps while it is small, then halves, then whole steps (an in-between size is made of smaller cells, so its edges stay clean). Drag it round the foot to turn it, as Drag a face picks its face: a 3D stamp faces the way you drag; a flat one or a letter lies on the floor if you drag sideways, on a wall if you drag down or up at a slant (straight up keeps a flat picture standing). Your own stamps only size.' },
+      { name: 'Handle', from: '#stamp-handle', says: 'The round knob on the top-right corner of the stamp\'s dashed box. Drag it away from the stamp\'s foot or toward it to make the stamp bigger or smaller: quarter steps while it is small, then halves, then whole steps (an in-between size is made of smaller cells, so its edges stay clean). Drag it round the foot to turn it, as Drag a face picks its face: a 3D stamp faces the way you drag; a flat one or a letter lies on the floor if you drag sideways, on a wall if you drag down or up at a slant (straight up keeps a flat picture standing). Your own stamps only size.' },
       { name: 'Smaller', from: '#stamp-smaller', says: 'The stamp one size smaller, down to a quarter of its own size (¼×) where the grid allows.' },
       { name: 'Bigger', from: '#stamp-bigger', says: 'The stamp one size bigger. The next stamps you place come out this size too.' },
       { name: 'Floor or wall', from: '#stamp-plane', says: 'For flat stamps (the Moon, the Smiley, sacred geometry…) and letters and numbers: each tap lays it on the next of the floor, the left wall and the right wall (and, for a flat picture, back to standing up), shaded like that face of a cube. The next stamps go there too.' },
       { name: 'Spin', from: '#stamp-spin', says: 'For the 3D stamps (the Cat, the Train, the House…): each tap turns it a quarter turn where it stands, so it faces right, left, or away to either side; the light stays where it is. The next stamps come out turned too (R on a keyboard).' },
-      { name: 'Done', from: '#stamp-done', says: 'Keeps the stamp as it is. Placing another stamp, drawing or Undo does the same.' },
+      { name: 'Check', from: '#stamp-check', says: 'The ✓ on the bottom-right corner of the stamp\'s dashed box: keeps the stamp where it is, as it is. The next tap places a new stamp.' },
+      { name: 'Done', from: '#stamp-done', says: 'The same as the ✓ (Esc on a keyboard). Drawing, another tool or stamp, or Undo also ends it.' },
     ],
   },
   {

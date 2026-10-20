@@ -13,7 +13,7 @@ import { applyCells, applyEdges, brushAt, closePopover, commit, doFill, eraseEdg
 import { openDrawing, openHelp, openSettings, syncMenu } from './screens.js';
 import { openProject, saveFile } from './files.js';
 import { barMode, setBar } from './video.js';
-import { endLive, spinStamp, startLive, stepStampSize } from './livestamp.js';
+import { endLive, isLive, moveFrom, moveTo, spinStamp, startLive, stepStampSize } from './livestamp.js';
 
 // ---------- pointer input ----------
 const pointers = new Map();
@@ -128,7 +128,10 @@ export function onDown(e) {
   }
 
   const erase = s.tool === 'eraser';
-  if (s.tool === 'pencil' || erase) {
+  // A stamp waiting for its ✓ moves instead of a new one being placed (ui/livestamp.js).
+  const off = s.brush === 'stamp' ? moveFrom(wx, wy) : null;
+  if (off) gesture = { kind: 'stampmove', off };
+  else if (s.tool === 'pencil' || erase) {
     if (DRAG_BRUSHES.has(s.brush)) {
       const A = L.nearestVertex(app.level, wx, wy);
       gesture = { kind: 'drag', tx: true, t0, A, erase, x, y, sx: x, sy: y, travel: 0 };
@@ -240,6 +243,9 @@ export function onMove(e) {
   } else if (g.kind === 'drag') {
     dragApply(g, wx, wy);
     requestRender();
+  } else if (g.kind === 'stampmove') {
+    moveTo(g.off, wx, wy);
+    requestRender();
   } else if (g.kind === 'line') {
     lineApply(g, wx, wy);
     requestRender();
@@ -307,7 +313,7 @@ function hover(e) {
   app.ghostSkip = null;
   let items = null;
   if ((s.tool === 'pencil' || s.tool === 'eraser') && !DRAG_BRUSHES.has(s.brush)) items = brushAt(...worldOf(e));
-  else if (s.tool === 'pencil' && s.brush === 'stamp') items = stampItemsAt(...worldOf(e)).cells;
+  else if (s.tool === 'pencil' && s.brush === 'stamp' && !isLive()) items = stampItemsAt(...worldOf(e)).cells;
   if (items) {
     // The preview outlines what would be painted and hatches what Keep fine detail would skip.
     const cells = S.expandCells(items, symCenter(), s.symmetry).map((i) => i.cell);
