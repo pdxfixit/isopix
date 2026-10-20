@@ -269,29 +269,44 @@ export function placeStampHandle() {
   const v = app.live, h = $('#stamp-handle'), ok = $('#stamp-check');
   if (!v || h.classList.contains('dragging')) return;
   const b = liveBox(), [x0, y0] = app.view.toScreen(b.x1, b.y0), [, y1] = app.view.toScreen(b.x1, b.y1);
-  // Above the stamp bar and the notices stacked over it (on a phone there is no room between them).
-  const tops = ['#stampbar', '#update-bar', '#protect-note', '#save-note', '#move-note'].map((sel) => $(sel).getBoundingClientRect()).filter((r) => r.height).map((r) => r.top);
-  const floor = Math.min(...tops, app.view.h) - 30, keep = (x, y) => [Math.max(30, Math.min(app.view.w - 30, x)), Math.max(30, Math.min(floor, y))];
-  const avoid = ['.topleft', '.topright', '#levels', '#zoom'];
-  const [hx, hy] = clearOf(avoid, ...keep(x0 + 6, y0 - 6), floor);
-  let [cx, cy] = clearOf(avoid, ...keep(x0 + 6, y1 + 6), floor);
-  // A small stamp's corners are closer than two knobs: the ✓ goes below the handle, or beside it.
-  if (Math.hypot(cx - hx, cy - hy) < 50) [cx, cy] = hy + 50 <= floor ? [hx, hy + 50] : [hx - 50, hy];
-  h.style.left = `${hx}px`; h.style.top = `${hy}px`;
-  ok.style.left = `${cx}px`; ok.style.top = `${cy}px`;
+  // Above the stamp bar. The notices stacked over it are kept clear too, and when nothing else is
+  // free (a short landscape phone with a notice up) a knob may sit on a notice's words, never on
+  // its buttons (2026-10-20: CI's 480 × 320 view had both knobs on ⚙️ and ?).
+  const bar = $('#stampbar').getBoundingClientRect(), floor = Math.min(bar.height ? bar.top : app.view.h, app.view.h) - 30;
+  const keep = (x, y) => [Math.max(30, Math.min(app.view.w - 30, x)), Math.max(30, Math.min(floor, y))];
+  const controls = ['.topleft', '.topright', '#levels', '#zoom'], notes = ['#update-bar', '#protect-note', '#save-note', '#move-note'];
+  // A knob on a notice's words is drawn above it (.over-note).
+  const place = (el, x, y, also) => {
+    let at = clearOf([...controls, ...notes], x, y, floor, also);
+    el.classList.toggle('over-note', !at);
+    at = at || clearOf([...controls, ...notes.map((n) => `${n} button`)], x, y, floor, also) || [x, y];
+    el.style.left = `${at[0]}px`; el.style.top = `${at[1]}px`;
+    return at;
+  };
+  const [hx, hy] = place(h, ...keep(x0 + 6, y0 - 6));
+  // The ✓ keeps off the handle too (a small stamp's corners are closer than two knobs).
+  place(ok, ...keep(x0 + 6, y1 + 6), [{ left: hx - 22, right: hx + 22, top: hy - 22, bottom: hy + 22 }]);
 }
 // A 44 px knob centered at (x, y), moved to the nearest spot on screen, above floor, that covers
-// none of the controls: beside or below each one it would cover, three times over (a gap
-// between two clusters may be too narrow for it, so it goes below them).
-function clearOf(sels, x, y, floor = Infinity) {
-  const rects = sels.map((sel) => document.querySelector(sel)?.getBoundingClientRect()).filter((r) => r && r.width && r.height);
+// none of the controls (nor the rects in also): beside or below each one it would cover, three
+// times over (a gap between two clusters may be too narrow for it, so it goes below them); when
+// that finds nothing, as in a short landscape phone's corner, the nearest free spot on a 12 px
+// grid; null when no spot at all is free.
+function clearOf(sels, x, y, floor = Infinity, also = []) {
+  const rects = sels.flatMap((sel) => [...document.querySelectorAll(sel)].map((el) => el.getBoundingClientRect())).filter((r) => r.width && r.height).concat(also);
   const covers = (cx, cy) => rects.filter((r) => !(cx + 26 < r.left || cx - 26 > r.right || cy + 26 < r.top || cy - 26 > r.bottom));
+  const fits = ([cx, cy]) => cx >= 26 && cx <= innerWidth - 26 && cy >= 26 && cy <= floor && !covers(cx, cy).length;
+  const nearest = (spots) => spots.reduce((b, c) => (Math.hypot(c[0] - x, c[1] - y) < Math.hypot(b[0] - x, b[1] - y) ? c : b));
+  if (fits([x, y])) return [x, y];
   let spots = [[x, y]];
   for (let pass = 0; pass < 3; pass++) {
     spots = spots.concat(spots.flatMap(([cx, cy]) => covers(cx, cy).flatMap((r) => [[r.right + 28, cy], [r.left - 28, cy], [cx, r.bottom + 28]])));
   }
-  const ok = spots.filter(([cx, cy]) => cx >= 26 && cx <= innerWidth - 26 && cy <= floor && !covers(cx, cy).length);
-  return ok.length ? ok.reduce((b, c) => (Math.hypot(c[0] - x, c[1] - y) < Math.hypot(b[0] - x, b[1] - y) ? c : b)) : [x, y];
+  let ok = spots.filter(fits);
+  if (!ok.length) {
+    for (let gy = 26; gy <= Math.min(floor, innerHeight - 26); gy += 12) for (let gx = 26; gx <= innerWidth - 26; gx += 12) if (fits([gx, gy])) ok.push([gx, gy]);
+  }
+  return ok.length ? nearest(ok) : null;
 }
 // The plane button's picture: a cube with the face in use filled, or a square facing you.
 const CUBE = '<path d="M12 3 20 7.5v9L12 21l-8-4.5v-9ZM12 12v9M12 12 4 7.5M12 12l8-4.5"/>';

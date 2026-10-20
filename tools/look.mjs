@@ -368,9 +368,12 @@ VIEWS['stamp-move'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   const corner = (x, y) => a.view.toScreen(x, y).map((n, i) => n + (i ? r.top : r.left));
   const b = LS.liveBox(), [tx, ty] = corner(b.x1, b.y0), [, by] = corner(b.x1, b.y1), [hx, hy] = mid(h), [cx, cy] = mid(ok);
   if (h.hidden || ok.hidden) throw new Error('the handle or the ✓ is hidden');
-  // On the corner, unless a control covers the corner (the handle is kept off the rails).
+  // On the corner, unless a control covers the corner (the handle is kept off the rails) or the
+  // corner is off the screen or below the bars (a short landscape phone: the handle is kept on it).
   const under = (x, y) => ['.topleft', '.topright', '#levels', '#zoom'].some((sel) => { const R = document.querySelector(sel)?.getBoundingClientRect(); return R && R.width && x + 26 > R.left && x - 26 < R.right && y + 26 > R.top && y - 26 < R.bottom; });
-  if (Math.hypot(hx - tx - 6, hy - ty + 6) > 2 && !under(tx + 6, ty - 6)) throw new Error("the handle is not on the outline's top-right corner");
+  const floor = Math.min(...['#stampbar', '#update-bar', '#protect-note', '#save-note', '#move-note'].map((sel) => document.querySelector(sel).getBoundingClientRect()).filter((R) => R.height).map((R) => R.top), innerHeight) - 30;
+  const off = (x, y) => x < 30 || x > innerWidth - 30 || y < 30 || y > floor;
+  if (Math.hypot(hx - tx - 6, hy - ty + 6) > 2 && !under(tx + 6, ty - 6) && !off(tx + 6, ty - 6)) throw new Error("the handle is not on the outline's top-right corner");
   if (Math.hypot(cx - tx - 6, cy - by - 6) > 2 && Math.hypot(cx - hx, cy - hy) < 50) throw new Error('the ✓ is not on the bottom-right corner, or sits on the handle');
   if (Math.hypot(cx - hx, cy - hy) < 44) throw new Error('the ✓ and the handle overlap');
   const n = a.drawing.cells.size, A0 = { ...a.live.A }, fire = (t, x, y) => st.dispatchEvent(new PointerEvent(t, { clientX: x, clientY: y, pointerId: 8, pointerType: 'touch', isPrimary: true, bubbles: true, button: 0, buttons: t === 'pointerup' ? 0 : 1 }));
@@ -392,7 +395,10 @@ VIEWS['stamp-move'] = { fresh: true, js: `${STAMPS_OPEN} ${SECTION('animals')} $
   other.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); ${nap}
   if (a.live) throw new Error('picking a grid size left the second Cat waiting for its ✓');
   ${TAP('innerWidth * 0.45', 'innerHeight * 0.4')} ${nap}
-  if (a.drawing.undoStack.length !== 3) throw new Error('the tap after picking a grid size did not place a third Cat');` };
+  if (a.drawing.undoStack.length !== 3) throw new Error('the tap after picking a grid size did not place a third Cat');
+  // Both knobs can be tapped: nothing is drawn over either (on a short landscape phone the
+  // third Cat runs off the screen and a notice is up, 2026-10-20).
+  ${nap} for (const el of [h, ok]) { const k = el.getBoundingClientRect(), top = document.elementFromPoint(k.x + k.width / 2, k.y + k.height / 2); if (!el.contains(top)) throw new Error('#' + el.id + ' is covered by ' + (top?.id || top?.className)); }` };
 // Floor or wall (owner, 2026-10-19, spec step 2): a Moon placed shows the plane button,
 // standing up; a tap lays it on the floor (every cell a top face), another on the left
 // wall, in the same undo step; + twice draws it anew at 1½×. Then an A, which goes
