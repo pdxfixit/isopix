@@ -146,7 +146,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ## Animals
 
-**Cat** (`cat`, 209 cells): as drawn, a quarter turn, half a turn, three quarters
+**Cat** (`cat`, 196 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Cat from every side](cat.svg)
 
@@ -154,7 +154,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Cat at 1×, 2× and 3×](cat-sizes.svg)
 
-**Bunny** (`bunny`, 185 cells): as drawn, a quarter turn, half a turn, three quarters
+**Bunny** (`bunny`, 167 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Bunny from every side](bunny.svg)
 
@@ -170,7 +170,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Duck at 1×, 2× and 3×](duck-sizes.svg)
 
-**Fox** (`fox`, 245 cells): as drawn, a quarter turn, half a turn, three quarters
+**Fox** (`fox`, 212 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Fox from every side](fox.svg)
 
@@ -178,7 +178,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Fox at 1×, 2× and 3×](fox-sizes.svg)
 
-**Snake** (`snake`, 297 cells): as drawn, a quarter turn, half a turn, three quarters
+**Snake** (`snake`, 345 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Snake from every side](snake.svg)
 
@@ -194,7 +194,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Frog at 1×, 2× and 3×](frog-sizes.svg)
 
-**Pig** (`pig`, 194 cells): as drawn, a quarter turn, half a turn, three quarters
+**Pig** (`pig`, 171 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Pig from every side](pig.svg)
 
@@ -202,7 +202,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Pig at 1×, 2× and 3×](pig-sizes.svg)
 
-**Dog** (`dog`, 216 cells): as drawn, a quarter turn, half a turn, three quarters
+**Dog** (`dog`, 195 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Dog from every side](dog.svg)
 
@@ -210,7 +210,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Dog at 1×, 2× and 3×](dog-sizes.svg)
 
-**Fish** (`fish`, 184 cells): as drawn, a quarter turn, half a turn, three quarters
+**Fish** (`fish`, 156 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Fish from every side](fish.svg)
 
@@ -218,7 +218,7 @@ At 1×, 2× and 3×, its detail growing:
 
 ![Fish at 1×, 2× and 3×](fish-sizes.svg)
 
-**Bird** (`bird`, 161 cells): as drawn, a quarter turn, half a turn, three quarters
+**Bird** (`bird`, 145 cells): as drawn, a quarter turn, half a turn, three quarters
 
 ![Bird from every side](bird.svg)
 
