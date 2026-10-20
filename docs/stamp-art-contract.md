@@ -1,6 +1,6 @@
 # Isopix stamp art contract
 
-Version 1, 2026-10-19.
+Version 2, 2026-10-19.
 
 This document is the whole handoff for drawing a stamp for Isopix. It is written for an artist, an agent or an image or language model that knows nothing about the app or its code. A stamp that follows it, and passes the check, comes into the app with no code written by you.
 
@@ -68,13 +68,15 @@ From the front (as the stamp is first placed) you see three sides of every block
 
 Things that face one way (animals, vehicles, people) face **+x**, down to the right, as every starter stamp does.
 
-Where the origin is does not matter: the app finds the stamp's foot (the middle of its bottom) and places it there. Keep numbers between -60 and 60.
+Where the origin is does not matter: the app finds the stamp's foot (the middle of its bottom) and places it there. Every number is a whole number from -60 to 60, both included.
+
+Parts are numbered from 1, in the order you list them; the check's messages use those numbers.
 
 ## 3. The parts
 
 **Block.** `{"box": [x, y, z], "size": [sx, sy, sz], "color": "#rrggbb"}`. `box` is its corner with the smallest x, y and z (back, left, bottom); `size` its width along x, depth along y and height, each at least 1. One half unit is the smallest feature: an eye, a button, a wheel's hub.
 
-**Decal.** `{"decal": side, "at": n, "from": [a, b], "to": [a, b], "color": "#rrggbb"}`. A flat color lying on a block's side, which it must sit exactly on.
+**Decal.** `{"decal": side, "at": n, "from": [a, b], "to": [a, b], "color": "#rrggbb"}`. A flat color lying on a block's side, which it must sit exactly on, and stay within: a stripe across two blocks that touch is two decals, one on each.
 
 | `decal` | Lies on | `at` is | `from` and `to` are |
 |---|---|---|---|
@@ -90,12 +92,12 @@ Where the origin is does not matter: the app finds the stamp's foot (the middle 
 
 ## 4. Drawing rules
 
-1. **Back to front.** The app paints the parts in the order you list them, later over earlier. List far things first: smaller x and y first, and lower z first where things stack. Put each decal right after the block it sits on, before anything in front of it. The check proves the order is right (R11) and names the two parts when it is not.
+1. **Back to front.** The app paints the parts in the order you list them, later over earlier. Blocks never overlap (rule 2), so any two are apart along x, y or z. **List a block before another when it lies wholly on the far side of it along one of those: wholly at smaller x, wholly at smaller y, or wholly below it.** So a wheel under a body comes before the body (it is below), even though it sticks out toward you; and a chassis behind that wheel (wholly at smaller y) comes before the wheel. Put each decal right after the block it sits on, before anything in front of it. When two blocks are apart in more than one direction, follow the one where they would cover each other on screen; the check proves the order is right (R11) and names the two parts when it is not, so the quickest way is often to list, check, and move what it names.
 2. **Blocks touch; they never overlap.** Two blocks may meet face to face but may not share space (R10). Overlapping blocks have no order that draws right from every side. Split one into smaller blocks instead.
-3. **No cheats.** A feature shows from every side only if it really sticks out. A wheel is a block that sticks a half unit out past the body's side, below it. Paws stand in front of the body. A feature painted "on top" of something that hides it in 3D will vanish when the stamp spins.
-4. **Something on every side.** Spin shows the back. Give each of the four sides something: an eye on each side of a head (not on its front: front eyes plus side eyes read as three eyes), windows on both sides and the back, a tail, a door at the back. The check warns about a bare side.
+3. **No cheats.** A feature shows from every side only if it really sticks out. Paws stand in front of the body. A feature painted "on top" of something that hides it in 3D will vanish when the stamp spins. **The wheel recipe:** a block 3 long, 1 deep and 3 tall (`"size": [3, 1, 3]`), wholly outside the body's side (touching it), its top at or under the body's bottom, in INK; a hub is a 1 by 1 decal on its outer face, in its middle (from 1 to 2 along it and from 1 to 2 up, counted from the wheel's own corner), in STONE. Two wheels a side for a car, more for a long vehicle.
+4. **Something on every side.** Spin shows the back. Give each of the four sides something: an eye on each side of a head (not on its front: front eyes plus side eyes read as three eyes), windows on both sides and the back, a tail, a door at the back. The check warns when no decal or slope anywhere in the stamp faces one of `+x`, `+y`, `-x` or `-y`. (Some older stamps in `docs/stamps/` still have bare backs while they are redrawn; this rule wins.)
 5. **It reads at its smallest size.** A placed stamp is small at first: make the parts that say what it is big and bold (a beak, ears, wheels, a chimney). Two specks read as a face; detail one half unit wide is the finest there is.
-6. **Its own size.** Aim for 80 to 300 cells (the check counts them). Up to 450 is fine; past 600 is rejected (R12). The bigger a stamp's own size, the fewer sizes it can grow to.
+6. **Its own size.** A cell is one small triangle of the grid, and a half unit is one triangle's side, so a face a by b half units is 2 × a × b cells, and a lone block of size [a, b, c] shows its three near faces: 2 × (a·b + b·c + a·c) cells (a [4, 4, 4] block is 96). Parts that hide each other count once. Aim for 80 to 300 cells; up to 450 is fine; past 600 is rejected (R12). The bigger a stamp's own size, the fewer sizes it can grow to.
 7. **Straight edges.** Slopes only at the grid's own slope (section 3). Blocks and decals are always straight. Round things are made by stepping: wide in the middle, narrower above and below (see the Apple and the Cloud in `docs/stamps/`).
 8. **The palette.** Use the palette (section 5). A color outside it is allowed when none will do; the check warns.
 9. **Same character.** A new drawing of a stamp that ships keeps what children know it by: its main colors, its shape, the way it faces.
@@ -138,15 +140,15 @@ One JSON object, nothing before or after it:
 | Field | Rule |
 |---|---|
 | `contract` | `1`, the version of this contract. |
-| `id` | Lowercase letters and digits, single dashes between words, at most 24 long: `fire-truck`. Permanent once it ships. A new drawing of a stamp that ships uses its id (the ids are in `docs/stamps/README.md`). |
+| `id` | Lowercase letters and digits, single dashes between words, at most 24 long: `fire-truck`. Permanent once it ships. A new drawing of a stamp that ships uses its id (`docs/stamps/README.md` lists them; the check says when an id is taken). |
 | `name` | What a child would call it, 1 to 20 characters: `Fire truck`. |
 | `group` | The Stamps drawer section: `shapes`, `buildings`, `nature`, `weather`, `animals`, `people`, `vehicles`, `space` or `food`. |
-| `author`, `tool` | Optional, a short line each. |
+| `author`, `tool` | Optional, a line of at most 80 characters each. |
 | `parts` | 1 to 400 parts (section 3), back to front (rule 1). |
 
 ## 7. The check
 
-`just stamp-check <file.json>` (or `node tools/stamp_check.mjs <file.json>`; add `--replace` for new art for a stamp that ships). It prints `ACCEPT` and draws the stamp from every side, in a grid of two by two, as `<id>.svg` beside the file: as placed (top left), then turned a quarter at a time. **Look at it**: the check cannot judge the art. Or it prints one `REJECT` line per problem. Send REJECT lines back to whoever drew the stamp as they are; do not fix delivered art by hand.
+`just stamp-check <file.json>` (or `node tools/stamp_check.mjs <file.json>`; add `--replace` for new art for a stamp that ships). It prints `ACCEPT` and draws the stamp from every side, in a square grid of two by two, as `<id>.svg` beside the file, read across then down: as placed, then turned a quarter at a time, each turn taking what faced down-right (+x) to face down-left (+y). Open the SVG in any web browser. **Look at it**: the check cannot judge the art. Or it prints one `REJECT` line per problem. Send REJECT lines back to whoever drew the stamp as they are; do not fix delivered art by hand.
 
 | Code | Means | Fix |
 |---|---|---|
@@ -206,4 +208,5 @@ Add a line when an art round teaches something; say which stamp and when.
 
 ## 11. Changelog
 
+- **Version 2, 2026-10-19.** After a cold read (a fresh agent drew a fire truck from this document alone and got an ACCEPT in four rounds, then listed where it had to guess): parts numbered from 1; how to order blocks that are apart in more than one direction, with a wheel under a body; what a cell is and how to count them; the wheel recipe; what counts as a bare side; the view order and turn direction; decals stay on one block; every limit as a number. The check's picture is square.
 - **Version 1, 2026-10-19.** First version: blocks, decals and slopes as JSON; rules 1 to 9; the check R1 to R12. Owner: "produce an art contract as well so that just like [Arrow-Rama] does, so that we can talk to other agents and other models to create art that we can bring back to you for integration as new stamps."
