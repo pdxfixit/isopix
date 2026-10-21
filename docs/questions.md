@@ -1,6 +1,6 @@
 # Questions for the owner
 
-Open questions for the owner, one card each. The owner answered cards 1 to 6 on 2026-10-12, 7 the same day, 8 to 10 on 2026-10-15, and 12 and 13 on 2026-10-16, and 14 and 16 on 2026-10-19;
+Open questions for the owner, one card each. The owner answered cards 1 to 6 on 2026-10-12, 7 the same day, 8 to 10 on 2026-10-15, and 12 and 13 on 2026-10-16, and 14 and 16 on 2026-10-19, and 17 on 2026-10-21;
 [decisions.md](decisions.md) has the answers.
 
 ## How this works
@@ -38,25 +38,5 @@ size is a huge consideration".
   of code; little use to a child who cannot read yet.
 
 A, because the sections hold 86 comfortably and the owner weighs size.
-
-**The owner:**
-
-## 17. Should a lesson start at a set grid size?
-
-Now: a lesson keeps the grid size and zoom it starts in. Basics' first step
-("Drag a finger across the paper to draw") finishes when a stroke paints 3
-cells, so someone who starts it zoomed far out, on a big grid, can draw a
-short stroke that paints only 1 or 2 big cells and the step waits. Found
-2026-10-20 when the look checks ran in a new order. Lessons already put the
-person's settings back when they end.
-
-- **A. Start every lesson at a set size and zoom** (recommended): the steps
-  then behave the same for everyone, and the settings come back at the end
-  as they do now.
-- **B. Leave it**: drawing a little longer finishes the step; nothing to build.
-- **C. Lower the first step to 1 cell**: any stroke finishes it, at any size.
-
-A, because a lesson is for someone who does not know the app yet, and a step
-that waits for no visible reason looks broken to a kid.
 
 **The owner:**

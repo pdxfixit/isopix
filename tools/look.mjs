@@ -662,11 +662,10 @@ const STROKE = `const st = document.querySelector('#stage');
 const STEP = `const tour = () => window.isopix.tour.state(); const say = () => document.querySelector('#tour .tour-say').textContent;
   const at = (i) => { if (tour()?.index !== i) throw new Error('lesson at step ' + (tour()?.index) + ', not ' + i + ': ' + say()); };`;
 // Show me around: Basics starts in a practice drawing; a stroke moves it to the cube step.
-// The lesson views start fresh: a lesson keeps the size and view it starts in,
-// and an earlier view can leave a coarser one, where their short first stroke
-// makes fewer than the 3 cells Basics asks for. Found when `--shards 4` changed
-// the order (2026-10-20): after `rail` the size was 1, not 3, at the same zoom;
-// after `stamp-move`, then `lesson-end` at 320 px, the zoom was 132 and the size 0.
+// The lesson views start fresh. A lesson used to keep the size and view it started in,
+// so after a view that left a coarser one their short first stroke made fewer than
+// the 3 cells Basics asks for (found when `--shards 4` changed the order, 2026-10-20).
+// Lessons now start at the default size and a fresh view (lesson-size, below).
 VIEWS.lesson = { fresh: true, js: `${q('#settings-open')} ${nap} ${q('#welcome-again')} ${nap} ${q('#welcome-tour')} ${nap} ${STROKE} ${STEP}
   if (window.isopix.drawingName !== 'Practice') throw new Error('not a practice drawing: ' + window.isopix.drawingName);
   at(0); await stroke(innerWidth * 0.4, innerHeight * 0.4); at(1);
@@ -697,6 +696,21 @@ VIEWS['lesson-end'] = { fresh: true, js: `${DRAW} ${STROKE} ${STEP} const a = wi
   btn('Keep it').click(); await new Promise((r) => setTimeout(r, 600));
   if (a.drawing.cells.size !== practice || a.drawingName === 'Practice' || a.tour.active()) throw new Error('Keep it did not keep the practice drawing');
   if (a.drawingId === mineId || !a.gallery.some((e) => e.id === mineId && e.name === name)) throw new Error('Keep it took the place of their drawing');` };
+// A lesson starts at the default grid size and a fresh view, and gives the person's
+// back at the end (owner, 2026-10-21, questions.md card 17): from the coarsest size,
+// locked, zoomed out, Basics starts at size 2, unlocked, at the home zoom; its short
+// first stroke finishes step 1; Stop lesson, Back to my drawing gives back size 0,
+// the lock and the zoom.
+VIEWS['lesson-size'] = { fresh: true, js: `${STROKE} ${STEP} const a = window.isopix, { HOME_ZOOM } = await import('./engine/view.js');
+  a.settings.notch = 0; a.settings.locked = true; a.settings.lockedLevel = 0; a.view.zoom = HOME_ZOOM / 4; window.dispatchEvent(new Event('resize')); ${nap}
+  const z0 = a.view.zoom;
+  a.tour.start('basics'); ${nap} at(0);
+  if (a.settings.notch !== 2 || a.settings.locked || Math.abs(a.view.zoom - HOME_ZOOM) > 1e-6) throw new Error('Basics did not start at size 2, unlocked, at the home zoom: notch ' + a.settings.notch + ', locked ' + a.settings.locked + ', zoom ' + a.view.zoom);
+  await stroke(innerWidth * 0.4, innerHeight * 0.4); at(1);
+  const btn = (t) => [...document.querySelectorAll('#tour button')].find((b) => b.textContent === t);
+  btn('Stop lesson').click(); ${nap} btn('Back to my drawing').click(); ${nap}
+  if (a.tour.active()) throw new Error('the lesson is still on');
+  if (a.settings.notch !== 0 || !a.settings.locked || a.settings.lockedLevel !== 0 || Math.abs(a.view.zoom - z0) > 1e-6) throw new Error('the size, lock or zoom did not come back: notch ' + a.settings.notch + ', locked ' + a.settings.locked + ', zoom ' + a.view.zoom + ' not ' + z0);` };
 // Help lists the lessons first, each folded with its step count and Start inside.
 VIEWS['help-lessons'] = { js: `${q('#settings-open')} ${nap} ${q('#settings-help')} ${nap}
   const head = document.querySelector('#help-body .set-head[aria-controls="lesson-basics"]');
