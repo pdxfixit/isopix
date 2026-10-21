@@ -232,6 +232,11 @@ function beginPractice() {
   app.drawing.paper = theirs.paper;
   app.stamps = app.stamps.slice(); app.palettes = app.palettes.slice(); app.selection = null; app.lastDensity = null; app.scaled = new WeakMap(); app.trace = null;
   app.file = { name: null, at: null, via: null, dirty: false, handle: null };
+  // Every lesson starts at the default grid size and a fresh view, so its steps go the
+  // same for everyone (a short first stroke on a big grid painted too few cells); the
+  // person's size and view come back at the end (owner, 2026-10-21: questions.md card 17, A).
+  for (const k of ['notch', 'locked', 'lockedLevel']) set(k, DEFAULTS[k]);
+  app.view.reset(); computeLevel(true); updateZoomUI();
   setName('Practice');
   for (const d of document.querySelectorAll('dialog[open]')) d.close();
   setClean(false); openColors(false); // a lesson points at the controls
