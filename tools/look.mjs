@@ -211,9 +211,12 @@ VIEWS['fold-open'] = { js: `${DRAW} try { ${FOLD} if (narrow) {
 VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
 // Light from the right, then Relight: the right faces take the base color (the mid tone).
 VIEWS.light = { js: `const a = window.isopix; a.settings.shading = true; ${q('[data-tool="pencil"]')}
-  window.isopix.settings.brush = 'hexagon'; ${TAP('innerWidth * 0.5', 'innerHeight * 0.4')} ${nap}
+  window.isopix.settings.brush = 'hexagon'; ${TAP('innerWidth * 0.5', 'innerHeight * 0.4')}
   const base = a.settings.color, right = () => [...a.drawing.cells.values()].filter((v) => v.f === 'R');
-  if (!right().length || right().some((v) => v.c === base)) throw new Error('no darker right faces to start with');
+  // Wait for the shaded cube, up to 2 s, not a fixed 150 ms: CI once checked before it was
+  // there (run 39684442970, 4 shards on one runner; docs/state.md, Known flake).
+  for (let i = 0; i < 40 && !(right().length && right().every((v) => v.c !== base)); i++) await new Promise((r) => setTimeout(r, 50));
+  if (!right().length || right().some((v) => v.c === base)) throw new Error('no darker right faces to start with (' + a.drawing.cells.size + ' cells, ' + right().length + ' right faces)');
   ${q('#settings-open')} ${nap} ${q('#light-flip')} document.querySelector('#settings').close(); ${nap}
   if (a.drawing.light !== 'right') throw new Error('Light from did not switch');
   ${q('[data-tool="select"]')} ${nap}
