@@ -213,9 +213,7 @@ VIEWS.selmore = { js: `${VIEWS.select.js} ${nap} ${q('#sel-more')}` };
 VIEWS.light = { js: `const a = window.isopix; a.settings.shading = true; ${q('[data-tool="pencil"]')}
   window.isopix.settings.brush = 'hexagon'; ${TAP('innerWidth * 0.5', 'innerHeight * 0.4')}
   const base = a.settings.color, right = () => [...a.drawing.cells.values()].filter((v) => v.f === 'R');
-  // Wait for the shaded cube, up to 2 s, not a fixed 150 ms: CI once checked before it was
-  // there (run 39684442970, 4 shards on one runner; docs/state.md, Known flake).
-  for (let i = 0; i < 40 && !(right().length && right().every((v) => v.c !== base)); i++) await new Promise((r) => setTimeout(r, 50));
+  ${nap}
   if (!right().length || right().some((v) => v.c === base)) throw new Error('no darker right faces to start with (' + a.drawing.cells.size + ' cells, ' + right().length + ' right faces)');
   ${q('#settings-open')} ${nap} ${q('#light-flip')} document.querySelector('#settings').close(); ${nap}
   if (a.drawing.light !== 'right') throw new Error('Light from did not switch');
@@ -1007,8 +1005,9 @@ for (const screen of opts.screens) {
     if (live) setLive(live[1]);
     const row = { screen, w, extra: [] };
     try {
-      // Each width starts from a blank drawing, not the last width's autosave.
-      if (!VIEWS[screen].fresh) await evaluate(`(async () => { const a = window.isopix; a.drawing.clear(); a.selection = null; })()`);
+      // Each width starts from a blank drawing, not the last width's autosave: no cells, lit
+      // from the left (light flips it), at the home view (zoom zooms in).
+      if (!VIEWS[screen].fresh) await evaluate(`(async () => { const a = window.isopix; a.drawing.clear(); a.drawing.light = 'left'; a.view.reset(); a.selection = null; })()`);
       if (VIEWS[screen].js) await evaluate(`(async () => { ${VIEWS[screen].js} })()`);
       if (opts.js) await evaluate(`(async () => { ${opts.js} })()`);
     } catch (err) { row.extra.push(`script failed: ${err.message.split('\n')[0]}`); }
@@ -1017,6 +1016,10 @@ for (const screen of opts.screens) {
     const shot = path.join(out, `${screen}-${w}.png`);
     const r = await send('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(shot, Buffer.from(r.data, 'base64'));
+    // Save now, so what this row leaves always reaches the next one. Left to the 800 ms
+    // autosave and the save on leaving the page, it got there only when the runner was
+    // slow (4 shards at once on CI), and a leak failed there and nowhere else (2026-10-21).
+    await evaluate(`(async () => { await (await import('./app.js')).flushSave(); })()`).catch(() => {});
     Object.assign(row, m, { errors: [...new Set(errors)], csp: [...new Set(csp)], logs: [...logs], shot });
     for (const d of m.dialogSideways) row.extra.push(`${d} scrolls sideways`);
     for (const o of m.overlaps) row.extra.push(`overlap: ${o}`);
