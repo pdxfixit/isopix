@@ -10,9 +10,9 @@ CI pins. Newer usually works; older Node does not.
 
 | Tool | Needed for | Known good | Install (macOS / Ubuntu) |
 |---|---|---|---|
-| Node 22 or newer | `just test`, `just look`, `just export-check`, `just perf` (they use Node's built-in `fetch`, `WebSocket` and test runner; no packages) | 26.11 (Mac), 22.11.0 (CI) | `brew install node` / nodesource or `actions/setup-node` |
+| Node 22 or newer | `just test`, `just look`, `just export-check`, `just perf` (they use Node's built-in `fetch`, `WebSocket` and test runner; no packages) | 26.11 (Mac), 22.11.0 (CI and `.node-version`) | `brew install node` / nodesource or `actions/setup-node` |
 | Python 3.8 or newer | `just serve`, `just version`, `just live-check`, the tools' unit tests (stdlib only) | 3.14 | preinstalled / `apt install python3` |
-| just 1.36 or newer | every recipe (`[positional-arguments]` and `import?` need a recent one; Ubuntu's package is too old) | 1.58 (Mac), 1.36.0 (CI) | `brew install just` / the release tarball, as in `.github/workflows/test.yml` |
+| just 1.58 or newer | every recipe (`[positional-arguments]` and `import?` need a recent one; Ubuntu's package is too old) | 1.58 (Mac, CI and `tools/cloud_setup.sh`) | `brew install just` / the release tarball, as in `.github/workflows/test.yml` |
 | Google Chrome | `just look`, `just export-check`, `just perf`, `deploy-verify`'s live look (headless, a private profile each run) | current stable | `brew install --cask google-chrome` / Google's `.deb` (GitHub's Ubuntu runners have it at `/usr/bin/google-chrome`). Found by itself at the macOS path, `/usr/bin/google-chrome` or `chromium`, or a cloud session's Playwright Chromium in `/opt/pw-browsers`; anywhere else, set `CHROME=/path/to/chrome`. As root (a cloud session) it runs without Chrome's sandbox. |
 | git | everything | any recent | preinstalled |
 | gh (GitHub CLI), signed in | deploys (`deploy-check` waits for CI to be green), reading CI: `gh run list`, `gh run view <id> --log-failed`, `gh run download <id>` | 2.102 | `brew install gh`, then `gh auth login` (The owner's GitHub account owns the repo) |
