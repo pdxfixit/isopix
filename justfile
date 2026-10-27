@@ -29,6 +29,10 @@ policy *args:
     [ -f "$p/tools/send.sh" ] || { echo "policy: $p has no tools/send.sh; update it (git -C $p pull)" >&2; exit 1; }
     exec bash "$p/tools/send.sh" isopix docs/privacy-policy.md "$@"
 
+# 🔑 Print the JSON for the ISOPIX_NAME_HASHES secret from names typed here, on the owner's Mac only: just names-secret --any NAME… [--exact NAME…] [--inside NAME…], or --from-commit 6e42f34
+names-secret *args:
+    python3 tools/names_secret.py {{args}}
+
 # 🧰 Once per clone: the git hooks (pre-commit runs just test; pre-push checks the version stamp) and the PDXfixIT author
 setup:
     git config core.hooksPath .githooks
