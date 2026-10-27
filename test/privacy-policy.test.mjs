@@ -1,5 +1,5 @@
 // docs/privacy-policy.md is the text of privacy.pdxfixit.com/isopix/: this repo holds it beside the code, and
-// `just policy` copies it into pdxfixit/privacy (whose build.py is the strict reader). This test catches here what
+// `just policy` sends it to pdxfixit/privacy (whose build.py is the strict reader). This test catches here what
 // that build would refuse there, so a malformed policy never gets as far as a copy: front matter with name, blurb
 // and a real `updated` date, no plain email address (the text says {contact}), and every @include naming a shared
 // block the privacy repo has. The app's own link to the policy must point at the page this text becomes.
@@ -52,7 +52,7 @@ test('the policy has front matter: name, blurb and a real updated date', () => {
   assert.equal(fm.meta.name, 'Isopix');
   const d = parseDate(fm.meta.updated);
   assert.ok(d, `updated: "${fm.meta.updated}" is not a date like "19 October 2026"`);
-  assert.ok(d.getTime() <= Date.now() + 864e5, 'updated: is in the future');
+  assert.ok(d.getTime() <= Date.now(), 'updated: is in the future');
   assert.match(fm.body, /^# Isopix privacy policy$/m, 'the page has its title');
 });
 
@@ -74,7 +74,7 @@ test('every @include is a line of its own', () => {
 
 test('every @include names a shared block the privacy repo has', (t) => {
   const pv = privacyCheckout();
-  if (!pv) { t.skip('no privacy checkout beside this repo ($PRIVACY or ../privacy): shared blocks not checked'); return; }
+  if (!pv) { console.log('note: no privacy checkout beside this repo (or $PRIVACY): @include names not checked'); t.skip('no privacy checkout beside this repo ($PRIVACY or ../privacy): shared blocks not checked'); return; }
   const names = [...policy.matchAll(/^@include ([a-z0-9-]+)$/gm)].map((m) => m[1]);
   assert.ok(names.length > 0, 'the policy includes the shared rules');
   for (const n of names) assert.ok(existsSync(`${pv}/src/_shared/${n}.md`), `@include ${n}: pdxfixit/privacy has no src/_shared/${n}.md`);
@@ -87,4 +87,10 @@ test('the app links the page this policy becomes', () => {
   for (const id of ['privacy-link', 'privacy-link-help']) {
     assert.match(html, new RegExp(`id="${id}"[^>]*href="https://privacy\\.pdxfixit\\.com/isopix/"`), `#${id} points at privacy.pdxfixit.com/isopix/`);
   }
+});
+
+test('`just policy` runs the privacy repo\'s tools/send.sh; the logic lives there, once', () => {
+  assert.ok(!existsSync(root + 'tools/policy.sh'), 'no copy of the send logic in this repo');
+  const justfile = readFileSync(root + 'justfile', 'utf8');
+  assert.match(justfile, /^policy \*args:\n(?:.*\n)*?\s+exec bash "\$p\/tools\/send\.sh" isopix docs\/privacy-policy\.md "\$@"$/m);
 });

@@ -40,7 +40,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 | `web/_headers` | Response headers for Cloudflare and `tools/serve.py` (CSP, no-cache for `sw.js`). |
 | `spec/` | The Isopix file format, spec 1.0, under CC0: the spec, a JSON Schema, examples, and reference renderers in Python and JavaScript (`test/spec.test.mjs` checks they draw what the app does). |
 | `test/` | `node --test` suites for the engine and app tables, plus `test/docs.test.mjs`: every recipe, look view, link and repo path the docs name must exist. |
-| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs`, `export_check.mjs`, `perf.mjs`, `bump_version.py`, `make_icons.mjs`, `live_check.py`, `version_bumped.sh`, `policy.sh` (`just policy`), `deploy.sh` (behind `deploy.just`). |
+| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs`, `export_check.mjs`, `perf.mjs`, `bump_version.py`, `make_icons.mjs`, `live_check.py`, `version_bumped.sh`, `deploy.sh` (behind `deploy.just`). |
 | `justfile`, `deploy.just` | Recipes, in [the house style](docs/justfile-style.md). The justfile imports `deploy.just` (the deploy recipes). Change either with care: a broken deploy recipe blocks every release. |
 | `docs/` | State, decisions, questions, the design brief, hosting, environment, Justfile style, `privacy-policy.md` (the public policy's text). |
 | Deploy: `deploy.just`, `tools/deploy.sh`, [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md) | Hosting, the `deploy-*` / `live` / `rollback` / `ship` recipes, checks after a deploy, rollback, DNS conflicts. See [Ship](#ship). |
@@ -99,7 +99,7 @@ Rules:
 - **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Land every finished commit with `just land` (see Ship).
 - **Agents are agents.** Call subagents "agents", never people.
 - **Tooling friction gets fixed:** an obvious, non-breaking improvement to a tool or doc you used goes in as its own commit.
-- **The privacy policy lives here:** `docs/privacy-policy.md` is the text of privacy.pdxfixit.com/isopix/. A change to what the app collects or shows updates it in the same commit (bump `updated:`); once it is on `main`, `just policy` copies it into pdxfixit/privacy and lands it there. `test/privacy-policy.test.mjs` checks its shape.
+- **The privacy policy lives here:** `docs/privacy-policy.md` is the text of privacy.pdxfixit.com/isopix/. A change to what the app collects or shows updates it in the same commit (bump `updated:`; write the address as `{contact}`); once it is on `main`, `just policy` hands it to pdxfixit/privacy's own send script, which copies and lands it (`--dry-run` stops before landing). `test/privacy-policy.test.mjs` checks its shape.
 - **When the owner decides something,** record it in docs/decisions.md in the same commit; a replaced rule is deleted, not annotated.
 
 ## Working with the owner

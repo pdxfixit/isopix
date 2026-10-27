@@ -11,13 +11,23 @@ default:
 serve port="8790":
     python3 tools/serve.py {{port}}
 
-#   just policy --dry-run     find and update the privacy checkout and check the policy; run nothing there
-# The privacy checkout is $PRIVACY, else ../privacy beside this repo, else a clone in the cache. Run it once the
-# change to docs/privacy-policy.md is committed (on main, after just land); the tool is tools/policy.sh.
-# 📜 Copy docs/privacy-policy.md into the privacy repo (privacy.pdxfixit.com/isopix/): its just take builds, tests and commits it, then just land there
+# docs/privacy-policy.md is this app's policy; the privacy site (pdxfixit/privacy) keeps a copy of it.
+# Run this once a change to it is on main. It finds the privacy checkout ($PRIVACY, else ../privacy beside
+# the main checkout, else a clone in ~/.cache/privacy) and runs its tools/send.sh, which takes the file in
+# a throwaway worktree there and lands it. --dry-run stops after the take and shows what would land.
+# The same recipe is in all four apps (noodlepads, isopix, arrowrama, orbit); only the app name differs.
+# 📜 Send docs/privacy-policy.md to the privacy site's repo and land it there (once it is on main): just policy [--dry-run]
 [positional-arguments]
 policy *args:
-    @bash tools/policy.sh "$@"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    p=${PRIVACY:-$(cd "$(git rev-parse --git-common-dir)/../.." && pwd)/privacy}
+    if [ -z "${PRIVACY:-}" ] && [ ! -e "$p/.git" ]; then
+        p=${XDG_CACHE_HOME:-$HOME/.cache}/privacy
+        if [ -e "$p/.git" ]; then git -C "$p" pull -q --ff-only; else git clone -q https://github.com/pdxfixit/privacy "$p"; fi
+    fi
+    [ -f "$p/tools/send.sh" ] || { echo "policy: $p has no tools/send.sh; update it (git -C $p pull)" >&2; exit 1; }
+    exec bash "$p/tools/send.sh" isopix docs/privacy-policy.md "$@"
 
 # 🧰 Once per clone: the git hooks (pre-commit runs just test; pre-push checks the version stamp) and the PDXfixIT author
 setup:
