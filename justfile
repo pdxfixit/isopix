@@ -134,7 +134,7 @@ export-check *args:
 
 #   just prove test/density.test.mjs web/engine/density.js
 #   PROVE_BASE=main proves a change already committed on a branch (default HEAD)
-# 🔎 Prove a test needs your change: runs it against the committed copy of each file (a new file: without it), then puts yours back
+# 🔎 Prove a test needs your change: it must fail on the committed copy of each file (a new file: without it) and pass on yours; PROVE_BASE=main proves a branch's commits; a tools/test_*.py runs under unittest
 prove test +files:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -142,16 +142,30 @@ prove test +files:
     files=({{files}})
     for f in "${files[@]}"; do mkdir -p "$keep/$(dirname "$f")"; cp "$f" "$keep/$f"; done
     trap 'for f in "${files[@]}"; do cp "$keep/$f" "$f"; done; rm -rf "$keep"' EXIT
+    # A kill (a timeout, Ctrl-C) puts your copies back too: bash runs no EXIT trap on a signal it does not catch.
+    trap 'exit 143' INT TERM
     base="${PROVE_BASE:-HEAD}"
     for f in "${files[@]}"; do
       if git cat-file -e "$base:$f" 2>/dev/null; then git show "$base:$f" > "$f"; else rm "$f"; fi
     done
-    if node --test {{test}} > "$keep/out" 2>&1; then
+    # A Python test (tools/test_*.py) runs under unittest from its own folder, as `just test` runs it.
+    case "{{test}}" in
+      *.py) run() { (cd "$(dirname "{{test}}")" && python3 -m unittest "$(basename "{{test}}" .py)"); } ;;
+      *) run() { node --test {{test}}; } ;;
+    esac
+    if run > "$keep/out" 2>&1; then
       echo "❌ {{test}} passes without your change to {{files}}" >&2
       exit 1
     fi
-    grep -E '^not ok|^✖' "$keep/out" | head -5 || true
-    echo "✅ {{test}} fails without your change to {{files}}"
+    grep -E '^not ok|^✖|^(FAIL|ERROR):' "$keep/out" | head -5 || true
+    # And it must pass with your change: a test broken on its own fails both ways, and looks proven.
+    for f in "${files[@]}"; do cp "$keep/$f" "$f"; done
+    if ! run > "$keep/out" 2>&1; then
+      grep -E '^not ok|^✖|^(FAIL|ERROR):' "$keep/out" | head -5 || true
+      echo "❌ {{test}} fails with your change too: the test itself is broken" >&2
+      exit 1
+    fi
+    echo "✅ {{test}} fails without your change to {{files}}, and passes with it"
 
 # 🐢 Frame times (median / p95 ms) on 38,400 cells in headless Chrome: pan, zoom, draw (--dpr 1, --cells N)
 [positional-arguments]
