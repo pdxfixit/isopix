@@ -6,6 +6,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 
 ## TL;DR
 
+- **Start:** `just doctor` (where you are, tools, is `main` live), then [docs/how-to.md](docs/how-to.md) for your task.
 - **Test:** `just test` (syntax check of every module, then `node --test test/`, including the docs-drift check; nothing to install).
 - **Run:** `just serve`, then http://localhost:8790/. Port 8790 is the owner's own server; agents preview on **8791** (`just serve 8791`).
 - **Look:** `just look drawn select settings drawing-sheet brushes` checks 320, 375, 700, 900 and 1100 px in your own headless Chrome.
@@ -94,7 +95,7 @@ Rules:
 - **A new key goes in `web/keys.js`; a new button, tool or brush gets its line in `web/help.js`.** `test/help.test.mjs` fails otherwise.
 - **Every control has a label a screen reader reads,** and nothing is gesture-only (density change always has buttons).
 - **Respect `prefers-reduced-motion`.**
-- **Fresh clone: `just setup` first.** It turns on the pre-commit hook (`.githooks/pre-commit` runs `just test`, about 3 s, and checks a staged `web/version.js` carries this commit's number; `.githooks/pre-push` checks the stamp again, since a rebase moves the commit count) and sets the PDXfixIT author. Never skip the hook; fix what it reports.
+- **Fresh clone: `just setup` first.** The pre-commit hook runs `just test` and checks the staged `web/version.js` stamp; pre-push checks it again (a rebase moves the commit count); the author is PDXfixIT. Never skip the hook.
 - **No personal names.** No name of the owner or his family in any file or commit message; `test/names.test.mjs` fails on them (hashes: secret `ISOPIX_NAME_HASHES`), as on a non-PDXfixIT commit.
 - **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Land every finished commit with `just land` (see Ship).
 - **Agents are agents.** Call subagents "agents", never people.

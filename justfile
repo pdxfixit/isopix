@@ -30,8 +30,17 @@ policy *args:
     exec bash "$p/tools/send.sh" isopix docs/privacy-policy.md "$@"
 
 # 🔑 Print the JSON for the ISOPIX_NAME_HASHES secret from names typed here, on the owner's Mac only: just names-secret --any NAME… [--exact NAME…] [--inside NAME…], or --from-commit 6e42f34
+[positional-arguments]
 names-secret *args:
-    python3 tools/names_secret.py {{args}}
+    @python3 tools/names_secret.py "$@"
+
+# 📋 Where this session stands: main checkout or worktree, tools, Chrome, gh, the names hashes, and whether main is live (read-only)
+doctor:
+    @sh tools/doctor.sh
+
+# 🧹 Archive a finished agent's branch and worktree (tag archive/<branch>, remove both); refuses unlanded commits or edits: just archive-agent <branch or agent id>
+archive-agent id:
+    @bash tools/archive_agent.sh "{{id}}"
 
 # 🧰 Once per clone: the git hooks (pre-commit runs just test; pre-push checks the version stamp) and the PDXfixIT author
 setup:

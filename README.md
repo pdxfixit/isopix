@@ -140,7 +140,7 @@ don't put names or contact details in it: nobody can write back.
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `stampart.js` (the starter stamps the app draws itself: flat pictures, planes, the block font, turning by depth), `stampmodels.js` (the box stamps as 3D models, for Spin), `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2, and `POST /api/feedback` into the shared feedback bucket, both through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
 | `test/` | `node --test` suites for the engine. |
-| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |
+| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`, `doctor.sh` (`just doctor`), `archive_agent.sh` (`just archive-agent`), `names_secret.py` (`just names-secret`). |
 | `docs/` | `state.md`, `decisions.md`, `questions.md`, `design-brief.md`, `deploy-cloudflare.md`, `environment.md`, `justfile-style.md`, `privacy-policy.md` (the public policy's text). |
 
 ## Decisions made
