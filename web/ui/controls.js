@@ -175,7 +175,13 @@ export function buildPalette() {
     chip.id = 'palettes-open';
     chip.setAttribute('aria-label', `Palettes: painting from ${p.name}`);
     chip.title = `Palettes: ${p.name}`;
-    chip.innerHTML = [0, 1, 2, 3].map((i) => `<i aria-hidden="true" style="background:${cs[Math.floor(i * cs.length / 4)] || 'transparent'}"></i>`).join('');
+    // Colors go through the style object: the CSP allows no inline style (web/_headers).
+    for (let i = 0; i < 4; i++) {
+      const dot = document.createElement('i');
+      dot.setAttribute('aria-hidden', 'true');
+      dot.style.background = cs[Math.floor(i * cs.length / 4)] || 'transparent';
+      chip.append(dot);
+    }
     chip.addEventListener('click', openPalettes);
     box.append(chip);
   }
@@ -186,7 +192,17 @@ export function buildPalette() {
     b.setAttribute('aria-checked', String(c === s.color));
     b.setAttribute('aria-label', inkName(app.drawing.paper, c) || `Color ${c}`);
     b.style.setProperty('--c', c);
-    if (s.shading) b.innerHTML = `<span class="tones" aria-hidden="true"><i style="background:${shade(c, 'T', app.drawing.light)}"></i><i style="background:${shade(c, 'L', app.drawing.light)}"></i><i style="background:${shade(c, 'R', app.drawing.light)}"></i></span>`;
+    if (s.shading) {
+      const tones = document.createElement('span');
+      tones.className = 'tones';
+      tones.setAttribute('aria-hidden', 'true');
+      for (const side of ['T', 'L', 'R']) {
+        const tone = document.createElement('i');
+        tone.style.background = shade(c, side, app.drawing.light);
+        tones.append(tone);
+      }
+      b.append(tones);
+    }
     b.addEventListener('click', (e) => { set('color', c); buildPalette(); pickedColor(); emit('color', { custom: false }); if (openedColors) openColors(false, e.detail === 0); });
     box.append(b);
   }
@@ -227,7 +243,17 @@ export function buildPalette() {
   // The folded button shows the color in use, with its tones while auto-shade is on.
   const fold = $('#colors-fold');
   const ink = inkName(app.drawing.paper, s.color) || `color ${s.color}`;
-  fold.innerHTML = `<span class="fold-swatch" aria-hidden="true">${s.shading ? box.querySelector('[aria-checked="true"]')?.innerHTML || '' : ''}</span><span class="fold-caret" aria-hidden="true">▲</span>`;
+  // The tones are copied as nodes: markup that carries style attributes is blocked by the CSP.
+  const swatch = document.createElement('span');
+  swatch.className = 'fold-swatch';
+  swatch.setAttribute('aria-hidden', 'true');
+  const tones = s.shading && box.querySelector('[aria-checked="true"] .tones');
+  if (tones) swatch.append(tones.cloneNode(true));
+  const caret = document.createElement('span');
+  caret.className = 'fold-caret';
+  caret.setAttribute('aria-hidden', 'true');
+  caret.textContent = '▲';
+  fold.replaceChildren(swatch, caret);
   fold.style.setProperty('--c', s.color);
   fold.setAttribute('aria-label', `Colors: painting with ${ink}${s.shading ? ', auto-shade on' : ''}. Show the colors`);
   fold.title = 'Colors';

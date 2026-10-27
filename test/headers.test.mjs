@@ -2,7 +2,7 @@
 // pinned: what it must keep, and that it allows no more than the page loads.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 const headers = readFileSync(new URL('../web/_headers', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
@@ -23,6 +23,27 @@ test('the policy is closed by default, with no framing, plugins, <base> or form 
 test('scripts: this site and Cloudflare\'s page counter only, never inline or eval', () => {
   assert.deepEqual(csp['script-src'], ["'self'", 'https://static.cloudflareinsights.com']);
   assert.doesNotMatch(csp['script-src'].join(' '), /unsafe-|\*/);
+});
+
+test('styles come from this site\'s files only: no style attribute or <style> anywhere the page is built', () => {
+  assert.deepEqual(csp['style-src'], ["'self'"]);
+  // A style="" attribute (in markup or in a string that becomes markup) or setAttribute('style') is blocked
+  // by this policy; element.style.x = … is not. Set colors through the style object.
+  const sources = [['index.html', html]];
+  const walk = (dir) => {
+    for (const e of readdirSync(new URL(`../web/${dir}`, import.meta.url), { withFileTypes: true })) {
+      const rel = `${dir}${e.name}`;
+      if (e.isDirectory()) { if (!/^(clips|fonts|icons)/.test(e.name)) walk(`${rel}/`); } else if (e.name.endsWith('.js')) sources.push([rel, readFileSync(new URL(`../web/${rel}`, import.meta.url), 'utf8')]);
+    }
+  };
+  walk('');
+  assert.ok(sources.length > 20);
+  for (const [name, text] of sources) {
+    assert.doesNotMatch(text, /\bstyle\s*=\s*["'`\\]|<style\b|setAttribute\(\s*['"]style['"]/i, `${name} sets an inline style`);
+    // Copying one element's markup into another carries the style attributes the style object made (the folded
+    // Colors button once did); copy nodes with cloneNode instead.
+    assert.doesNotMatch(text, /\.innerHTML\b(?!\s*(=(?!=)|\+=))/, `${name} reads innerHTML (copy nodes, not markup)`);
+  }
 });
 
 test('connections and outside origins: only Cloudflare\'s page counter', () => {
