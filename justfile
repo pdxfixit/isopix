@@ -11,6 +11,14 @@ default:
 serve port="8790":
     python3 tools/serve.py {{port}}
 
+#   just policy --dry-run     find and update the privacy checkout and check the policy; run nothing there
+# The privacy checkout is $PRIVACY, else ../privacy beside this repo, else a clone in the cache. Run it once the
+# change to docs/privacy-policy.md is committed (on main, after just land); the tool is tools/policy.sh.
+# 📜 Copy docs/privacy-policy.md into the privacy repo (privacy.pdxfixit.com/isopix/): its just take builds, tests and commits it, then just land there
+[positional-arguments]
+policy *args:
+    @bash tools/policy.sh "$@"
+
 # 🧰 Once per clone: the git hooks (pre-commit runs just test; pre-push checks the version stamp) and the PDXfixIT author
 setup:
     git config core.hooksPath .githooks

@@ -123,7 +123,7 @@ buttons, tools, keys and settings were used, how long a sitting lasted and the
 kind of device, sent to the site's own Worker with one random device code that
 never changes. Never the drawing, names, anything typed or the IP address.
 What is sent is told in one place, the shared
-[privacy policy](https://privacy.pdxfixit.com/isopix/), which the switch links.
+[privacy policy](https://privacy.pdxfixit.com/isopix/), which the switch links. Its text is [docs/privacy-policy.md](docs/privacy-policy.md); `just policy` copies it into pdxfixit/privacy.
 Detail: [docs/telemetry.md](docs/telemetry.md).
 
 **Feedback** (Settings → About, beside the version): after a grown-up answers
@@ -140,8 +140,8 @@ don't put names or contact details in it: nobody can write back.
 | `web/engine/` | Pure logic, no DOM: `lattice.js` (coordinates, hierarchy, lines), `model.js` (cells, undo log), `brushes.js`, `symmetry.js`, `fill.js`, `stampart.js` (the starter stamps the app draws itself: flat pictures, planes, the block font, turning by depth), `stampmodels.js` (the box stamps as 3D models, for Spin), `density.js` (selection, density change, stamps), `svg.js`, `project.js`, `pngproject.js` (the project inside a PNG), `view.js`, `color.js`, `gesture.js` (drawing or moving the view). |
 | `worker/` | The isopix.app Worker: `index.js` (`POST /api/events` into R2, and `POST /api/feedback` into the shared feedback bucket, both through `events-worker.js`, vendored from flarepress; everything else to the static files) and `schema.sql` (no tables: the retired visit table's drop). |
 | `test/` | `node --test` suites for the engine. |
-| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `deploy.sh`. |
-| `docs/` | `state.md`, `decisions.md`, `questions.md`, `design-brief.md`, `deploy-cloudflare.md`, `environment.md`, `justfile-style.md`. |
+| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs` (headless width check), `export_check.mjs`, `bump_version.py` (semver: PATCH is the commit count), `make_icons.mjs`, `policy.sh` (`just policy`), `deploy.sh`. |
+| `docs/` | `state.md`, `decisions.md`, `questions.md`, `design-brief.md`, `deploy-cloudflare.md`, `environment.md`, `justfile-style.md`, `privacy-policy.md` (the public policy's text). |
 
 ## Decisions made
 

@@ -40,16 +40,16 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 | `web/_headers` | Response headers for Cloudflare and `tools/serve.py` (CSP, no-cache for `sw.js`). |
 | `spec/` | The Isopix file format, spec 1.0, under CC0: the spec, a JSON Schema, examples, and reference renderers in Python and JavaScript (`test/spec.test.mjs` checks they draw what the app does). |
 | `test/` | `node --test` suites for the engine and app tables, plus `test/docs.test.mjs`: every recipe, look view, link and repo path the docs name must exist. |
-| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs`, `export_check.mjs`, `perf.mjs`, `bump_version.py`, `make_icons.mjs`, `live_check.py`, `version_bumped.sh`, `deploy.sh` (the logic behind `deploy.just`). |
+| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs`, `export_check.mjs`, `perf.mjs`, `bump_version.py`, `make_icons.mjs`, `live_check.py`, `version_bumped.sh`, `policy.sh` (`just policy`), `deploy.sh` (behind `deploy.just`). |
 | `justfile`, `deploy.just` | Recipes, in [the house style](docs/justfile-style.md). The justfile imports `deploy.just` (the deploy recipes). Change either with care: a broken deploy recipe blocks every release. |
-| `docs/` | State, decisions, questions, the design brief, hosting, environment, Justfile style. |
+| `docs/` | State, decisions, questions, the design brief, hosting, environment, Justfile style, `privacy-policy.md` (the public policy's text). |
 | Deploy: `deploy.just`, `tools/deploy.sh`, [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md) | Hosting, the `deploy-*` / `live` / `rollback` / `ship` recipes, checks after a deploy, rollback, DNS conflicts. See [Ship](#ship). |
 
 ## Verify
 
 1. **`just test`** must be green. Judge it by the exit code, not by grepping: a syntax error stops it at `node --check` before any test runs.
 2. **Every engine change ships with a test that fails without it.** Prove it: `just prove test/<file>.test.mjs web/engine/<file>.js`.
-3. **Look at it** for anything a user sees: `just look [draw|drawn|select|settings|drawing-sheet|brushes …] [--js CODE]` (`just look --help` lists every view) reports sideways scroll, console errors, CSP blocks, controls under 44 px and overlaps at 320, 375, 700, 900 and 1100 px, and saves screenshots to the folder it prints. Run it with `--light` and again with `--dark`. Read the screenshots: the script cannot judge layout. A new screen or state gets a view: add an entry to `VIEWS` in `tools/look.mjs` (JS that opens it and throws if it did not); CI runs `just look --all`, so it is covered there too. `just look --all` runs every view locally.
+3. **Look at it** for anything a user sees: `just look [draw|drawn|select|settings|drawing-sheet|brushes …] [--js CODE]` (`just look --help` lists every view) reports sideways scroll, console errors, CSP blocks, controls under 44 px and overlaps at 320, 375, 700, 900 and 1100 px, and saves screenshots to the folder it prints. Run it with `--light` and again with `--dark`. Read the screenshots: the script cannot judge layout. A new screen or state gets a view: add an entry to `VIEWS` in `tools/look.mjs` (JS that opens it and throws if it did not); CI runs `just look --all`, as can you.
 4. **Output changes:** `just export-check`. **Moving house** (`web/move.js`, the old addresses): `just move-check`. **Autosave** (`web/autosave.js`): `just autosave-check`. **Installing** (manifest, service worker, home-screen tags): `just install-check`.
 5. **The shared Browser pane** is for real clicks and drags only. Serve on 8791 and pass your own `tabId` to every call. Its service worker fails to register (a pane limit); headless Chrome registers it and runs offline.
 6. **Rendering changes:** `just perf` before and after; the bar is in docs/decisions.md (Shipping).
@@ -57,17 +57,17 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 
 ## Ship
 
-Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here. **It deploys every push to `main` that changes `web/`, `worker/` or `site/`** (the owner, 2026-10-15: "autodeploy like noodlepads"); Actions → deploy → Run workflow runs it by hand. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
+Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here. **It deploys every push to `main` that changes `web/`, `worker/` or `site/`**. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
 
 1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
 2. **Commit on your branch** (your own worktree) by explicit path, then **`just land`** there and **`just ci-wait`** for green CI. It is flarepress's shared tool (`land.conf`): pull `main`, cherry-pick, restamp `web/version.js`, test, push.
-3. **The deploy** is GitHub's: it runs `deploy-check` (on `main`, `web/` and `site/` committed, files present, `just test` and **GitHub's CI run for that commit green**), gate, stamp, push, then `deploy-verify` (live version, 200s, service-worker cache header, `version.js` equal to the commit's, `just look` on the live site). Agents never run `just --yes deploy`; the owner may, from his Mac. **`just deploy-plan`** (wrangler's dry run, sending nothing) is fine anywhere.
+3. **The deploy** is GitHub's: it runs `deploy-check` (on `main`, `web/` and `site/` committed, files present, `just test` and **GitHub's CI run for that commit green**), gate, stamp, push, then `deploy-verify` (the live version, headers and a `just look` on the live site). Agents never run `just --yes deploy`; the owner may, from his Mac. **`just deploy-plan`** (wrangler's dry run, sending nothing) is fine anywhere.
 4. **Look at the live site:** `just live` (status, cache headers, etag, versions, ✅/⚠️). A red deploy run after its push step means the new version is already live: fix forward, or the owner runs `just rollback` (prints the steps; `--yes` runs them).
 
 Rules:
 
 - **Land every commit with `just land`; every one that changes `web/` is deployed by GitHub**, then `just live`. Never deploy with failing tests (`deploy-check` refuses), and bump `web/version.js` with each release that changes `web/` (CI fails without it).
-- **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go. Isopix's first publish, at isopix.pdxfixit.com, was approved on 2026-10-13 for release 1.0.1; the move to isopix.app, on 2026-10-15 (its first deploy there may need `FIRST_PUBLISH=1`).
+- **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go.
 - **Never delete or edit a DNS record without the owner's approval.** If the domain will not attach, show him the exact record (see the doc).
 - Only `web/` is uploaded, configured by `site/`, so both must be committed (`ALLOW_DIRTY=1` overrides on the Mac, and stamps the version `-dirty`).
 - `web/version.json` is the deploy's label (`v1.2.174-dce9c71`: release, commit), from `deploy-stamp`, gitignored; `web/version.js` is the release stamp.
@@ -98,14 +98,15 @@ Rules:
 - **No personal names.** Never write the owner's or his family's names in any file or commit message; `test/names.test.mjs` fails on them, and on any commit not authored by PDXfixIT.
 - **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Land every finished commit with `just land` (see Ship).
 - **Agents are agents.** Call subagents "agents", never people.
-- **Tooling friction gets fixed:** an obvious, non-breaking improvement to a tool or doc you used goes in the same session, as its own commit.
+- **Tooling friction gets fixed:** an obvious, non-breaking improvement to a tool or doc you used goes in as its own commit.
+- **The privacy policy lives here:** `docs/privacy-policy.md` is the text of privacy.pdxfixit.com/isopix/. A change to what the app collects or shows updates it in the same commit (bump `updated:`); once it is on `main`, `just policy` copies it into pdxfixit/privacy and lands it there. `test/privacy-policy.test.mjs` checks its shape.
 - **When the owner decides something,** record it in docs/decisions.md in the same commit; a replaced rule is deleted, not annotated.
 
 ## Working with the owner
 
-The owner owns Isopix and decides what it does. He reads replies on his phone as often as at a desk.
+The owner owns Isopix and decides what it does. He often reads replies on his phone.
 
-- **Answer short, result first:** what changed or what you found, then the numbers (tests passing, ms per frame, the live version), then anything he must do. Plain English; define a term the first time. A bit of whimsy and emoji are welcome.
+- **Answer short, result first:** what changed or what you found, then the numbers (tests passing, ms per frame, the live version), then anything he must do. Plain English; define a term the first time. Whimsy and emoji are welcome.
 - **Judgment calls are his.** Anything that changes what the app looks like or does, or trades one good thing for another: give two or three options with your recommendation and why, and ask before building it. Mechanical work (a fix with a clear right answer, tests, docs that match the code) needs no permission.
 - **Ask in chat when it blocks the work, in [docs/questions.md](docs/questions.md) when it can wait.** That file says how to write a card and how an answer gets recorded.
 - **His rules hold even when they are inconvenient:** nothing is pushed, deployed, deleted (DNS included) or published against them. If a rule seems wrong, say so and ask; do not work around it.
@@ -118,7 +119,7 @@ The repo holds everything except: **flarepress** (the public deploy code), the *
 
 ## Handoff
 
-Before you stop, leave the next session a warm start:
+Before you stop, leave a warm start:
 
 1. **docs/state.md**, present tense: what is live (`just live` shows the version), what is in flight (committed but not deployed, half done, waiting on CI), and what waits on the owner. Update the counts it quotes (tests, checks) if they changed.
 2. **TODO.md**: delete finished lines; add approved work in order.

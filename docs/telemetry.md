@@ -68,7 +68,7 @@ still an identifier), the telemetry runner removes the code
 from every kept copy a year on (its `ids` for this job), no location is recorded, only the time zone's offset (2026-10-16: the events carry
 no country; the owner chose country-only in every app, a city or street counts
 as personal), and the shared privacy policy (https://privacy.pdxfixit.com/isopix/,
-source `src/isopix/policy.md` in pdxfixit/privacy) says all of it. Settings has
+its text is `docs/privacy-policy.md` here, copied into pdxfixit/privacy by `just policy`) says all of it. Settings has
 no note of its own, only the switch and the policy's link, so every app says it
 the same way (the owner, 2026-10-16). Change the policy in the same change as
 anything that changes what is sent. `test/telemetry.test.mjs` fails when the
