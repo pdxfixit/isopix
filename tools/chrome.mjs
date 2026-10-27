@@ -15,7 +15,8 @@ function findChrome() {
   const fixed = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
   const pw = '/opt/pw-browsers';
   let found = [];
-  try { found = fs.readdirSync(pw).filter((d) => /^chromium-\d+$/.test(d)).sort().reverse().map((d) => path.join(pw, d, 'chrome-linux', 'chrome')); } catch { /* none */ }
+  // Playwright's folder is chrome-linux in older releases and chrome-linux64 in newer ones.
+  try { found = fs.readdirSync(pw).filter((d) => /^chromium-\d+$/.test(d)).sort().reverse().flatMap((d) => ['chrome-linux64', 'chrome-linux'].map((s) => path.join(pw, d, s, 'chrome'))); } catch { /* none */ }
   return [...fixed, ...found].find((p) => fs.existsSync(p)) || fixed[0];
 }
 export const CHROME = process.env.CHROME || findChrome();
