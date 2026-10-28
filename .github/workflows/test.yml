@@ -12,6 +12,7 @@ on:
   pull_request:
 permissions:
   contents: read
+  actions: read
 jobs:
   test:
     runs-on: ubuntu-24.04
@@ -61,6 +62,15 @@ jobs:
   # wide: every view at 320, 375, 700, 900 and 1100 px in light mode. short: a
   # landscape phone with the browser bars showing (480, 568, 844 × 320), where the
   # side rails must clear the bottom row and the update bar keep between the rails.
+      - name: Report
+        if: always()
+        continue-on-error: true
+        uses: pdxfixit/flarepress/ci@v1
+        with:
+          status: ${{ job.status }}
+          endpoint: ${{ vars.CI_ENDPOINT }}
+          key: ${{ secrets.CI_EVENTS_KEY }}
+          ntfy-topic: ${{ secrets.NTFY_TOPIC }}
   look:
     name: look (${{ matrix.pass }})
     runs-on: ubuntu-24.04
@@ -97,3 +107,12 @@ jobs:
           name: screenshots-${{ matrix.pass }}
           path: shots/
           if-no-files-found: ignore
+      - name: Report
+        if: always()
+        continue-on-error: true
+        uses: pdxfixit/flarepress/ci@v1
+        with:
+          status: ${{ job.status }}
+          endpoint: ${{ vars.CI_ENDPOINT }}
+          key: ${{ secrets.CI_EVENTS_KEY }}
+          ntfy-topic: ${{ secrets.NTFY_TOPIC }}
