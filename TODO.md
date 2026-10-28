@@ -16,6 +16,5 @@ Offered, not yet approved (ask the owner first):
 
 ## The owner does
 
-- Set the names secret, once (the test skips the name scan until then, in CI and on the Mac): on your Mac run `just names-secret --from-commit 6e42f34 > ~/.config/isopix/names.json` (it rebuilds the lists from the hashes the old test held, so you retype nothing; `mkdir -p ~/.config/isopix` first), then `gh secret set ISOPIX_NAME_HASHES < ~/.config/isopix/names.json`. Never paste the value into a chat or a file in the repo. The old hashes stay in git history, which is public; they cannot be unpublished, only no longer added to.
 - Try it on the Pixel and a tablet: the things in [docs/state.md](docs/state.md) "Try first".
 - In pdxfixit/telemetry, the `[jobs.isopix.ids] visits` entry stays until 2027-10-16, then goes (it blanks the kept copies' device codes); until then its `isopix` job's `TELEMETRY_ISOPIX_D1_ID` secret is unused.
