@@ -96,7 +96,7 @@ Rules:
 - **Every control has a label a screen reader reads,** and nothing is gesture-only (density change always has buttons).
 - **Respect `prefers-reduced-motion`.**
 - **Fresh clone: `just setup` first.** The pre-commit hook runs `just test` and checks the staged `web/version.js` stamp; pre-push checks it again (a rebase moves the commit count); the author is PDXfixIT. Never skip the hook.
-- **No personal names.** No name of the owner or his family in any file or commit message; `test/names.test.mjs` fails on them (hashes: secret `ISOPIX_NAME_HASHES`), as on a non-PDXfixIT commit.
+- **No personal names.** No name of the owner or his family in any file or commit message (no scan; the rule is enough, owner 2026-10-28). `test/names.test.mjs` checks the author is PDXfixIT.
 - **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Land every finished commit with `just land` (see Ship).
 - **Agents are agents.** Call subagents "agents", never people.
 - **Tooling friction gets fixed:** an obvious, non-breaking improvement to a tool or doc you used goes in as its own commit.

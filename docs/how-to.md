@@ -25,10 +25,6 @@ A cloud clone can be shallow. `just version` and the stamp checks count commits,
 9. **Commit by explicit path** (`git add <files>`, never `-A`): other agents work in this repo. `<type>: <summary>`, a bullet body, the `Co-Authored-By` trailer.
 10. **Land it:** `just land` from your worktree, then `just ci-wait` for green CI. A red run after the upload means the new version is already live: fix forward.
 
-## The names check
-
-`test/names.test.mjs` holds no names and no hashes (the repo is public). It reads `ISOPIX_NAME_HASHES` (CI) or `~/.config/isopix/names.json` (the owner's Mac) and skips the scan where neither exists. The owner makes the value once with `just names-secret` (see TODO.md "The owner does"). Agents never print or commit it; in a cloud session write no capitalized everyday word that could be a first name, and read CI after a push.
-
 ## Landing other agents' work
 
 From the main checkout:

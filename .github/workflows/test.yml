@@ -18,8 +18,6 @@ jobs:
     timeout-minutes: 20
     env:
       CHROME: /usr/bin/google-chrome
-      # The names' hashes live outside this public repo (test/names.test.mjs); a fork's pull request has none and skips the scan.
-      ISOPIX_NAME_HASHES: ${{ secrets.ISOPIX_NAME_HASHES }}
     steps:
       - uses: actions/checkout@v7
         with:

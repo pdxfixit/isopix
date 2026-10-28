@@ -56,9 +56,6 @@ if command -v gh > /dev/null && gh auth status > /dev/null 2>&1; then ok "gh is 
 else warn "gh is missing or signed out: just land and just ci-wait can't run; push a land/ branch and say so"; fi
 [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || warn "CLOUDFLARE_API_TOKEN is set here: agents hold none (GitHub deploys)"
 
-# The names check needs its hashes (outside the repo, it is public).
-if [ -n "${ISOPIX_NAME_HASHES:-}" ] || [ -s "$HOME/.config/isopix/names.json" ]; then ok "names hashes found: just test scans for the family's names"
-else warn "no ISOPIX_NAME_HASHES or ~/.config/isopix/names.json: just test skips the names scan here (CI runs it)"; fi
 
 # What is live, against main. The deploy stamps version.json as
 # {"version":"v<release>-<short sha>[-dirty]","commit":"<short sha>",…};

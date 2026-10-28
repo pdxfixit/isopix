@@ -29,12 +29,7 @@ policy *args:
     [ -f "$p/tools/send.sh" ] || { echo "policy: $p has no tools/send.sh; update it (git -C $p pull)" >&2; exit 1; }
     exec bash "$p/tools/send.sh" isopix docs/privacy-policy.md "$@"
 
-# 🔑 Print the JSON for the ISOPIX_NAME_HASHES secret from names typed here, on the owner's Mac only: just names-secret --any NAME… [--exact NAME…] [--inside NAME…], or --from-commit 6e42f34
-[positional-arguments]
-names-secret *args:
-    @python3 tools/names_secret.py "$@"
-
-# 📋 Where this session stands: main checkout or worktree, tools, Chrome, gh, the names hashes, and whether main is live (read-only)
+# 📋 Where this session stands: main checkout or worktree, tools, Chrome, gh, and whether main is live (read-only)
 doctor:
     @sh tools/doctor.sh
 
