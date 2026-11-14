@@ -22,11 +22,9 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 4. [docs/questions.md](docs/questions.md): open questions for the owner. Look first for answers he typed in.
 5. [TODO.md](TODO.md): "Agents do" (approved work, in order) and "The owner does".
 6. [README.md](README.md): what the app does, the file map, storage, keys.
-7. As needed: [docs/environment.md](docs/environment.md) (tools to install, ports, every outside dependency) before you install, preview or deploy; [docs/design-brief.md](docs/design-brief.md) for the intent behind a feature; [docs/justfile-style.md](docs/justfile-style.md) before you write a recipe.
+7. As needed: [docs/environment.md](docs/environment.md) (tools to install, ports, every outside dependency) before you install, preview or deploy; [docs/design-brief.md](docs/design-brief.md) for the intent behind a feature (background, not a task list); [docs/justfile-style.md](docs/justfile-style.md) before you write a recipe.
 
 **Leave the next session a warm start.** A fresh cloud session has only this repo: no chat history, no memory folder, no access to the owner's notes. Everything the next agent needs must be in a file here. Update [docs/state.md](docs/state.md) in the same commit whenever what exists or what is in flight changes. If the chat taught you a standing rule, add it here.
-
-**Design intent:** [docs/design-brief.md](docs/design-brief.md) is the owner's original brief (2026-10-12). It is background, not a task list, and docs/decisions.md outranks it where they differ.
 
 ## Where things are
 
@@ -106,6 +104,8 @@ Rules:
 ## Working with the owner
 
 The owner owns Isopix and decides what it does. He often reads replies on his phone.
+
+**Claude agents manage this repo, with the owner's standing approval (2026-11-14) to decide repo upkeep without asking:** [docs/ownership.md](docs/ownership.md).
 
 - **Answer short, result first:** what changed or what you found, then the numbers (tests passing, ms per frame, the live version), then anything he must do. Plain English; define a term the first time. Whimsy and emoji are welcome.
 - **Judgment calls are his.** Anything that changes what the app looks like or does, or trades one good thing for another: give two or three options with your recommendation and why, and ask before building it. Mechanical work (a fix with a clear right answer, tests, docs that match the code) needs no permission.
