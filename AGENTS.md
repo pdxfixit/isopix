@@ -105,7 +105,7 @@ Rules:
 
 The owner owns Isopix and decides what it does. He often reads replies on his phone.
 
-**Claude agents manage this repo, with the owner's standing approval (2026-11-14) to decide repo upkeep without asking:** [docs/ownership.md](docs/ownership.md).
+**Claude agents manage this repo** (owner's standing approval, 2026-11-14): [docs/agents/ownership.md](docs/agents/ownership.md).
 
 - **Answer short, result first:** what changed or what you found, then the numbers (tests passing, ms per frame, the live version), then anything he must do. Plain English; define a term the first time. Whimsy and emoji are welcome.
 - **Judgment calls are his.** Anything that changes what the app looks like or does, or trades one good thing for another: give two or three options with your recommendation and why, and ask before building it. Mechanical work (a fix with a clear right answer, tests, docs that match the code) needs no permission.
