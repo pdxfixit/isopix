@@ -1,6 +1,6 @@
 # Isopix 🧊
 
-A touch drawing app on an isometric (triangular) grid, for the owner first and for kids second, so kid-friendly. The grid size is the brush size. Plain HTML, CSS and ES modules in `web/`, Canvas 2D, Pointer Events, no build step and no dependencies. Installable and offline. Live at https://isopix.app/ (see [Ship](#ship)).
+A touch drawing app on an isometric (triangular) grid, for the owner first and for kids second, so kid-friendly. The grid size is the brush size. Plain HTML, CSS and ES modules in `web/`, Canvas 2D, Pointer Events, no build step and no dependencies. Installable and offline. Live at https://isopix.app/ (see [Ship](docs/agents/ship.md)).
 
 This file is the contract: how to start, how to verify and ship, and the rules for working here. Detail lives in the files it points to.
 
@@ -11,7 +11,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 - **Run:** `just serve`, then http://localhost:8790/. Port 8790 is the owner's own server; agents preview on **8791** (`just serve 8791`).
 - **Look:** `just look drawn select settings drawing-sheet brushes` checks 320, 375, 700, 900 and 1100 px in your own headless Chrome.
 - **Output:** `just export-check` proves PNG, SVG and project files round trip.
-- **Ship:** see [Ship](#ship). A commit that changes `web/` gets `just version`; `just land` puts it on `main` and GitHub deploys it (`.github/workflows/deploy.yml`, on pushes to `main` changing `web/`, `worker/` or `site/`).
+- **Ship:** see [Ship](docs/agents/ship.md). A commit that changes `web/` gets `just version`; `just land` puts it on `main` and GitHub deploys it (`.github/workflows/deploy.yml`, on pushes to `main` changing `web/`, `worker/` or `site/`).
 - **Agents land, deploy included, without asking once `just test` and CI are green**, whatever a session's push-only-to-its-branch default says (owner, 2026-10-19). They never run the deploy and hold no Cloudflare token: [docs/environment.md](docs/environment.md#a-session-that-cannot-deploy).
 
 ## Cold start: read in this order
@@ -25,59 +25,10 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 7. As needed: [docs/environment.md](docs/environment.md) (tools to install, ports, every outside dependency) before you install, preview or deploy; [docs/design-brief.md](docs/design-brief.md) for the intent behind a feature (background, not a task list); [docs/justfile-style.md](docs/justfile-style.md) before you write a recipe.
 
 **Leave the next session a warm start.** A fresh cloud session has only this repo: no chat history, no memory folder, no access to the owner's notes. Everything the next agent needs must be in a file here. Update [docs/state.md](docs/state.md) in the same commit whenever what exists or what is in flight changes. If the chat taught you a standing rule, add it here.
-
-## Where things are
-
-| Path | What it holds |
-|---|---|
-| `web/` | The site. Nothing else is served; every path in it is relative. |
-| `web/engine/` | Pure logic, no DOM: lattice math, the cell model and undo log, brushes, fill, symmetry, density change and stamps, SVG, project files, view and level-follow. Each file opens with a comment saying what it owns. |
-| `web/app.js`, `web/ui/` | `app.js`: the app state, rendering, lessons, autosave and the wiring; `window.isopix` is the state, for debugging and the tools. `ui/`: one job each (`controls`, `tools`, `input`, `screens`, `files`). Tests that check what the app handles read all of them (`test/appsource.mjs`). |
-| `web/render.js` | Canvas 2D drawing: cells, edges, gutters, overlays. |
-| `worker/` | The isopix.app Worker: `POST /api/events` and `/api/feedback` ([docs/telemetry.md](docs/telemetry.md)) into R2; everything else to the static files. |
-| `web/sw.js`, `web/version.js` | Service worker (network first) and its version stamp. |
-| `web/_headers` | Response headers for Cloudflare and `tools/serve.py` (CSP, no-cache for `sw.js`). |
-| `spec/` | The Isopix file format, spec 1.0, under CC0: the spec, a JSON Schema, examples, and reference renderers in Python and JavaScript (`test/spec.test.mjs` checks they draw what the app does). |
-| `test/` | `node --test` suites for the engine and app tables, plus `test/docs.test.mjs`: every recipe, look view, link and repo path the docs name must exist. |
-| `tools/` | `serve.py`, `look.mjs` + `chrome.mjs`, `export_check.mjs`, `perf.mjs`, `bump_version.py`, `make_icons.mjs`, `live_check.py`, `version_bumped.sh`, `deploy.sh` (behind `deploy.just`). |
-| `justfile`, `deploy.just` | Recipes, in [the house style](docs/justfile-style.md). The justfile imports `deploy.just` (the deploy recipes). Change either with care: a broken deploy recipe blocks every release. |
-| `docs/` | State, decisions, questions, the design brief, hosting, environment, Justfile style, `privacy-policy.md` (the public policy's text). |
-| Deploy: `deploy.just`, `tools/deploy.sh`, [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md) | Hosting, the `deploy-*` / `live` / `rollback` / `ship` recipes, checks after a deploy, rollback, DNS conflicts. See [Ship](#ship). |
-
-## Verify
-
-1. **`just test`** must be green. Judge it by the exit code, not by grepping: a syntax error stops it at `node --check` before any test runs.
-2. **Every engine change ships with a test that fails without it.** Prove it: `just prove test/<file>.test.mjs web/engine/<file>.js`.
-3. **Look at it** for anything a user sees: `just look [draw|drawn|select|settings|drawing-sheet|brushes …] [--js CODE]` (`just look --help` lists every view) reports sideways scroll, console errors, CSP blocks, controls under 44 px and overlaps at 320, 375, 700, 900 and 1100 px, and saves screenshots to the folder it prints. Run it with `--light` and again with `--dark`. Read the screenshots: the script cannot judge layout. A new screen or state gets a view: add an entry to `VIEWS` in `tools/look.mjs` (JS that opens it and throws if it did not); CI runs `just look --all`, as can you.
-4. **Output changes:** `just export-check`. **Moving house** (`web/move.js`, the old addresses): `just move-check`. **Autosave** (`web/autosave.js`): `just autosave-check`. **Installing** (manifest, service worker, home-screen tags): `just install-check`.
-5. **The shared Browser pane** is for real clicks and drags only. Serve on 8791 and pass your own `tabId` to every call. Its service worker fails to register (a pane limit); headless Chrome registers it and runs offline.
-6. **Rendering changes:** `just perf` before and after; the bar is in docs/decisions.md (Shipping).
-7. **What no tool here can test:** real multi-touch (pinch, long-press then pinch, two-finger pan), pen pressure, and performance on a real phone. Pointer events dispatched from script cover the logic, not the feel. Say so in your report.
-
-## Ship
-
-Hosting is https://isopix.app. **GitHub deploys** (`.github/workflows/deploy.yml`) with this repo's own Cloudflare token, running the same `just --yes deploy` as the owner's Mac, through the public flarepress (`github.com/pdxfixit/flarepress`); the site's config is `site/` here. **It deploys every push to `main` that changes `web/`, `worker/` or `site/`**. The old addresses carry drawings over by `web/move.js`; their move Workers are the owner's, outside this repo. Detail, rollback and the DNS-conflict steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). A commit that changes nothing under `web/` (docs, tests, tools, workflows) is pushed, CI read, and not deployed (docs/decisions.md, Shipping).
-
-1. **Bump the release stamp:** `just version` (semver; PATCH becomes the commit count) (edits `web/version.js`; installed copies key their cache on it). Do it in the same commit as the change.
-2. **Commit on your branch** (your own worktree) by explicit path, then **`just land`** there and **`just ci-wait`** for green CI. It is flarepress's shared tool (`land.conf`): pull `main`, cherry-pick, restamp `web/version.js`, test, push.
-3. **The deploy** is GitHub's: it runs `deploy-check` (on `main`, `web/` and `site/` committed, files present, `just test` and **GitHub's CI run for that commit green**), gate, stamp, push, then `deploy-verify` (the live version, headers and a `just look` on the live site). Agents never run `just --yes deploy`; the owner may, from his Mac. **`just deploy-plan`** (wrangler's dry run, sending nothing) is fine anywhere.
-4. **Look at the live site:** `just live` (status, cache headers, etag, versions, ✅/⚠️). A red deploy run after its push step means the new version is already live: fix forward, or the owner runs `just rollback` (prints the steps; `--yes` runs them).
-
-Rules:
-
-- **Land every commit with `just land`; every one that changes `web/` is deployed by GitHub**, then `just live`. Never deploy with failing tests (`deploy-check` refuses), and bump `web/version.js` with each release that changes `web/` (CI fails without it).
-- **While the address does not answer at all, `deploy` refuses** unless `FIRST_PUBLISH=1` is set: the first publish creates the Custom Domain (a DNS record) and needs the owner's go.
-- **Never delete or edit a DNS record without the owner's approval.** If the domain will not attach, show him the exact record (see the doc).
-- Only `web/` is uploaded, configured by `site/`, so both must be committed (`ALLOW_DIRTY=1` overrides on the Mac, and stamps the version `-dirty`).
-- `web/version.json` is the deploy's label (`v1.2.174-dce9c71`: release, commit), from `deploy-stamp`, gitignored; `web/version.js` is the release stamp.
-- Never force-push `main`.
-- **Auth fails at push** (`push` fails on auth): nothing was published. On GitHub the repo secret `CLOUDFLARE_API_TOKEN` needs the owner; on his Mac, `npx wrangler login`. Details: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
-
 ## Standing rules
 
 ### CI (GitHub Actions, `.github/workflows/`)
 
-- `test.yml` runs on every push and pull request: `just test`, `just export-check`, `just look` (screenshots uploaded as an artifact), and the version-bump rule (`tools/version_bumped.sh`). `live.yml` runs daily (`tools/live_check.py`): the live site must answer (3 retries); it does not check which version is live, since `deploy.yml` deploys every push to `main`. No secrets, `contents: read`, pinned actions. `deploy.yml` deploys with this repo's own Cloudflare token (the only secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
 - After each push, read the run: `gh run list --limit 3`, then `gh run view <id> --log-failed`. Fix a red run before anything else.
 - **Every bug fixed adds a test that fails without the fix** (`just prove`).
 - **Every session closes one CI gap:** a check that would have caught a past mistake. Record it in `docs/state.md` under "CI gaps closed".
@@ -114,15 +65,16 @@ The owner owns Isopix and decides what it does. He often reads replies on his ph
 - **Record his words.** When he decides something, the docs/decisions.md row quotes him (`Owner: "…"`).
 - **Say plainly what you did not check.** Real touch, pen and phone speed cannot be tested here (see Verify).
 
-## Things outside this repo
+## More detail: `docs/agents/`
 
-The repo holds everything except: **flarepress** (the public deploy code), the **Cloudflare token** (a GitHub secret, or the owner's login), **GitHub access**, and a **real phone**. [docs/environment.md](docs/environment.md#things-outside-this-repo) says what each is for, what to do when it is missing, and who can supply it (The owner).
+Detail that used to live in this file, one topic per file. Open the one you need.
 
-## Handoff
-
-Before you stop, leave a warm start:
-
-1. **docs/state.md**, present tense: what is live (`just live` shows the version), what is in flight (committed but not deployed, half done, waiting on CI), and what waits on the owner. Update the counts it quotes (tests, checks) if they changed.
-2. **TODO.md**: delete finished lines; add approved work in order.
-3. **docs/decisions.md** and **docs/questions.md**: every decision recorded, every open question carded.
-4. **Final report** (to the owner or the agent that started you): the result first; what you changed, by commit; what you ran and its result (tests, look, export-check, CI run, `just live`) versus what you only read; what is not verified (touch, phone); anything waiting on the owner, as a decision with a recommendation.
+| File | Read it when |
+|---|---|
+| [docs/agents/ownership.md](docs/agents/ownership.md) | before you merge, land, or delete branches, worktrees or remote branches |
+| [docs/agents/where-things-are.md](docs/agents/where-things-are.md) | you need to know which path holds what: `web/`, `worker/`, `spec/`, `test/`, `tools/`, the recipes |
+| [docs/agents/verify.md](docs/agents/verify.md) | before you call a change done: tests, `just look`, output checks, what no tool here can test |
+| [docs/agents/ship.md](docs/agents/ship.md) | you version, commit, land or deploy a change, or watch the live site |
+| [docs/agents/ci.md](docs/agents/ci.md) | you read a CI run or touch a workflow |
+| [docs/agents/outside-repo.md](docs/agents/outside-repo.md) | something you need is not in the repo: flarepress, the Cloudflare token, GitHub access, a real phone |
+| [docs/agents/handoff.md](docs/agents/handoff.md) | before you stop: the warm start and the final report |

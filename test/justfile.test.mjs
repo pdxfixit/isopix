@@ -35,7 +35,8 @@ test('every recipe has a doc comment directly above it', () => {
 });
 
 test('every tool in tools/ is named in a doc', () => {
-  const docs = ['README.md', 'AGENTS.md', ...readdirSync(new URL('../docs/', import.meta.url)).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`)]
+  const docs = ['README.md', 'AGENTS.md', ...readdirSync(new URL('../docs/', import.meta.url)).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`),
+    ...readdirSync(new URL('../docs/agents/', import.meta.url)).filter((f) => f.endsWith('.md')).map((f) => `docs/agents/${f}`)]
     .map(read).join('\n');
   const missing = readdirSync(new URL('../tools/', import.meta.url), { withFileTypes: true })
     .filter((e) => e.isFile() && /\.(sh|py|mjs)$/.test(e.name) && !e.name.startsWith('test_'))

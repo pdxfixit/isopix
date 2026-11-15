@@ -13,15 +13,16 @@ import { execFileSync, spawnSync } from 'node:child_process';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-// AGENTS.md is loaded into every session (CLAUDE.md imports it). 16,000 bytes is
-// about 4,000 tokens: room for the contract, while the detail lives in docs/.
-const AGENTS_MAX_BYTES = 16000;
+// AGENTS.md is loaded into every session (CLAUDE.md imports it). 9,000 bytes is
+// about 2,250 tokens: room for the contract, while the detail lives in docs/ and docs/agents/.
+const AGENTS_MAX_BYTES = 9000;
 
 // Paths the docs name that are made by tools and never committed.
 const GENERATED = new Set(['web/version.json', 'shots', 'shots/']);
 
 const DOCS = ['AGENTS.md', 'README.md', 'TODO.md',
-  ...fs.readdirSync(path.join(ROOT, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`)];
+  ...fs.readdirSync(path.join(ROOT, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`),
+  ...fs.readdirSync(path.join(ROOT, 'docs/agents')).filter((f) => f.endsWith('.md')).map((f) => `docs/agents/${f}`)];
 
 // Code in a Markdown file: each line of a fenced block, and each inline `span`.
 function codeOf(md) {
