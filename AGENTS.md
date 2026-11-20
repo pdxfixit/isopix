@@ -25,6 +25,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 7. As needed: [docs/environment.md](docs/environment.md) (tools to install, ports, every outside dependency) before you install, preview or deploy; [docs/design-brief.md](docs/design-brief.md) for the intent behind a feature (background, not a task list); [docs/justfile-style.md](docs/justfile-style.md) before you write a recipe.
 
 **Leave the next session a warm start.** A fresh cloud session has only this repo: no chat history, no memory folder, no access to the owner's notes. Everything the next agent needs must be in a file here. Update [docs/state.md](docs/state.md) in the same commit whenever what exists or what is in flight changes. If the chat taught you a standing rule, add it here.
+
 ## Standing rules
 
 ### CI (GitHub Actions, `.github/workflows/`)
@@ -35,22 +36,7 @@ This file is the contract: how to start, how to verify and ship, and the rules f
 
 ### Working here
 
-- **No build step, no dependencies.** Tools are stdlib Python or Node with no packages (headless Chrome needs a WebSocket client; stdlib Python has none).
-- **The engine stays pure.** No DOM, canvas or `window` in `web/engine/`. The DOM code calls it.
-- **The model has one write path.** Change cells, edges and hidden children only through `Drawing.setCell` / `setEdge` / `setHidden` (or `paint`, which uses them), inside `begin()` ... `commit()`. That is what makes undo, previews (`rollback`) and replay exact.
-- **Stored formats are kept by users.** A change to the project file or the autosave needs `project.js` to still load older files (`VERSION`), and a test.
-- **Anything that comes in is untrusted:** project files are shape-checked in `project.js`; keep it that way.
-- **Touch targets at least 44 px; nothing scrolls sideways;** check light and dark mode.
-- **A new key goes in `web/keys.js`; a new button, tool or brush gets its line in `web/help.js`.** `test/help.test.mjs` fails otherwise.
-- **Every control has a label a screen reader reads,** and nothing is gesture-only (density change always has buttons).
-- **Respect `prefers-reduced-motion`.**
-- **Fresh clone: `just setup` first.** The pre-commit hook runs `just test` and checks the staged `web/version.js` stamp; pre-push checks it again (a rebase moves the commit count); the author is PDXfixIT. Never skip the hook.
-- **No personal names.** No name of the owner or his family in any file or commit message (no scan; the rule is enough, owner 2026-10-28). `test/names.test.mjs` checks the author is PDXfixIT.
-- **Commits:** one per finished unit of work, staged by explicit path (never `git add -A`: other agents work in this repo), `<type>: <summary>`, a bullet body, and the `Co-Authored-By` trailer. Land every finished commit with `just land` (see Ship).
-- **Agents are agents.** Call subagents "agents", never people.
-- **Tooling friction gets fixed:** an obvious, non-breaking improvement to a tool or doc you used goes in as its own commit.
-- **The privacy policy lives here:** `docs/privacy-policy.md` is the text of privacy.pdxfixit.com/isopix/. A change to what the app collects or shows updates it in the same commit (bump `updated:`; write the address as `{contact}`); once it is on `main`, `just policy` hands it to pdxfixit/privacy's own send script, which copies and lands it (`--dry-run` stops before landing). `test/privacy-policy.test.mjs` checks its shape.
-- **When the owner decides something,** record it in docs/decisions.md in the same commit; a replaced rule is deleted, not annotated.
+Read [docs/agents/working-here.md](docs/agents/working-here.md) before you edit: the engine and model rules, stored formats, touch and accessibility minimums, keys and help, the hook, commits, no personal names, the privacy policy.
 
 ## Working with the owner
 
@@ -72,6 +58,7 @@ Detail that used to live in this file, one topic per file. Open the one you need
 | File | Read it when |
 |---|---|
 | [docs/agents/ownership.md](docs/agents/ownership.md) | before you merge, land, or delete branches, worktrees or remote branches |
+| [docs/agents/working-here.md](docs/agents/working-here.md) | before you edit: code, format, accessibility, commit and privacy rules |
 | [docs/agents/where-things-are.md](docs/agents/where-things-are.md) | you need to know which path holds what: `web/`, `worker/`, `spec/`, `test/`, `tools/`, the recipes |
 | [docs/agents/verify.md](docs/agents/verify.md) | before you call a change done: tests, `just look`, output checks, what no tool here can test |
 | [docs/agents/ship.md](docs/agents/ship.md) | you version, commit, land or deploy a change, or watch the live site |

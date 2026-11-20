@@ -5,6 +5,7 @@ Detail that does not fit in [AGENTS.md](../../AGENTS.md), which stays the short 
 | File | Read it when |
 | --- | --- |
 | [ownership.md](ownership.md) | before you merge, land, or delete branches, worktrees or remote branches |
+| [working-here.md](working-here.md) | before you edit: code, format, accessibility, commit and privacy rules |
 | [where-things-are.md](where-things-are.md) | you need to know which path holds what: `web/`, `worker/`, `spec/`, `test/`, `tools/`, the recipes |
 | [verify.md](verify.md) | before you call a change done: tests, `just look`, output checks, what no tool here can test |
 | [ship.md](ship.md) | you version, commit, land or deploy a change, or watch the live site |
